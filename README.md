@@ -1,9 +1,10 @@
-# Senior Project 
+# Senior Project
 
 * **Course:** CSC 59866
 * **Instructor:** Prof. Thomas M. Sessa
 * **Institution:** CUNY - The City College of New York
 * **Semester:** Fall 2025
+* **Team Name:** Digital Worms
 
 ---
 
@@ -16,5 +17,3 @@
 * **Kritan Baniya**
 
 ---
-
-* Instructor: Prof. Thomas M. Sessa
