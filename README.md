@@ -20,7 +20,7 @@
 
 ## Tech Stack
 * **Frontend**
-* ** **React** **
+* * **React**
 * **Backend**
-* ** **FastAPI**
+* * **FastAPI**
 
