@@ -5,8 +5,8 @@ function App() {
   const [count, setCount] = useState(0)
 
   return (
-    <div>
-      <h1>Vite + React</h1>
+    <div className="frame">
+      <h1>CLINIC IQ</h1>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
