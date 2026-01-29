@@ -17,3 +17,10 @@
 * **Kritan Baniya**
 
 ---
+
+## Tech Stack
+* **Frontend
+* ** **React
+* **Backend
+* ** **FastAPI
+
