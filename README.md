@@ -19,8 +19,8 @@
 ---
 
 ## Tech Stack
-* **Frontend
-* ** **React
-* **Backend
-* ** **FastAPI
+* **Frontend**
+* ** **React** **
+* **Backend**
+* ** **FastAPI**
 
