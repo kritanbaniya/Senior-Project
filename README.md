@@ -27,8 +27,8 @@
 ---
 
 ## Setting Up
-##### zero: git clone this project. 
-##### first: install node for this particular project. 
+#### zero: git clone this project. 
+#### first: install node for this particular project. 
 if you already have node js installed in your computer, do 
 ```
 npm install
