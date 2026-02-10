@@ -1,23 +1,41 @@
 import { useState } from 'react'
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import './style.css'
 import Header from './Header'
+import ClinicInfo from './pages/ClinicInfo'
+import LoginModal from './components/LoginModal'
+
+function HomePage() {
+  const navigate = useNavigate()
+  return (
+    <div className="home-page info-box">
+      <h1 className="page-title">CLINIC Nearby</h1>
+      <div className="frame">
+        <h1 className="left_title">CLINIC 1</h1>
+        <h2 className="left_title">Location...</h2>
+        <h2 className="left_title">...</h2>
+        <div className="card">
+          <button onClick={() => navigate('/clinic')}>
+            Check
+          </button>
+        </div>
+        <p className="read-the-docs" />
+      </div>
+    </div>
+  )
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [loginOpen, setLoginOpen] = useState(false)
 
   return (
     <>
-    <Header />
-    <div className="frame">
-      <h1>CLINIC IQ</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          buton
-        </button>
-      </div>
-      <p className="read-the-docs">
-      </p>
-    </div>
+      <Header onLoginClick={() => setLoginOpen(true)} />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/clinic" element={<ClinicInfo />} />
+      </Routes>
+      <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} />
     </>
   )
 }

@@ -1,12 +1,26 @@
-function Header() {
+import { Link } from 'react-router-dom'
+
+interface HeaderProps {
+  onLoginClick?: () => void
+}
+
+function Header({ onLoginClick }: HeaderProps) {
   return (
     <header className="header">
-      <a href="/" className="header-logo">CLINIC IQ</a>
+      <Link to="/" className="header-logo">CLINIC IQ</Link>
       <nav className="header-nav">
-        <a href="/">Home</a>
+        <Link to="/">Home</Link>
         <a href="/patients">About</a>
         <a href="/appointments">Contact</a>
-        <a href="/settings">Login</a>
+        <a
+          href="/settings"
+          onClick={(e) => {
+            e.preventDefault()
+            onLoginClick?.()
+          }}
+        >
+          Login
+        </a>
       </nav>
     </header>
   )

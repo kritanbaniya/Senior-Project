@@ -34,19 +34,33 @@ h1 {
   color: #000000;
 }
 
+h2 {
+  font-size: 1.2em;
+  line-height: 1;
+  color: #000000;
+}
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 2rem 2rem;
   text-align: center;
 }
-
+.left_title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgb(0, 0, 0);
+  text-decoration: none;
+  text-align: left;
+}
+h2.left_title {
+  font-size: 1rem;
+}
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1rem 2rem;
-  background-color: #94c4dc;
+  background-color: rgb(174, 200, 236);
   color: white;
   margin: 0 -2rem 2rem -2rem;
   border-radius: 0 0 8px 8px;
@@ -56,7 +70,7 @@ h1 {
 .header-logo {
   font-size: 1.5rem;
   font-weight: 700;
-  color: white;
+  color: rgb(0, 0, 0);
   text-decoration: none;
 }
 
@@ -70,7 +84,7 @@ h1 {
 }
 
 .header-nav a {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(0, 0, 0, 0.9);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;
@@ -95,6 +109,7 @@ h1 {
 
 .card {
   padding: 2em;
+  text-align: right;
 }
 
 .read-the-docs {
@@ -116,11 +131,12 @@ button {
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   font-size: 1em;
-  font-weight: 500;
+  font-weight: 900;
   font-family: inherit;
   font-weight: bold;
   text-transform: uppercase;
-  background-color: #ff9b29;
+  background-color: #000000;
+  color: #ffffff;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -132,15 +148,146 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* 诊所信息页 */
+.home-page,
+.clinic-info-page {
+  text-align: left;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1rem 0;
+}
+.page-title {
+  text-align: left;
+  margin-bottom: 1rem;
+}
+.clinic-info-page .page-title {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+.login-title {
+  text-align: left;
+}
+.info-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+.info-box-title {
+  font-size: 1.1rem;
+  margin: 0 0 0.75rem 0;
+  color: #333;
+}
+.info-box-content p {
+  margin: 0.5rem 0;
+  color: #444;
+  font-size: 0.95rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 1rem;
+  color: #646cff;
+  text-decoration: none;
+  font-weight: 500;
+}
+.back-link:hover {
+  color: #535bf2;
+}
+
+/* 登录弹窗：半透明黑色背景 */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+.login-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+.login-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #666;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+.login-close:hover {
+  color: #000;
+}
+.login-title {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  color: #000;
+}
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.login-field label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+.login-field input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.login-field input:focus {
+  outline: none;
+  border-color: #646cff;
+}
+.login-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+.login-submit {
+  flex: 1;
+  background-color: #000;
+  color: #fff;
+}
+.login-cancel {
+  background-color: #eee;
+  color: #333;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
+    background-color: #e7f1ff;
   }
   a:hover {
     color: #747bff;
   }
   button {
-    background-color: #f9f9f9;
+    background-color: #ffbc04;
+  }
+  .login-submit {
+    background-color: #ffbc04;
   }
 }

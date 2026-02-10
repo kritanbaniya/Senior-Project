@@ -59,6 +59,22 @@ Make sure you have the following installed **before starting**:
 - **Python 3.10+**  
     https://www.python.org/downloads/
 
+**Check if they are installed** (run in a terminal):
+
+```bash
+# Git — should print something like "git version 2.x.x"
+git --version
+
+# Node.js — should print something like "v20.x.x" or "v18.x.x"
+node --version
+
+# Python — should print "Python 3.10.x" or higher (e.g. 3.11, 3.12)
+python --version
+# On some systems you may need: python3 --version
+```
+
+If any command is not found or the version is too old, install or upgrade using the links above.
+
 >   Node.js is **only** used for the frontend.  
 >   Python is **only** used for the backend.
 
@@ -86,4 +102,29 @@ source venv/Scripts/activate
 cd backend
 pip install -r requirements.txt
 uvicorn main:app --reload
+```
 
+---
+
+## How to run the frontend locally
+
+1. **Open a terminal** (e.g. Git Bash, PowerShell, or Command Prompt).
+
+2. **Go to the project and into the frontend folder:**
+   ```bash
+   cd Senior-Project
+   cd frontend
+   ```
+
+
+3. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+   enter (y) to install vite if u dont have it 
+   ```bash
+   npm install -D vite
+    ```
+4. **Open the app in your browser** at the URL shown in the terminal (usually **http://localhost:5173**).
+
+To stop the server, press `Ctrl+C` in the terminal.
