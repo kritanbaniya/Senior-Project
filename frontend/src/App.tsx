@@ -4,6 +4,7 @@ import './style.css'
 import Header from './Header'
 import ClinicInfo from './pages/ClinicInfo'
 import LoginModal from './components/LoginModal'
+import DoctorDashboard from './pages/DoctorDashboard'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -34,6 +35,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/clinic" element={<ClinicInfo />} />
+        <Route path="/dashboard/doctor" element={<DoctorDashboard />} />
       </Routes>
       <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} />
     </>
