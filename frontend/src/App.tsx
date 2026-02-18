@@ -121,7 +121,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/clinic-nearby" element={<ClinicNearby />} />
         <Route path="/clinic" element={<ClinicInfo />} />
-        <Route path="/dashboard/patient" element={<PatientDashboard />} />
+        <Route path="/dashboard/patient" element={<PatientDashboard onOpenLogin={() => setLoginOpen(true)} isLoggedIn={!!profile} fullName={profile?.full_name ?? null} />} />
         <Route path="/dashboard/nurse" element={<NurseDashBoard />} />
         <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
