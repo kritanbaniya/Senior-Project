@@ -6,7 +6,10 @@ import Header from './Header'
 import ClinicInfo from './pages/ClinicInfo'
 import PatientDashboard from './pages/DashBoard/PatientDashboard'
 import NurseDashBoard from './pages/DashBoard/NurseDashBoard'
+import DoctorDashBoard from './pages/DashBoard/DoctorDashBoard'
+import ClinicADashBoard from './pages/DashBoard/ClinicADashBoard'
 import LoginModal from './components/LoginModal'
+import ProtectedDashboardRoute from './components/ProtectedDashboardRoute'
 import ResetPassword from './pages/ResetPassword'
 import { supabase } from './lib/supabase'
 
@@ -56,18 +59,18 @@ function ClinicNearby() {
 
 function App() {
   const [loginOpen, setLoginOpen] = useState(false)
-  const [profile, setProfile] = useState<{ full_name: string | null } | null>(null)
+  const [profile, setProfile] = useState<{ full_name: string | null; role: string | null } | null>(null)
   const [loadingProfile, setLoadingProfile] = useState(true)
 
   const loadProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('full_name')
+      .select('full_name, role')
       .eq('id', userId)
       .single()
 
     if (!error && data) {
-      setProfile({ full_name: data.full_name })
+      setProfile({ full_name: data.full_name, role: data.role ?? null })
     } else {
       setProfile(null)
     }
@@ -99,6 +102,7 @@ function App() {
     }
   }, [])
 
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     setProfile(null)
@@ -121,8 +125,38 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/clinic-nearby" element={<ClinicNearby />} />
         <Route path="/clinic" element={<ClinicInfo />} />
-        <Route path="/dashboard/patient" element={<PatientDashboard onOpenLogin={() => setLoginOpen(true)} isLoggedIn={!!profile} fullName={profile?.full_name ?? null} />} />
-        <Route path="/dashboard/nurse" element={<NurseDashBoard />} />
+        <Route
+          path="/dashboard/patient"
+          element={
+            <ProtectedDashboardRoute profile={profile} loadingProfile={loadingProfile} allowedRole="patient">
+              <PatientDashboard onOpenLogin={() => setLoginOpen(true)} isLoggedIn={!!profile} fullName={profile?.full_name ?? null} />
+            </ProtectedDashboardRoute>
+          }
+        />
+        <Route
+          path="/dashboard/nurse"
+          element={
+            <ProtectedDashboardRoute profile={profile} loadingProfile={loadingProfile} allowedRole="nurse">
+              <NurseDashBoard />
+            </ProtectedDashboardRoute>
+          }
+        />
+        <Route
+          path="/dashboard/doctor"
+          element={
+            <ProtectedDashboardRoute profile={profile} loadingProfile={loadingProfile} allowedRole="doctor">
+              <DoctorDashBoard />
+            </ProtectedDashboardRoute>
+          }
+        />
+        <Route
+          path="/dashboard/clinic"
+          element={
+            <ProtectedDashboardRoute profile={profile} loadingProfile={loadingProfile} allowedRole="clinic">
+              <ClinicADashBoard />
+            </ProtectedDashboardRoute>
+          }
+        />
         <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
       <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} />
