@@ -5,6 +5,7 @@ import './style.css'
 import Header from './Header'
 import ClinicInfo from './pages/ClinicInfo'
 import PatientDashboard from './pages/DashBoard/PatientDashboard'
+import PatientYourInformation from './pages/DashBoard/PatientYourInformation'
 import NurseDashBoard from './pages/DashBoard/NurseDashBoard'
 import DoctorDashBoard from './pages/DashBoard/DoctorDashBoard'
 import ClinicADashBoard from './pages/DashBoard/ClinicADashBoard'
@@ -130,6 +131,14 @@ function App() {
           element={
             <ProtectedDashboardRoute profile={profile} loadingProfile={loadingProfile} allowedRole="patient">
               <PatientDashboard onOpenLogin={() => setLoginOpen(true)} isLoggedIn={!!profile} fullName={profile?.full_name ?? null} />
+            </ProtectedDashboardRoute>
+          }
+        />
+        <Route
+          path="/dashboard/patient/information"
+          element={
+            <ProtectedDashboardRoute profile={profile} loadingProfile={loadingProfile} allowedRole="patient">
+              <PatientYourInformation onOpenLogin={() => setLoginOpen(true)} isLoggedIn={!!profile} fullName={profile?.full_name ?? null} />
             </ProtectedDashboardRoute>
           }
         />

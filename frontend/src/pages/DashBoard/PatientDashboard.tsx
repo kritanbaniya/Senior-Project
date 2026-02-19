@@ -206,6 +206,7 @@ export default function PatientDashboard({ onOpenLogin, isLoggedIn, fullName }: 
           <a href="#medications" className="pd-nav-item">Medications</a>
           <a href="#vitals" className="pd-nav-item">Vitals</a>
           <a href="#lab" className="pd-nav-item">Lab results</a>
+          <Link to="/dashboard/patient/information" className="pd-nav-item">Your information</Link>
           <Link to="/clinic" className="pd-nav-item">Clinic info</Link>
         </nav>
       </aside>
