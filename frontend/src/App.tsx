@@ -21,13 +21,10 @@ function HomePage() {
       <p className="homepage-subtitle">Choose where you want to go</p>
       <div className="homepage-actions">
         <Link to="/dashboard/patient" className="homepage-card">
-          <span className="homepage-card-title">Patient</span>
-          <span className="homepage-card-desc">Patient portal — appointments, queue, records</span>
+          <span className="homepage-card-title">User's DashBoard</span>
+          <span className="homepage-card-desc">Check your informations by your roles</span>
         </Link>
-        <Link to="/dashboard/nurse" className="homepage-card">
-          <span className="homepage-card-title">Staff</span>
-          <span className="homepage-card-desc">Nurse dashboard — queue & appointments</span>
-        </Link>
+        
         <Link to="/clinic-nearby" className="homepage-card">
           <span className="homepage-card-title">Clinic Nearby</span>
           <span className="homepage-card-desc">Find and check in at nearby clinics</span>
@@ -127,6 +124,13 @@ function App() {
         <Route path="/clinic-nearby" element={<ClinicNearby />} />
         <Route path="/clinic" element={<ClinicInfo />} />
         <Route
+          path="/dashboard"
+          element={
+            <ProtectedDashboardRoute profile={profile} loadingProfile={loadingProfile} allowedRole="none">
+              <div className="clinic-info-page">Error: Unrecognized Role</div>
+            </ProtectedDashboardRoute>
+          }
+        /><Route
           path="/dashboard/patient"
           element={
             <ProtectedDashboardRoute profile={profile} loadingProfile={loadingProfile} allowedRole="patient">
