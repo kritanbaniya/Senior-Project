@@ -54,25 +54,37 @@ function ClinicNearby() {
     </div>
   )
 }
+export type PatientInfo = {
+  id: string
+  created_at: string
+  age: number | null
+  gender: string | null
+  birthday: string | null
+  blood_type: string | null
+  name: string | null
+}
 
 function App() {
   const [loginOpen, setLoginOpen] = useState(false)
   const [profile, setProfile] = useState<{ full_name: string | null; role: string | null } | null>(null)
+  
   const [loadingProfile, setLoadingProfile] = useState(true)
 
   const loadProfile = async (userId: string) => {
-    const { data, error } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('full_name, role')
       .eq('id', userId)
       .single()
-
-    if (!error && data) {
-      setProfile({ full_name: data.full_name, role: data.role ?? null })
+  
+    if (!profileError && profileData) {
+      setProfile({ full_name: profileData.full_name, role: profileData.role ?? null })
     } else {
       setProfile(null)
     }
+
   }
+  
 
   useEffect(() => {
     const init = async () => {
