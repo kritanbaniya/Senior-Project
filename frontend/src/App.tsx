@@ -161,9 +161,9 @@ function App() {
         <Route
           path="/dashboard/nurse"
           element={
-            <ProtectedDashboardRoute profile={profile} loadingProfile={loadingProfile} allowedRole="nurse">
+            //<ProtectedDashboardRoute profile={profile} loadingProfile={loadingProfile} allowedRole="nurse">
               <NurseDashBoard />
-            </ProtectedDashboardRoute>
+            //</ProtectedDashboardRoute>
           }
         />
         <Route
