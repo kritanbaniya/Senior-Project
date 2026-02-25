@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../../context/AuthContext'
 
-// Types for later Supabase/API integration
 type AppointmentStatus = 'scheduled' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled'
 type Appointment = {
   id: string
@@ -86,14 +86,9 @@ const MOCK_ALERTS = [
   { id: 'a2', text: 'Follow-up lab work requested by Dr. Smith', severity: 'warning' as const },
 ]
 
-interface PatientDashboardProps {
-  onOpenLogin: () => void
-  isLoggedIn: boolean
-  fullName: string | null
-}
-
-export default function PatientDashboard({ onOpenLogin, isLoggedIn, fullName }: PatientDashboardProps) {
-  const displayName = fullName?.trim() || MOCK_PATIENT.name
+export default function PatientDashboard() {
+  const { profile } = useAuth()
+  const displayName = profile?.full_name?.trim() || MOCK_PATIENT.name
   const [appointments, setAppointments] = useState<Appointment[]>([
     { id: '1', date: '2025-02-15', time: '10:00', doctor: 'Dr. Smith', type: 'General Check-up', status: 'confirmed' },
     { id: '2', date: '2025-02-22', time: '14:30', doctor: 'Dr. Lee', type: 'Follow-up', status: 'confirmed' },
@@ -174,20 +169,6 @@ export default function PatientDashboard({ onOpenLogin, isLoggedIn, fullName }: 
 
   const upcomingAppointments = appointments.filter((a) => ['scheduled', 'confirmed', 'checked_in'].includes(a.status))
   const recentRecords = MOCK_RECORDS.slice(0, 2)
-
-  if (!isLoggedIn) {
-    return (
-      <div className="pd-layout pd-login-required">
-        <div className="pd-login-required-content">
-          <p className="pd-login-required-text">Please log in first</p>
-          <p className="pd-login-required-hint">Log in to use the patient portal — view appointments, queue status, and medical records.</p>
-          <button type="button" className="pd-btn pd-btn-primary pd-login-required-btn" onClick={onOpenLogin}>
-            Log in
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="pd-layout">

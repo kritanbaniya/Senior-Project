@@ -1,12 +1,12 @@
+// patient profile editing page. reads from and writes to the public.patient_info
+// table in supabase directly using the anon key (secured by row-level security
+// so each user can only access their own row). the page is only reachable through
+// DashboardGuard + RoleGuard so the user is guaranteed to be an authenticated patient.
+
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
-
-interface PatientYourInformationProps {
-  onOpenLogin: () => void
-  isLoggedIn: boolean
-  fullName: string | null
-}
+import { supabase } from '../../../lib/supabase'
+import { useAuth } from '../../../context/AuthContext'
 
 type PatientInfoRow = {
   id: string
@@ -19,8 +19,12 @@ type PatientInfoRow = {
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
-export default function PatientYourInformation({ onOpenLogin, isLoggedIn, fullName }: PatientYourInformationProps) {
-  const displayName = fullName?.trim() || 'Patient'
+// renders the sidebar, header, and a form for personal details (name, birthday,
+// gender, age, blood type). on mount it loads existing data from patient_info;
+// on submit it upserts the row keyed by the user's auth uid.
+export default function PatientYourInformation() {
+  const { profile } = useAuth()
+  const displayName = profile?.full_name?.trim() || 'Patient'
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -34,7 +38,8 @@ export default function PatientYourInformation({ onOpenLogin, isLoggedIn, fullNa
     blood_type: '',
   })
 
-  // load patient_info for the logged-in user's uuid; show saved data or empty fields
+  // on mount, fetch the patient_info row matching the logged-in user's uuid.
+  // if a row exists the form is pre-filled; otherwise fields start empty.
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -71,6 +76,8 @@ export default function PatientYourInformation({ onOpenLogin, isLoggedIn, fullNa
     void load()
   }, [])
 
+  // validates age input then upserts the form data into public.patient_info
+  // using the user's auth uid as the primary key (onConflict: 'id').
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setMessage(null)
@@ -106,20 +113,6 @@ export default function PatientYourInformation({ onOpenLogin, isLoggedIn, fullNa
       return
     }
     setMessage({ type: 'success', text: 'saved' })
-  }
-
-  if (!isLoggedIn) {
-    return (
-      <div className="pd-layout pd-login-required">
-        <div className="pd-login-required-content">
-          <p className="pd-login-required-text">Please log in first</p>
-          <p className="pd-login-required-hint">Log in to view and update your information.</p>
-          <button type="button" className="pd-btn pd-btn-primary pd-login-required-btn" onClick={onOpenLogin}>
-            Log in
-          </button>
-        </div>
-      </div>
-    )
   }
 
   return (
