@@ -1,17 +1,13 @@
-// global navigation bar shown on every page via RootLayout.
-// reads auth state from AuthContext to toggle between a login link
-// and a logout button. no props needed thanks to the context.
-
 import { Link } from 'react-router-dom'
-import { useAuth } from './context/AuthContext'
 
-// renders the site logo, nav links, and an auth action button.
-// when logged out, clicking "login" calls openLogin() which makes
-// the LoginModal visible in RootLayout.
-function Header() {
-  const { profile, openLogin, logout } = useAuth()
-  const isLoggedIn = !!profile
+interface HeaderProps {
+  onLoginClick?: () => void
+  onLogoutClick?: () => void
+  isLoggedIn?: boolean
+  fullName?: string | null
+}
 
+function Header({ onLoginClick, onLogoutClick, isLoggedIn }: HeaderProps) {
   return (
     <header className="header">
       <Link to="/" className="header-logo">CLINIC IQ</Link>
@@ -23,7 +19,7 @@ function Header() {
           <button
             type="button"
             className="header-logout-button"
-            onClick={logout}
+            onClick={onLogoutClick}
           >
             log out
           </button>
@@ -32,7 +28,7 @@ function Header() {
             href="/settings"
             onClick={(e) => {
               e.preventDefault()
-              openLogin()
+              onLoginClick?.()
             }}
           >
             login

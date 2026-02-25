@@ -1,14 +1,7 @@
-// page users land on after clicking the password-reset link in their email.
-// supabase automatically exchanges the url token for a session before the page
-// loads, so supabase.auth.updateUser() can set the new password. after a
-// successful update the user is signed out and redirected to the home page.
-
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
-// shows a new-password / confirm-password form. on success it signs the user
-// out (so the old session is invalidated) and redirects to "/" after a short delay.
 export default function ResetPassword() {
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
@@ -18,8 +11,6 @@ export default function ResetPassword() {
   const [submitting, setSubmitting] = useState(false)
   const [passwordReset, setPasswordReset] = useState(false)
 
-  // validates both fields match, calls supabase.auth.updateUser with the new
-  // password, then signs out and navigates home so the user can log in fresh.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMessage(null)

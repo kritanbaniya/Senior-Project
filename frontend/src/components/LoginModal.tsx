@@ -1,8 +1,3 @@
-// modal overlay that handles all authentication flows: login, signup (with role
-// selection), and forgot-password. communicates directly with supabase auth.
-// opened/closed via the loginOpen state in AuthContext; on successful login
-// supabase fires an auth state change that AuthProvider picks up automatically.
-
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
@@ -14,9 +9,6 @@ interface LoginModalProps {
 type LoginMode = 'login' | 'signup' | 'forgot'
 type SignupRole = 'patient' | 'nurse' | 'doctor' | 'clinic' | null
 
-// three-mode modal (login | signup | forgot). mode switches happen via
-// in-modal links. the signup flow first asks for a role, then shows the
-// registration form. all supabase calls use the anon key client.
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [mode, setMode] = useState<LoginMode>('login')
   const [username, setUsername] = useState('')
@@ -53,8 +45,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     onClose()
   }
 
-  // calls supabase.auth.signInWithPassword. on success the modal closes and
-  // AuthProvider's onAuthStateChange listener loads the user's profile.
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMessage(null)
@@ -81,8 +71,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     }
   }
 
-  // creates a new account via supabase.auth.signUp, passing the chosen role
-  // and full name as user metadata. shows an email-verification prompt on success.
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMessage(null)
@@ -152,8 +140,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     }
   }
 
-  // sends a password-reset email via supabase. the redirect url points to
-  // /reset-password where the user sets a new password.
   const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMessage(null)
