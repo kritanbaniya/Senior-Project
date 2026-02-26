@@ -25,6 +25,9 @@ type Appointment = {
 
 
 
+
+
+
 //// USED TYPE: 
 // for appointment list 
 type NewAppointment = {
@@ -47,8 +50,22 @@ type MemberList = {
   user_id: string;
   clinic_id: string; 
 };
-
-
+// Creating appointments 
+type CreateAppointment = {
+    
+    visit_type: string; 
+}
+type SubmitAppointment = {
+    Appointment_id: string;   // LET SUPABASE GEN? 
+    appointment_date: string; // EpochTimeStamp; // ? 
+    patient_id: string; 
+    clinic_id: string; 
+    clician_id: string; 
+    created_at: string; // LET SUPABASE GEN? 
+    checkin_at: string; 
+    seen_at: string; 
+    visit_type: string; 
+}
 
 
 export default function NurseAppointmentManager() {
@@ -96,24 +113,7 @@ export default function NurseAppointmentManager() {
             
             setDoctorList(data ?? []);
     }
-    const retrievePatients = async () => {
-        const { data, error } = 
-                    await supabase
-                        .schema("public")
-                        .from("membernamerole")
-                        .select('*')
-                        .eq('clinic_id', clinicThis)
-                        .eq('role', "patient");
-                console.log("DOCTORS DATA:", data);
-                console.log("ERROR:", error);
 
-                if (error) {
-                    setAppointmentsList([ ]);
-                    return;
-                }
-            
-            setPatientList(data ?? []);
-    }
 
     ////////////////////////////////////////////////
     ///// C R U D !!! 
@@ -122,28 +122,27 @@ export default function NurseAppointmentManager() {
     // C: CREATE NEW APPOINTMENT 
     const createAppointment = async () => {
         // 1. treat the input 
-        //// figure: if user typed is a part of this clinic already or not? 
 
-        
+
         // 2. insert to supabase 
         const { data, error } = 
             await supabase
                 .schema("public")
-                .from("appointments")
+                .from("Appointments")
                 .insert([
                     {
-                        appointment_date: "2026-05-20T14:00:00",
-                        patient_name: "yixuanshi",
-                        patient_email: "yixuanshi059@gmail.com",
-                        clinician_name: "Greendale Human",
-                        clinic_name: "kritan's clinic",
-                        checkin_at: null,
-                        seen_at: null,
+                        appointment_date: null, // creates a random serial successfully 
+                        patient_id: null, 
+                        clinic_id: null, 
+                        clinician_id: null, 
+                        created_at: "2026-03-20 14:32:00", // null, 
+                        checkin_at: null, 
+                        seen_at: null, 
                         visit_type: null,
-                    }])
+                    }]);
 
-        console.log("DATA:", data);
-        console.log("ERROR:", error);
+        console.log("DATA CREATE:", data);
+        console.log("ERROR CREATE:", error);
 
         if (error) {
             setAppointmentsList([]);
@@ -268,7 +267,7 @@ export default function NurseAppointmentManager() {
     useEffect(() => {
         readAppointments(); // get newest list of appointments on initial render
         retrievePracticioners(); // get list of practicioner's from this specific clinic 
-        
+        createAppointment(); 
         return 
     }, []); 
 
