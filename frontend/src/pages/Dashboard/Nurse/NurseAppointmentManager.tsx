@@ -3,6 +3,12 @@ import { supabase } from '../../../lib/supabase'
 
 
 
+
+//// TO BE REMOVED AFTER SUPABASE IMPLEMENTATION IS COMPLETE 
+// Mock – replace with Supabase/API
+const MOCK_DOCTORS = ['Dr. Smith', 'Dr. Lee', 'Dr. Johnson'] 
+    // before replacing, need to finalize members table. How to keep track? probably managed by clinics and nurses.
+const MOCK_APPOINTMENT_TYPES = ['General Check-up', 'Follow-up', 'Consultation', 'Vaccination', 'Lab Work']
 type AppointmentStatus = 'scheduled' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled'
 type Appointment = {
   id: string
@@ -13,6 +19,9 @@ type Appointment = {
   status: AppointmentStatus
   patientName: string
 }
+
+
+
 
 
 
@@ -30,7 +39,7 @@ type NewAppointment = {
   type: string; 
 };
 // for doctor list 
-type DoctorList = {
+type MemberList = {
   clinic_name: string; 
   full_name: string;  
   role: string;
@@ -41,16 +50,13 @@ type DoctorList = {
 
 
 
-// Mock – replace with Supabase/API
-const MOCK_DOCTORS = ['Dr. Smith', 'Dr. Lee', 'Dr. Johnson'] 
-    // before replacing, need to finalize members table. How to keep track? probably managed by clinics and nurses.
-const MOCK_APPOINTMENT_TYPES = ['General Check-up', 'Follow-up', 'Consultation', 'Vaccination', 'Lab Work']
-
 
 export default function NurseAppointmentManager() {
     //// HELPER FUNCTIONS: 
     // Retrieve list of doctors in this clinic 
-    const [doctorList, setDoctorList]  = useState<DoctorList[]>([]);
+    const [doctorList, setDoctorList]  = useState<MemberList[]>([]);
+    const [patientList, setPatientList]  = useState<MemberList[]>([]);
+    const [clinicThis, setClinicThis]  = useState<string>(); // useful for other functions 
     const thisNursesClinic = async () => {
         const { data: authData, error: authErr } = await supabase.auth.getUser();
         if (authErr || !authData.user) {
@@ -69,6 +75,7 @@ export default function NurseAppointmentManager() {
                 console.log("CLINIC DATA:", data);
                 console.log("ERROR:", error);
         if (error || !data) return null;
+        setClinicThis(data.clinic_id); 
         return data.clinic_id; 
     }
     const retrievePracticioners = async () => {
@@ -89,7 +96,24 @@ export default function NurseAppointmentManager() {
             
             setDoctorList(data ?? []);
     }
+    const retrievePatients = async () => {
+        const { data, error } = 
+                    await supabase
+                        .schema("public")
+                        .from("membernamerole")
+                        .select('*')
+                        .eq('clinic_id', clinicThis)
+                        .eq('role', "patient");
+                console.log("DOCTORS DATA:", data);
+                console.log("ERROR:", error);
 
+                if (error) {
+                    setAppointmentsList([ ]);
+                    return;
+                }
+            
+            setPatientList(data ?? []);
+    }
 
     ////////////////////////////////////////////////
     ///// C R U D !!! 
@@ -98,8 +122,9 @@ export default function NurseAppointmentManager() {
     // C: CREATE NEW APPOINTMENT 
     const createAppointment = async () => {
         // 1. treat the input 
+        //// figure: if user typed is a part of this clinic already or not? 
 
-
+        
         // 2. insert to supabase 
         const { data, error } = 
             await supabase
@@ -134,7 +159,7 @@ export default function NurseAppointmentManager() {
                 .schema("public")
                 .from("appointmentlist_display")
                 .select('*');
-                //.order("appointment_date", { ascending: false }); 
+                //.order("appointment_date", { ascending: false });      FUTURE: ADJUST ORDER BY THIS 
         console.log("APPOINTMENT DATA:", data);
         console.log("ERROR:", error);
 
@@ -150,7 +175,14 @@ export default function NurseAppointmentManager() {
 
 
 
+
+
+
+
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    //// TO BE EDITTED/REMOVED AFTER SUPABASE IMPLEMENTATION IS COMPLETE 
     const [showScheduleForm, setShowScheduleForm] = useState(false)
     const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null)
     const [scheduleForm, setScheduleForm] = useState({
@@ -160,7 +192,6 @@ export default function NurseAppointmentManager() {
         type: MOCK_APPOINTMENT_TYPES[0],
         patientName: '',
     })
-
     const handleScheduleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         const newApt: Appointment = {
@@ -186,9 +217,7 @@ export default function NurseAppointmentManager() {
         })
         setEditingAppointmentId(apt.id)
     }
-
-
-    /* UPDATING  FUNCTIONS 
+    /* U the original UPDATING FUNCTIONS 
         // UPDATE APPOINTMENT 
     const [appointments, setAppointments] = useState<Appointment[]>([
         { id: '1', date: '2025-02-15', time: '10:00', doctor: 'Dr. Smith', type: 'General Check-up', status: 'checked_in', patientName: 'Jane Doe' },
