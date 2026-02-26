@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { supabase } from '../../../lib/supabase'
 
 // Queue stage: patient flow through the clinic
 type QueueStage = 'waiting' | 'consultation' | 'discharge'
@@ -25,6 +26,22 @@ type Appointment = {
   status: AppointmentStatus
   patientName: string
 }
+
+
+// 
+type NewAppointment = {
+  id: string; 
+  appointment_date: string;  
+  patient_name: string;
+  patient_email: string;
+  clinician_name: string;
+  clinic_name: string;
+  checkin_at: string | null;
+  seen_at: string | null;
+  type: string; 
+};
+
+
 
 // Mock – replace with Supabase/API
 const MOCK_DOCTORS = ['Dr. Smith', 'Dr. Lee', 'Dr. Johnson']
@@ -165,9 +182,38 @@ export default function NurseDashBoard() {
     setScheduleForm({ date: '', time: '', doctor: MOCK_DOCTORS[0], type: MOCK_APPOINTMENT_TYPES[0], patientName: '' })
   }
 
+  
+  const [appointmentsList, setAppointmentsList] = useState<NewAppointment[]>([]); // useState<Record<string, unknown>[]>([]);
+  const readAppointments = async () => {
+        const { data, error } = 
+            await supabase
+                .schema("public")
+                .from("appointmentlist_display")
+                .select('*');
+                //.order("appointment_date", { ascending: false }); 
+        console.log("DATA:", data);
+        console.log("ERROR:", error);
+
+        if (error) {
+            setAppointmentsList([ ]);
+            return;
+        }
+
+        setAppointmentsList(data ?? []);  
+  }
+    
+  useEffect(() => {
+      readAppointments();
+      return 
+  }, []); 
+
+
   return (
     <div className="clinic-info-page nurse-dashboard">
       <h1 className="page-title">Nurse Dashboard</h1>
+      <pre>{JSON.stringify(appointmentsList, null, 2)}</pre>
+
+
 
       {/* Live service queue */}
       <div className="info-box queue-section">
@@ -285,14 +331,17 @@ export default function NurseDashBoard() {
               <div className="nurse-appointment-list">
                 <p className="small-label">Appointments (today & upcoming)</p>
                 <ul className="appointment-list">
-                  {appointments.filter((a) => ['scheduled', 'confirmed', 'checked_in'].includes(a.status)).map((apt) => (
+                  {appointmentsList
+                    /*.filter((a) => ['scheduled', 'confirmed', 'checked_in']
+                    .includes(a.status))*/
+                    .map((apt) => (
                     <li key={apt.id} className="appointment-item nurse-apt-item">
-                      <span className="apt-date">{apt.date}</span>
-                      <span className="apt-time">{apt.time}</span>
-                      <span className="apt-doctor">{apt.doctor}</span>
+                      <span className="apt-date">{apt.appointment_date}</span>
+                      {/* <span className="apt-time">{apt.time}</span> */}
+                      <span className="apt-doctor">{apt.clinician_name}</span>
                       <span className="apt-type">{apt.type}</span>
-                      <span className="apt-patient">{apt.patientName}</span>
-                      <span className={`apt-status status-${apt.status}`}>{apt.status.replace('_', ' ')}</span>
+                      <span className="apt-patient">{apt.patient_name}</span>
+                      {/* <span className={`apt-status status-${apt.status}`}>{apt.status.replace('_', ' ')}</span> */}
                       <button type="button" className="btn-small" onClick={() => handleEditAppointment(apt)}>Edit</button>
                     </li>
                   ))}
@@ -303,6 +352,10 @@ export default function NurseDashBoard() {
         </div>
       </div>
 
+
+
+
+      {/*QUICK ACTIONS*/}
       <div className="info-box quick-actions-box">
         <h2 className="info-box-title">Quick actions</h2>
         <div className="info-box-content quick-actions">
