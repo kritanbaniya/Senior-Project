@@ -1,0 +1,332 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '../../../lib/supabase'
+
+
+
+type AppointmentStatus = 'scheduled' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled'
+type Appointment = {
+  id: string
+  date: string
+  time: string
+  doctor: string
+  type: string
+  status: AppointmentStatus
+  patientName: string
+}
+
+
+
+//// USED TYPE: 
+// for appointment list 
+type NewAppointment = {
+  id: string; 
+  appointment_date: string;  
+  patient_name: string;
+  patient_email: string;
+  clinician_name: string;
+  clinic_name: string;
+  checkin_at: string | null;
+  seen_at: string | null;
+  type: string; 
+};
+// for doctor list 
+type DoctorList = {
+  clinic_name: string; 
+  full_name: string;  
+  role: string;
+  created_at: string;
+  user_id: string;
+  clinic_id: string; 
+};
+
+
+
+// Mock – replace with Supabase/API
+const MOCK_DOCTORS = ['Dr. Smith', 'Dr. Lee', 'Dr. Johnson'] 
+    // before replacing, need to finalize members table. How to keep track? probably managed by clinics and nurses.
+const MOCK_APPOINTMENT_TYPES = ['General Check-up', 'Follow-up', 'Consultation', 'Vaccination', 'Lab Work']
+
+
+export default function NurseAppointmentManager() {
+    //// HELPER FUNCTIONS: 
+    // Retrieve list of doctors in this clinic 
+    const [doctorList, setDoctorList]  = useState<DoctorList[]>([]);
+    const thisNursesClinic = async () => {
+        const { data: authData, error: authErr } = await supabase.auth.getUser();
+        if (authErr || !authData.user) {
+            console.log("AUTH ERROR:", authErr);
+            return null;
+        }
+        const userId = authData.user.id; 
+        console.log("USER DATA:", userId)
+        const { data, error } = 
+                    await supabase
+                        .schema("public")
+                        .from("Memberships")
+                        .select('clinic_id')
+                        .eq('user_id', userId)
+                        .single();
+                console.log("CLINIC DATA:", data);
+                console.log("ERROR:", error);
+        if (error || !data) return null;
+        return data.clinic_id; 
+    }
+    const retrievePracticioners = async () => {
+        const { data, error } = 
+                    await supabase
+                        .schema("public")
+                        .from("membernamerole")
+                        .select('*')
+                        .eq('clinic_id', await thisNursesClinic())
+                        .eq('role', "doctor");
+                console.log("DOCTORS DATA:", data);
+                console.log("ERROR:", error);
+
+                if (error) {
+                    setAppointmentsList([ ]);
+                    return;
+                }
+            
+            setDoctorList(data ?? []);
+    }
+
+
+    ////////////////////////////////////////////////
+    ///// C R U D !!! 
+        // I GOT SPIDERS CRAWLING DOWN MY SPINE, 
+        // one thousand fourty bugs to pay the fine-
+    // C: CREATE NEW APPOINTMENT 
+    const createAppointment = async () => {
+        // 1. treat the input 
+
+
+        // 2. insert to supabase 
+        const { data, error } = 
+            await supabase
+                .schema("public")
+                .from("appointments")
+                .insert([
+                    {
+                        appointment_date: "2026-05-20T14:00:00",
+                        patient_name: "yixuanshi",
+                        patient_email: "yixuanshi059@gmail.com",
+                        clinician_name: "Greendale Human",
+                        clinic_name: "kritan's clinic",
+                        checkin_at: null,
+                        seen_at: null,
+                        visit_type: null,
+                    }])
+
+        console.log("DATA:", data);
+        console.log("ERROR:", error);
+
+        if (error) {
+            setAppointmentsList([]);
+            return;
+        }
+    }
+
+    // R: READ APPOINTMENT 
+    const [appointmentsList, setAppointmentsList] = useState<NewAppointment[]>([]); // useState<Record<string, unknown>[]>([]);
+    const readAppointments = async () => {
+        const { data, error } = 
+            await supabase
+                .schema("public")
+                .from("appointmentlist_display")
+                .select('*');
+                //.order("appointment_date", { ascending: false }); 
+        console.log("APPOINTMENT DATA:", data);
+        console.log("ERROR:", error);
+
+        if (error) {
+            setAppointmentsList([ ]);
+            return;
+        }
+
+        setAppointmentsList(data ?? []);  
+    }
+    
+
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    const [showScheduleForm, setShowScheduleForm] = useState(false)
+    const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null)
+    const [scheduleForm, setScheduleForm] = useState({
+        date: '',
+        time: '',
+        doctor: MOCK_DOCTORS[0], //doctorList[0].full_name,
+        type: MOCK_APPOINTMENT_TYPES[0],
+        patientName: '',
+    })
+
+    const handleScheduleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        const newApt: Appointment = {
+        id: String(Date.now()),
+        date: scheduleForm.date,
+        time: scheduleForm.time,
+        doctor: scheduleForm.doctor,
+        type: scheduleForm.type,
+        status: 'scheduled',
+        patientName: scheduleForm.patientName || 'New Patient',
+        }
+        setAppointments((prev) => [...prev, newApt].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)))
+        setScheduleForm({ date: '', time: '', doctor: MOCK_DOCTORS[0], type: MOCK_APPOINTMENT_TYPES[0], patientName: '' })
+        setShowScheduleForm(false)
+    }
+    const handleEditAppointment = (apt: Appointment) => {
+        setScheduleForm({
+        date: apt.date,
+        time: apt.time,
+        doctor: apt.doctor,
+        type: apt.type,
+        patientName: apt.patientName,
+        })
+        setEditingAppointmentId(apt.id)
+    }
+
+
+    /* UPDATING  FUNCTIONS 
+        // UPDATE APPOINTMENT 
+    const [appointments, setAppointments] = useState<Appointment[]>([
+        { id: '1', date: '2025-02-15', time: '10:00', doctor: 'Dr. Smith', type: 'General Check-up', status: 'checked_in', patientName: 'Jane Doe' },
+        { id: '2', date: '2025-02-15', time: '10:30', doctor: 'Dr. Lee', type: 'Follow-up', status: 'checked_in', patientName: 'John Smith' },
+        { id: '3', date: '2025-02-15', time: '11:00', doctor: 'Dr. Johnson', type: 'Consultation', status: 'checked_in', patientName: 'Maria Garcia' },
+        { id: '4', date: '2025-02-15', time: '14:00', doctor: 'Dr. Smith', type: 'Vaccination', status: 'confirmed', patientName: 'Alex Chen' },
+    ])
+
+    const handleUpdateAppointment = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!editingAppointmentId) return
+        setAppointments((prev) =>
+        prev.map((a) =>
+            a.id === editingAppointmentId
+            ? {
+                ...a,
+                date: scheduleForm.date,
+                time: scheduleForm.time,
+                doctor: scheduleForm.doctor,
+                type: scheduleForm.type,
+                patientName: scheduleForm.patientName,
+                }
+            : a
+        )
+        )
+        setEditingAppointmentId(null)
+        setScheduleForm({ date: '', time: '', doctor: MOCK_DOCTORS[0], type: MOCK_APPOINTMENT_TYPES[0], patientName: '' })
+    }
+    const cancelEdit = () => {
+        setEditingAppointmentId(null)
+        setScheduleForm({ date: '', time: '', doctor: MOCK_DOCTORS[0], type: MOCK_APPOINTMENT_TYPES[0], patientName: '' })
+    }*/ 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+  
+
+
+
+
+
+
+
+
+
+    ////////////////////////////////////////////////
+    //// REACT HOOKS !
+    // prob dont need to separate yet. 
+    useEffect(() => {
+        readAppointments(); // get newest list of appointments on initial render
+        retrievePracticioners(); // get list of practicioner's from this specific clinic 
+        
+        return 
+    }, []); 
+
+
+
+
+
+    return (
+        <>
+            {/* Appointment management */}
+            <div className="info-box appointments-section">
+                <h2 className="info-box-title">Appointment scheduling</h2>
+                <div className="info-box-content">
+                    {/* <h3><pre>{JSON.stringify(doctorList, null, 2)}</pre></h3> */}
+                    <p>View, create, and modify appointments.</p>
+                    {editingAppointmentId ? ( 
+                        // EDIT APPOINTMENTS 
+                        <p>not currently working:</p>
+                        /*<form className="portal-form" onSubmit={handleUpdateAppointment}>
+                            <div className="form-row"><label>Patient name</label>
+                                <input type="text" value={scheduleForm.patientName} onChange={(e) => setScheduleForm((f) => ({ ...f, patientName: e.target.value }))} required />
+                                </div>
+                            <div className="form-row"><label>Date</label>
+                                <input type="date" value={scheduleForm.date} onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))} required />
+                                </div>
+                            <div className="form-row"><label>Time</label>
+                                <input type="time" value={scheduleForm.time} onChange={(e) => setScheduleForm((f) => ({ ...f, time: e.target.value }))} required />
+                                </div>
+                            <div className="form-row"><label>Provider</label>
+                                <select value={scheduleForm.doctor} onChange={(e) => setScheduleForm((f) => ({ ...f, doctor: e.target.value }))}>{MOCK_DOCTORS.map((d) => <option key={d} value={d}>{d}</option>)}</select>
+                                </div>
+                            <div className="form-row"><label>Visit type</label>
+                                <select value={scheduleForm.type} onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value }))}>{MOCK_APPOINTMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select>
+                                </div>
+                            <div className="form-actions">
+                                <button type="submit" className="btn-primary">Save changes</button>
+                                <button type="button" className="btn-secondary" onClick={cancelEdit}>Cancel</button>
+                                </div>
+                        </form>*/
+                    ) : (
+                        <>
+                            
+                            {/* C CREAT NEW Appointment */}
+                            {!showScheduleForm ? (
+                                <button type="button" className="btn-primary" onClick={() => setShowScheduleForm(true)}>Create appointment</button>
+                            ) : (
+                                <form className="portal-form" onSubmit={handleScheduleSubmit}>
+                                    <div className="form-row"><label>Patient name</label><input type="text" value={scheduleForm.patientName} onChange={(e) => setScheduleForm((f) => ({ ...f, patientName: e.target.value }))} placeholder="Patient name" /></div>
+                                    <div className="form-row"><label>Date</label><input type="date" value={scheduleForm.date} onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))} required /></div>
+                                    <div className="form-row"><label>Time</label><input type="time" value={scheduleForm.time} onChange={(e) => setScheduleForm((f) => ({ ...f, time: e.target.value }))} required /></div>
+                                    <div className="form-row"><label>Provider</label><select value={scheduleForm.doctor} onChange={(e) => setScheduleForm((f) => ({ ...f, doctor: e.target.value }))}>{doctorList.map((d) => <option key={d.user_id} value={d.user_id}>{d.full_name}</option>)}</select></div>
+                                    <div className="form-row"><label>Visit type</label><select value={scheduleForm.type} onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value }))}>{MOCK_APPOINTMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select></div>
+                                    <div className="form-actions">
+                                        <button type="submit" className="btn-primary">Create</button>
+                                        <button type="button" className="btn-secondary" onClick={() => setShowScheduleForm(false)}>Cancel</button>
+                                    </div>
+                                </form>
+                            )}
+
+                            {/* R READ LIST of Appointments */}
+                            <div className="nurse-appointment-list">
+                                <p className="small-label">Appointments (today & upcoming)</p>
+                                <ul className="appointment-list">
+                                {appointmentsList
+                                    /*.filter((a) => ['scheduled', 'confirmed', 'checked_in']
+                                    .includes(a.status))*/
+                                    .map((apt) => (
+                                    <li key={apt.id} className="appointment-item nurse-apt-item">
+                                        <span className="apt-date">{apt.appointment_date}</span>
+                                        {/* <span className="apt-time">{apt.time}</span> */}
+                                        <span className="apt-doctor">{apt.clinician_name}</span>
+                                        <span className="apt-type">{apt.type}</span>
+                                        <span className="apt-patient">{apt.patient_name}</span>
+                                        {/* <span className={`apt-status status-${apt.status}`}>{apt.status.replace('_', ' ')}</span> */}
+                                        <button type="button" className="btn-small" onClick={() => handleEditAppointment(apt)}>Edit</button>
+                                    </li>
+                                ))}
+                                </ul>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        </>
+    )
+}
+
+
+
+

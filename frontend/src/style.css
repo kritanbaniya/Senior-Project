@@ -276,11 +276,16 @@ button:focus-visible {
 .patient-dashboard .appointment-item:last-child {
   border-bottom: none;
 }
-.patient-dashboard .apt-date { font-weight: 600; color: #333; }
-.patient-dashboard .apt-time { color: #555; }
-.patient-dashboard .apt-doctor { color: #333; }
-.patient-dashboard .apt-type { color: #666; }
-.patient-dashboard .apt-status {
+/* .patient-dashboard  */
+.apt-date { font-weight: 600; color: #333; }
+/* .patient-dashboard  */
+.apt-time { color: #555; }
+/* .patient-dashboard  */
+.apt-doctor { color: #333; }
+/* .patient-dashboard  */
+.apt-type { color: #666; }
+/* .patient-dashboard  */
+.apt-status {
   font-size: 0.85rem;
   padding: 0.2rem 0.5rem;
   border-radius: 6px;
