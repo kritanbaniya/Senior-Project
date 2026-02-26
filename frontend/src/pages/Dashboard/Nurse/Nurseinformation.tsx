@@ -11,8 +11,6 @@ type NurseInfoRow = {
   phone: number | null
 }
 
-const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-
 export default function NurseInformation() {
   const { profile } = useAuth()
   const displayName = profile?.full_name?.trim() || 'Nurse'
@@ -24,9 +22,6 @@ export default function NurseInformation() {
   const [form, setForm] = useState({
     name: '',
     birthday: '',
-    gender: '',
-    age: '',
-    blood_type: '',
     license_num: '',
     phone: '',
   })
@@ -51,9 +46,6 @@ export default function NurseInformation() {
         setForm({
           name: row.name ?? '',
           birthday: row.birthday ?? '',
-          gender: '',
-          age: '',
-          blood_type: '',
           license_num: row.license_num != null ? String(row.license_num) : '',
           phone: row.phone != null ? String(row.phone) : '',
         })
@@ -61,9 +53,6 @@ export default function NurseInformation() {
         setForm({
           name: '',
           birthday: '',
-          gender: '',
-          age: '',
-          blood_type: '',
           license_num: '',
           phone: '',
         })
@@ -224,41 +213,26 @@ export default function NurseInformation() {
                     />
                   </div>
                   <div className="pd-form-row">
-                    <label htmlFor="ni-gender">Gender</label>
+                    <label htmlFor="ni-license_num">License number</label>
                     <input
-                      id="ni-gender"
+                      id="ni-license_num"
                       type="text"
-                      value={form.gender}
-                      onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
-                      placeholder="Gender"
+                      inputMode="numeric"
+                      value={form.license_num}
+                      onChange={(e) => setForm((f) => ({ ...f, license_num: e.target.value }))}
+                      placeholder="Nurse license number"
                     />
                   </div>
                   <div className="pd-form-row">
-                    <label htmlFor="ni-age">Age</label>
+                    <label htmlFor="ni-phone">Phone</label>
                     <input
-                      id="ni-age"
-                      type="number"
-                      min={0}
-                      max={150}
-                      value={form.age}
-                      onChange={(e) => setForm((f) => ({ ...f, age: e.target.value }))}
-                      placeholder="Age"
+                      id="ni-phone"
+                      type="text"
+                      inputMode="tel"
+                      value={form.phone}
+                      onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                      placeholder="7–15 digits"
                     />
-                  </div>
-                  <div className="pd-form-row">
-                    <label htmlFor="ni-blood_type">Blood type</label>
-                    <select
-                      id="ni-blood_type"
-                      value={form.blood_type}
-                      onChange={(e) => setForm((f) => ({ ...f, blood_type: e.target.value }))}
-                    >
-                      <option value="">Select</option>
-                      {BLOOD_TYPES.map((bt) => (
-                        <option key={bt} value={bt}>
-                          {bt}
-                        </option>
-                      ))}
-                    </select>
                   </div>
                   {message && (
                     <p className={message.type === 'error' ? 'pd-alert pd-alert-warning' : 'pd-card-desc'}>
