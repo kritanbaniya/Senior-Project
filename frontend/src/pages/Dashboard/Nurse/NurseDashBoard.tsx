@@ -216,6 +216,7 @@ export default function NurseDashBoard() {
       <div className="info-box quick-actions-box">
         <h2 className="info-box-title">Quick actions</h2>
         <div className="info-box-content quick-actions">
+          <Link to="/dashboard/nurse/information" className="action-link">Your information</Link>
           <Link to="/dashboard/patient" className="action-link">Patient portal</Link>
           <Link to="/clinic" className="action-link">Clinic info</Link>
           <Link to="/" className="action-link">Home</Link>

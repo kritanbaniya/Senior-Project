@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
+import { supabase } from '../../../lib/supabase'
 
 type AppointmentStatus = 'scheduled' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled'
 type Appointment = {
@@ -86,9 +87,18 @@ const MOCK_ALERTS = [
   { id: 'a2', text: 'Follow-up lab work requested by Dr. Smith', severity: 'warning' as const },
 ]
 
+export type PatientInfo = {
+  id: string
+  age: number | null
+  gender: string | null
+  birthday: string | null
+  blood_type: string | null
+  name: string | null
+}
+
 export default function PatientDashboard() {
-  const { profile } = useAuth()
-  const displayName = profile?.full_name?.trim() || MOCK_PATIENT.name
+  
+  
   const [appointments, setAppointments] = useState<Appointment[]>([
     { id: '1', date: '2025-02-15', time: '10:00', doctor: 'Dr. Smith', type: 'General Check-up', status: 'confirmed' },
     { id: '2', date: '2025-02-22', time: '14:30', doctor: 'Dr. Lee', type: 'Follow-up', status: 'confirmed' },
@@ -108,8 +118,27 @@ export default function PatientDashboard() {
   })
   const [profileOpen, setProfileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [info, setInfo] = useState<PatientInfo | null>(null)
 
   useEffect(() => {
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        return
+      }
+      const { data, error } = await supabase
+        .from('patient_info')
+        .select('id, name, birthday, gender, age, blood_type')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!error && data) {
+        setInfo(data)
+      } else {
+        setInfo(null)
+      }
+    }
+    void load()
     if (!queue) return
     const interval = setInterval(() => {
       setQueue((prev) =>
@@ -124,7 +153,7 @@ export default function PatientDashboard() {
     }, 8000)
     return () => clearInterval(interval)
   }, [queue])
-
+  const displayName = info?.name?.trim() || MOCK_PATIENT.name
   const todayStr = new Date().toISOString().slice(0, 10)
   const todaysAppointment = appointments.find((a) => a.date === todayStr && (a.status === 'confirmed' || a.status === 'scheduled'))
 
@@ -169,7 +198,19 @@ export default function PatientDashboard() {
 
   const upcomingAppointments = appointments.filter((a) => ['scheduled', 'confirmed', 'checked_in'].includes(a.status))
   const recentRecords = MOCK_RECORDS.slice(0, 2)
-
+  /*if (!true) {
+    return (
+      <div className="pd-layout pd-login-required">
+        <div className="pd-login-required-content">
+          <p className="pd-login-required-text">Please log in first</p>
+          <p className="pd-login-required-hint">Log in to use the patient portal — view appointments, queue status, and medical records.</p>
+          <button type="button" className="pd-btn pd-btn-primary pd-login-required-btn" onClick={onOpenLogin}>
+            Log in
+          </button>
+        </div>
+      </div>
+    )
+  }*/
   return (
     <div className="pd-layout">
       {/* Left sidebar */}
@@ -245,19 +286,27 @@ export default function PatientDashboard() {
               <div className="pd-overview-grid">
                 <div className="pd-overview-item">
                   <span className="pd-overview-label">Age</span>
-                  <span className="pd-overview-value">{MOCK_PATIENT.age}</span>
+                  <span className="pd-overview-value">{info?info.age:"-"}</span>
                 </div>
                 <div className="pd-overview-item">
                   <span className="pd-overview-label">Gender</span>
-                  <span className="pd-overview-value">{MOCK_PATIENT.gender}</span>
+                  <span className="pd-overview-value">{info?info.gender:"-"}</span>
                 </div>
                 <div className="pd-overview-item">
                   <span className="pd-overview-label">Patient ID</span>
-                  <span className="pd-overview-value pd-mono">{MOCK_PATIENT.patientId}</span>
+                  <span className="pd-overview-value pd-mono">{"-"}</span>
+                </div>
+                <div className="pd-overview-item">
+                  <span className="pd-overview-label">Blood Type</span>
+                  <span className="pd-overview-value pd-mono">{info?info.blood_type:"-"}</span>
+                </div>
+                <div className="pd-overview-item">
+                  <span className="pd-overview-label">Birthday</span>
+                  <span className="pd-overview-value pd-mono">{info?info.birthday:"-"}</span>
                 </div>
                 <div className="pd-overview-item">
                   <span className="pd-overview-label">Status</span>
-                  <span className="pd-overview-value pd-status-badge">{MOCK_PATIENT.status}</span>
+                  <span className="pd-overview-value pd-status-badge">{info?"active" : "diactive"}</span>
                 </div>
               </div>
             </section>

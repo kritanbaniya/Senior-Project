@@ -10,7 +10,9 @@ import ResetPassword from './pages/ResetPassword'
 import PatientDashboard from './pages/Dashboard/Patient/PatientDashboard'
 import PatientYourInformation from './pages/Dashboard/Patient/PatientYourInformation'
 import NurseDashBoard from './pages/Dashboard/Nurse/NurseDashBoard'
+import NurseYourInformation from './pages/Dashboard/Nurse/Nurseinformation'
 import DoctorDashBoard from './pages/Dashboard/Doctor/DoctorDashBoard'
+import DoctorYourInformation from './pages/Dashboard/Doctor/DoctorInformation'
 import ClinicADashBoard from './pages/Dashboard/Clinic/ClinicADashBoard'
 import './style.css'
 
@@ -31,9 +33,11 @@ export default function App() {
             </Route>
             <Route path="nurse" element={<RoleGuard allowedRole="nurse" />}>
               <Route index element={<NurseDashBoard />} />
+              <Route path="information" element={<NurseYourInformation />} />
             </Route>
             <Route path="doctor" element={<RoleGuard allowedRole="doctor" />}>
               <Route index element={<DoctorDashBoard />} />
+              <Route path="information" element={<DoctorYourInformation />} />
             </Route>
             <Route path="clinic" element={<RoleGuard allowedRole="clinic" />}>
               <Route index element={<ClinicADashBoard />} />
