@@ -1,0 +1,18 @@
+{
+  "type": "module",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.3.3",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+  "start": "node dist/server.js",
+  "build": "tsc -p .",
+  "dev": "nodemon src/server.ts"
+}
+}

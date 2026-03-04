@@ -128,3 +128,39 @@ uvicorn main:app --reload
 4. **Open the app in your browser** at the URL shown in the terminal (usually **http://localhost:5173**).
 
 To stop the server, press `Ctrl+C` in the terminal.
+
+
+
+
+
+## Backend installation 
+Install express in your backend folder 
+```
+npm install express
+```
+
+install typescript compiler 
+1. 
+```
+npm install --save-dev typescript @types/node @types/express ts-node nodemon
+```
+2. 
+```
+npx tsc --init
+``` 
+
+After installation, make sure your package.json files are the same as what had been originally in github. 
+
+
+
+### Run the backend server 
+```
+npm run dev   
+```
+
+### end the backend server 
+ctrl+C 
+
+
+
+
