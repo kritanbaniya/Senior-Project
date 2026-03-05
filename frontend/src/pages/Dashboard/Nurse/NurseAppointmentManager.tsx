@@ -158,7 +158,7 @@ export default function NurseAppointmentManager() {
         console.log("FORMSUBMITTED", scheduleForm );
         
         if((scheduleForm.patientId != null) && (scheduleForm.doctorId != null)){
-            const appointmentDate = `${scheduleForm.date} ${scheduleForm.time}:00`;
+            let appointmentDate = `${scheduleForm.date} ${scheduleForm.time}:00`;
             // console.log("appointmentDate:", appointmentDate);
 
             // 2. insert to supabase 
@@ -168,14 +168,14 @@ export default function NurseAppointmentManager() {
                     .from("Appointments")
                     .insert([
                         {
-                            appointment_date: appointmentDate, // creates a random serial successfully 
+                            appointment_date: appointmentDate, 
                             patient_id: scheduleForm.patientId, 
                             clinic_id: clinicThis, 
                             clinician_id: scheduleForm.doctorId, 
                             created_at: "2026-03-20 14:32:00", // null, 
                             checkin_at: null, 
                             seen_at: null, 
-                            visit_type: null,
+                            visit_type: scheduleForm.type,
                         }])
                     .select("*")     // <-- makes PostgREST return inserted row(s)
                     .single();
@@ -236,12 +236,17 @@ export default function NurseAppointmentManager() {
     const handleEditAppointment = async (apt: NewAppointment) => {
         const { data, error } = 
             await supabase
+                // .schema("public")
+                // .from("appointmentlist_display2")
+                // .select('*')
+                // .eq('Appointment_id', apt.Appointment_id)
+                // .single();
                 .schema("public")
-                .from("appointmentlist_display2")
+                .from("Appointments")
                 .select('*')
                 .eq('Appointment_id', apt.Appointment_id)
                 .single();
-        if(error || data == undefined ){
+        if(error || !data ){
             // setAptUpdateData({
             //     Appointment_id: '', 
             //     appointment_date:  '',  
@@ -253,34 +258,51 @@ export default function NurseAppointmentManager() {
             //     seen_at: null,
             //     visit_type:  ''});
             return 
-        }
-        console.log(data);
-        // setUpdateForm(
-        //     appointmentId: data.Appointment_id, 
-        //     patientId: data
+        }console.log(data);
 
-        // )
-        // setAptUpdateData(data);
-        setShowAptUpdateForm(true); // optional: opens the same form area
+
+        let d = new Date(data.appointment_date); // ISO -> Date
+        let yyyy = d.getFullYear();
+        let mm = String(d.getMonth() + 1).padStart(2, "0");
+        let dd = String(d.getDate()).padStart(2, "0");
+        let hh = String(d.getHours()).padStart(2, "0");
+        let min = String(d.getMinutes()).padStart(2, "0");
+
+        setUpdateForm({
+            appointmentId: data.Appointment_id,
+            patientId: data.patient_id ?? "",     // only if your view returns it
+            doctorId: data.clinician_id ?? "",    // only if your view returns it
+            date: `${yyyy}-${mm}-${dd}`,
+            time: `${hh}:${min}`,
+            type: data.visit_type ?? MOCK_APPOINTMENT_TYPES[0],
+        });
+
+        setShowAptUpdateForm(true);
     }
+    const updateAppointments = async () => {
+        console.log("UPDATEFORM SUBMITTED:", updateForm)
+        if((updateForm.appointmentId != null) && (updateForm.doctorId != null)){
+            let appointmentDate = `${updateForm.date} ${updateForm.time}:00`;
+            const { data, error } = 
+                await supabase
+                    .schema("public")
+                    .from("Appointments")
+                    .update({
+                            appointment_date: appointmentDate, 
+                            patient_id: updateForm.patientId,  
+                            clinician_id: updateForm.doctorId, 
+                            visit_type: updateForm.type,
+                        })
+                    .eq('Appointment_id', updateForm.appointmentId)
+                    .select()
+                    .single();
+            console.log("UPDATE DATA:", data);
+            console.log("UPDATE ERROR:", error);
 
-    const updateAppointments = async (aptid : string ) => {
-        const { data, error } = 
-            await supabase
-                .schema("public")
-                .from("Appointments")
-                .update({
-
-                })
-                .eq('Appointment_id', await aptid);
-                //.order("appointment_date", { ascending: false });      FUTURE: ADJUST ORDER BY THIS 
-        console.log("UPDATE DATA:", data);
-        console.log("UPDATE ERROR:", error);
-
-        if (error) { 
-            return;
+            if (error) { 
+                return;
+            }
         }
- 
     }
 
 
@@ -436,24 +458,55 @@ export default function NurseAppointmentManager() {
                             </div>
 
                             {showAptUpdateForm ? 
-                            (<form className="portal-form" onSubmit={handleEditAppointment}>
+                            (<form 
+                                className="portal-form" 
+                                onSubmit={(e) => { 
+                                    e.preventDefault(); 
+                                    updateAppointments();
+                                }}>
+                                {/* Inputs */}
                                 <div className="form-row"><label>Patient name</label>
-                                    <input type="text" value={updateForm.patientId} onChange={(e) => setScheduleForm((f) => ({ ...f, patientName: e.target.value }))} required />
+                                    <select 
+                                    value={updateForm.patientId} 
+                                    onChange={(e) => setUpdateForm((f) => ({ ...f, patientId: e.target.value }))}>
+                                        {patientList.map((d) => 
+                                            <option key={d.user_id} value={d.user_id}>
+                                                {d.full_name}
+                                            </option>)}
+                                    </select> 
                                     </div>
                                 <div className="form-row"><label>Date</label>
-                                    <input type="date" value={updateForm.date} onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))} required />
+                                    <input 
+                                    type="date" 
+                                    value={updateForm.date} 
+                                    onChange={(e) => setUpdateForm((f) => ({ ...f, date: e.target.value }))} 
+                                    required />
                                     </div>
                                 <div className="form-row"><label>Time</label>
-                                    <input type="time" value={updateForm.time} onChange={(e) => setScheduleForm((f) => ({ ...f, time: e.target.value }))} required />
+                                    <input 
+                                    type="time" 
+                                    value={updateForm.time} 
+                                    onChange={(e) => setUpdateForm((f) => ({ ...f, time: e.target.value }))} 
+                                    required />
                                     </div>
                                 <div className="form-row"><label>Provider</label>
-                                    <select value={updateForm.doctorId} onChange={(e) => setScheduleForm((f) => ({ ...f, doctor: e.target.value }))}>{doctorList.map((d) => <option key={d.user_id} value={d.user_id}>{d.full_name}</option>)}</select>
+                                    <select 
+                                    value={updateForm.doctorId} 
+                                    onChange={(e) => setUpdateForm((f) => ({ ...f, doctor: e.target.value }))}>
+                                        {doctorList.map((d) => 
+                                        <option key={d.user_id} value={d.user_id}>{d.full_name}</option>)}
+                                    </select>
                                     </div>
                                 <div className="form-row"><label>Visit type</label>
-                                    <select value={updateForm.type} onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value }))}>{MOCK_APPOINTMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select>
+                                    <select 
+                                    value={updateForm.type} 
+                                    onChange={(e) => setUpdateForm((f) => ({ ...f, type: e.target.value }))}>
+                                        {MOCK_APPOINTMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select>
                                     </div>
+
+                                {/* Buttons */}
                                 <div className="form-actions">
-                                    <button type="submit" className="btn-primary" onClick={() => updateAppointments(appointmentUpdate)}>Save changes</button>
+                                    <button type="submit" className="btn-primary" onClick={() => {}}>Save changes</button>
                                     <button type="button" className="btn-secondary" onClick={() => setShowAptUpdateForm(false)}>Cancel</button> 
                                     </div>
                             </form>)
