@@ -11,7 +11,7 @@ export default function HomePage() {
           <span className="homepage-card-desc">go to your own dashboard</span>
         </Link>
         
-        <Link to="/clinic-nearby" className="homepage-card">
+        <Link to="/clinic-discovery" className="homepage-card">
           <span className="homepage-card-title">Clinic Nearby</span>
           <span className="homepage-card-desc">Find and check in at nearby clinics</span>
         </Link>
