@@ -25,9 +25,15 @@ function Header() {
       <NavLink to="/help" className="header-link">Help</NavLink>
       <NavLink to="/contact" className="header-link">Contact Us</NavLink>
 
-      <button type="button" className="header-auth header-auth--login" onClick={openLogin}>
-        Login
-      </button>
+    {isLoggedIn ? (
+    <button type="button" className="header-logout-button" onClick={logout}>
+      Log Out
+    </button>
+    ) : (
+    <button type="button" className="header-login-button" onClick={openLogin}>
+      Login
+    </button>
+    )}
     </nav>
   </div>
 </header>

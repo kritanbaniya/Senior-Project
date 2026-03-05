@@ -40,7 +40,7 @@ h2 {
   color: #000000;
 }
 #root {
-  max-width: 1280px;
+  max-width: none;
   margin: 0 auto;
   padding: 0 2rem 2rem;
   text-align: center;
@@ -57,21 +57,17 @@ h2.left_title {
 }
 .header {
   display: flex;
-  width: auto;
   align-items: center;
   justify-content: space-between;
-  /*padding: 1rem 2rem;*/
   background-color: #C7C0F0;
-  /*color: white;*/
   margin: 0 -2rem 2rem -2rem;
-  /*border-radius: 0 0 8px 8px;*/
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .header-inner {
-  max-width: 1200px;                 /* keeps content centered */
+  width: 50%;
   margin: 0 auto;
-  padding: 18px 28px;                /* bar height */
+  padding: 18px 24px;                /* bar height */
   display: flex;
   align-items: center;
   justify-content: space-between;    /* logo left, nav right */
@@ -111,8 +107,8 @@ h2.left_title {
 .header-link {
   text-decoration: none;
   font-weight: 700;
-  color: #ffffff;
-  font-size: 16px;
+  color: #3D3762;
+  font-size: px;
   transition: color 0.2s;
 }
 
@@ -131,17 +127,11 @@ h2.left_title {
   color: #ff9b29;
 }
 
-.header-logout-button {
-  background: none;
-  border: none;
-  padding: 0;
-  color: rgba(0, 0, 0, 0.9);
-  font-weight: 500;
-  text-transform: none;
-  cursor: pointer;
+.header-logout-button:hover {
+  color: #ff9b29;
 }
 
-.header-logout-button:hover {
+.header-login-button:hover {
   color: #ff9b29;
 }
 
@@ -192,7 +182,7 @@ button {
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: #37ac08;
 }
 button:focus,
 button:focus-visible {
