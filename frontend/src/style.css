@@ -40,7 +40,7 @@ h2 {
   color: #000000;
 }
 #root {
-  max-width: 1280px;
+  max-width: none;
   margin: 0 auto;
   padding: 0 2rem 2rem;
   text-align: center;
@@ -59,28 +59,61 @@ h2.left_title {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
-  background-color: rgb(174, 200, 236);
-  color: white;
+  background-color: #C7C0F0;
   margin: 0 -2rem 2rem -2rem;
-  border-radius: 0 0 8px 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.header-logo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: rgb(0, 0, 0);
+.header-inner {
+  width: 50%;
+  margin: 0 auto;
+  padding: 18px 24px;                /* bar height */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;    /* logo left, nav right */
+}
+
+.header-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   text-decoration: none;
+}
+
+.header-brand-text {
+  font-size: 28px;
+  font-weight: 700;
+  color: #3D3762;
+  transition: color 0.2s;
+}
+
+.header-logo {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
 }
 
 .header-logo:hover {
   color: #ff9b29;
 }
 
+/* Navigation Group */
 .header-nav {
   display: flex;
-  gap: 1.5rem;
+  align-items: center;
+  gap: 28px;
+}
+
+.header-link {
+  text-decoration: none;
+  font-weight: 700;
+  color: #3D3762;
+  font-size: px;
+  transition: color 0.2s;
+}
+
+.header-link:hover {
+  opacity: 0.85;
 }
 
 .header-nav a {
@@ -94,17 +127,11 @@ h2.left_title {
   color: #ff9b29;
 }
 
-.header-logout-button {
-  background: none;
-  border: none;
-  padding: 0;
-  color: rgba(0, 0, 0, 0.9);
-  font-weight: 500;
-  text-transform: none;
-  cursor: pointer;
+.header-logout-button:hover {
+  color: #ff9b29;
 }
 
-.header-logout-button:hover {
+.header-login-button:hover {
   color: #ff9b29;
 }
 
@@ -149,13 +176,13 @@ button {
   font-family: inherit;
   font-weight: bold;
   text-transform: uppercase;
-  background-color: #000000;
+  background-color: #8D7BEE;
   color: #ffffff;
   cursor: pointer;
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: #37ac08;
 }
 button:focus,
 button:focus-visible {
