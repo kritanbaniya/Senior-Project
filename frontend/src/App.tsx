@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { ClinicProvider } from './context/ClinicContext'
 import RootLayout from './layouts/RootLayout'
 import DashboardGuard from './layouts/DashboardGuard'
 import RoleGuard from './layouts/RoleGuard'
@@ -19,32 +20,34 @@ import './style.css'
 export default function App() {
   return (
     <AuthProvider>
-      <Routes>
-        <Route element={<RootLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/clinic-nearby" element={<ClinicNearby />} />
-          <Route path="/clinic" element={<ClinicInfo />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+      <ClinicProvider>
+        <Routes>
+          <Route element={<RootLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/clinic-nearby" element={<ClinicNearby />} />
+            <Route path="/clinic" element={<ClinicInfo />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
-          <Route path="/dashboard" element={<DashboardGuard />}>
-            <Route path="patient" element={<RoleGuard allowedRole="patient" />}>
-              <Route index element={<PatientDashboard />} />
-              <Route path="information" element={<PatientYourInformation />} />
-            </Route>
-            <Route path="nurse" element={<RoleGuard allowedRole="nurse" />}>
-              <Route index element={<NurseDashBoard />} />
-              <Route path="information" element={<NurseYourInformation />} />
-            </Route>
-            <Route path="doctor" element={<RoleGuard allowedRole="doctor" />}>
-              <Route index element={<DoctorDashBoard />} />
-              <Route path="information" element={<DoctorYourInformation />} />
-            </Route>
-            <Route path="clinic" element={<RoleGuard allowedRole="clinic" />}>
-              <Route index element={<ClinicADashBoard />} />
+            <Route path="/dashboard" element={<DashboardGuard />}>
+              <Route path="patient" element={<RoleGuard allowedRole="patient" />}>
+                <Route index element={<PatientDashboard />} />
+                <Route path="information" element={<PatientYourInformation />} />
+              </Route>
+              <Route path="nurse" element={<RoleGuard allowedRole="nurse" />}>
+                <Route index element={<NurseDashBoard />} />
+                <Route path="information" element={<NurseYourInformation />} />
+              </Route>
+              <Route path="doctor" element={<RoleGuard allowedRole="doctor" />}>
+                <Route index element={<DoctorDashBoard />} />
+                <Route path="information" element={<DoctorYourInformation />} />
+              </Route>
+              <Route path="clinic" element={<RoleGuard allowedRole="clinic" />}>
+                <Route index element={<ClinicADashBoard />} />
+              </Route>
             </Route>
           </Route>
-        </Route>
-      </Routes>
+        </Routes>
+      </ClinicProvider>
     </AuthProvider>
   )
 }

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { useAuth } from '../../../context/AuthContext'
+import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
+import { useClinicContext } from '../../../context/ClinicContext'
+import { usePatientQueue } from '../../../features/queue/usePatientQueue'
+import PatientQueueCard from '../../../features/queue/components/PatientQueueCard'
 
 type AppointmentStatus = 'scheduled' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled'
 type Appointment = {
@@ -11,12 +13,6 @@ type Appointment = {
   doctor: string
   type: string
   status: AppointmentStatus
-}
-
-type QueueEntry = {
-  position: number
-  estimatedWaitMinutes: number
-  appointmentId: string
 }
 
 type VisitRecord = {
@@ -97,13 +93,14 @@ export type PatientInfo = {
 }
 
 export default function PatientDashboard() {
-  
-  
+  const location = useLocation()
+  const { selectedClinicId, setSelectedClinicId } = useClinicContext()
+  const locationClinicId = (location.state as { clinicId?: string } | null)?.clinicId ?? null
+
   const [appointments, setAppointments] = useState<Appointment[]>([
     { id: '1', date: '2025-02-15', time: '10:00', doctor: 'Dr. Smith', type: 'General Check-up', status: 'confirmed' },
     { id: '2', date: '2025-02-22', time: '14:30', doctor: 'Dr. Lee', type: 'Follow-up', status: 'confirmed' },
   ])
-  const [queue, setQueue] = useState<QueueEntry | null>(null)
   const [intakeComplete, setIntakeComplete] = useState(false)
   const [consentComplete, setConsentComplete] = useState(false)
   const [showScheduleForm, setShowScheduleForm] = useState(false)
@@ -119,6 +116,23 @@ export default function PatientDashboard() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [info, setInfo] = useState<PatientInfo | null>(null)
+  const activeClinicId = locationClinicId ?? selectedClinicId
+  const {
+    loading: queueLoading,
+    error: queueError,
+    row: queueRow,
+    exitState,
+    activePosition,
+    peopleAhead,
+    join,
+    leave,
+  } = usePatientQueue(activeClinicId)
+
+  useEffect(() => {
+    if (locationClinicId) {
+      setSelectedClinicId(locationClinicId)
+    }
+  }, [locationClinicId, setSelectedClinicId])
 
   useEffect(() => {
     const load = async () => {
@@ -139,23 +153,9 @@ export default function PatientDashboard() {
       }
     }
     void load()
-    if (!queue) return
-    const interval = setInterval(() => {
-      setQueue((prev) =>
-        prev
-          ? {
-              ...prev,
-              position: Math.max(1, prev.position - (Math.random() > 0.7 ? 1 : 0)),
-              estimatedWaitMinutes: Math.max(0, prev.estimatedWaitMinutes - (Math.random() > 0.6 ? 1 : 0)),
-            }
-          : null
-      )
-    }, 8000)
-    return () => clearInterval(interval)
-  }, [queue])
+  }, [])
   const displayName = info?.name?.trim() || MOCK_PATIENT.name
   const todayStr = new Date().toISOString().slice(0, 10)
-  const todaysAppointment = appointments.find((a) => a.date === todayStr && (a.status === 'confirmed' || a.status === 'scheduled'))
 
   const handleScheduleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -170,18 +170,6 @@ export default function PatientDashboard() {
     setAppointments((prev) => [...prev, newApt].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)))
     setScheduleForm({ date: '', time: '', doctor: MOCK_DOCTORS[0], type: MOCK_APPOINTMENT_TYPES[0], reason: '' })
     setShowScheduleForm(false)
-  }
-
-  const handleCheckIn = (_remote: boolean) => {
-    if (!todaysAppointment) return
-    setQueue({
-      position: 4 + Math.floor(Math.random() * 3),
-      estimatedWaitMinutes: 15 + Math.floor(Math.random() * 20),
-      appointmentId: todaysAppointment.id,
-    })
-    setAppointments((prev) =>
-      prev.map((a) => (a.id === todaysAppointment.id ? { ...a, status: 'checked_in' as AppointmentStatus } : a))
-    )
   }
 
   const handleIntakeSubmit = (e: React.FormEvent) => {
@@ -311,35 +299,17 @@ export default function PatientDashboard() {
               </div>
             </section>
 
-            {/* Queue / Check-in – when in queue or today has appointment */}
-            <section className="pd-card pd-card-queue" id="queue">
-              <h2 className="pd-card-title">Check-in & queue</h2>
-              {queue ? (
-                <>
-                  <p className="pd-card-desc">You’re in the service queue. Live updates below.</p>
-                  <div className="pd-queue-stats">
-                    <div className="pd-queue-stat">
-                      <span className="pd-queue-label">Position</span>
-                      <span className="pd-queue-value">{queue.position}</span>
-                    </div>
-                    <div className="pd-queue-stat">
-                      <span className="pd-queue-label">Est. wait</span>
-                      <span className="pd-queue-value">~{queue.estimatedWaitMinutes} min</span>
-                    </div>
-                  </div>
-                </>
-              ) : todaysAppointment ? (
-                <>
-                  <p className="pd-card-desc">You have an appointment today. Check in when you arrive.</p>
-                  <div className="pd-checkin-buttons">
-                    <button type="button" className="pd-btn pd-btn-primary" onClick={() => handleCheckIn(false)}>Check in at clinic</button>
-                    <button type="button" className="pd-btn pd-btn-secondary" onClick={() => handleCheckIn(true)}>Remote check-in</button>
-                  </div>
-                </>
-              ) : (
-                <p className="pd-card-desc">No appointment today. Your queue status will appear here after check-in.</p>
-              )}
-            </section>
+            <PatientQueueCard
+              clinicSelected={Boolean(activeClinicId)}
+              loading={queueLoading}
+              row={queueRow}
+              activePosition={activePosition}
+              peopleAhead={peopleAhead}
+              exitState={exitState}
+              onJoin={join}
+              onLeave={leave}
+            />
+            {queueError && <p className="pd-empty">{queueError}</p>}
 
             {/* Upcoming appointments */}
             <section className="pd-card pd-card-appointments" id="appointments">
