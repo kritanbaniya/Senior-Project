@@ -177,7 +177,6 @@ export default function DoctorDashBoard() {
       return
     }
 
-    // In production, this would save to backend
     console.log('Saving visit notes:', {
       patientId: selectedPatient.id,
       notes: clinicalNote,
@@ -195,7 +194,6 @@ export default function DoctorDashBoard() {
       return
     }
 
-    // Save notes and mark complete
     console.log('Completing visit for:', selectedPatient.patientName)
     setPatientStage(selectedPatient.id, 'completed')
     setSelectedPatientId(null)
@@ -226,519 +224,426 @@ export default function DoctorDashBoard() {
   }
 
   const flagMissingForms = (patientId: string) => {
-    // In production, this would notify nurse
     console.log('Flagging missing forms for patient:', patientId)
     setFlagFormsFeedback(patientId)
     setTimeout(() => setFlagFormsFeedback(null), 3000)
   }
 
-  const waitingCount = patients.filter((p) => p.stage === 'waiting').length
-  const inConsultationCount = patients.filter((p) => p.stage === 'consultation').length
-
   return (
-    <div className="clinic-info-page doctor-dashboard">
+    <div className="clinic-info-page doctor-dashboard" style={{ maxWidth: '100%', width: '100%' }}>
       <h1 className="page-title">Doctor Dashboard</h1>
 
-      {/* Provider Queue View */}
-      <div className="info-box queue-section">
-        <h2 className="info-box-title">My Patient Queue</h2>
-        <div className="info-box-content">
-          <p className="nurse-intro">
-            View your assigned patients and their status. Select a patient to review intake forms,
-            medical history, and write visit notes.
-          </p>
+      {/* Three-column layout: Queue | Patient Info | Visit Notes */}
+      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 420px', gap: '1.5rem', alignItems: 'start' }}>
+        
+        {/* LEFT COLUMN: Patient Queue */}
+        <div className="info-box queue-section" style={{ position: 'sticky', top: '1rem', maxHeight: '85vh', overflowY: 'auto' }}>
+          <h2 className="info-box-title">Patient Queue</h2>
+          <div className="info-box-content">
 
-          {/* Quick stats */}
-          <div className="queue-live">
-            <div className="queue-stat">
-              <span className="queue-label">Waiting</span>
-              <span className="queue-value">{waitingCount}</span>
-            </div>
-            <div className="queue-stat">
-              <span className="queue-label">In consultation</span>
-              <span className="queue-value">{inConsultationCount}</span>
-            </div>
-            <div className="queue-stat">
-              <span className="queue-label">Total assigned</span>
-              <span className="queue-value">{patients.length}</span>
-            </div>
+            {patients.length === 0 ? (
+              <p className="no-queue">No patients assigned.</p>
+            ) : (
+              <ol className="nurse-queue-list" style={{ marginBottom: 0 }}>
+                {patients.map((patient, index) => (
+                  <li
+                    key={patient.id}
+                    className={`nurse-queue-item stage-${patient.stage}`}
+                    onClick={() => setSelectedPatientId(patient.id)}
+                    style={{
+                      cursor: 'pointer',
+                      border: selectedPatientId === patient.id ? '2px solid #0369a1' : '1px solid rgba(0,0,0,0.08)',
+                      background: selectedPatientId === patient.id ? '#f0f9ff' : undefined,
+                      gridTemplateColumns: 'auto 1fr',
+                      padding: '0.65rem',
+                      marginBottom: '0.5rem'
+                    }}
+                  >
+                    <span className="queue-order" style={{ fontSize: '0.85rem' }}>#{index + 1}</span>
+                    <div>
+                      <div className="queue-patient-name" style={{ marginBottom: '0.2rem', fontSize: '0.9rem' }}>
+                        {patient.patientName}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                        {patient.age}y • {patient.appointmentType}
+                      </div>
+                      {!patient.formsComplete && (
+                        <div style={{ color: '#dc2626', fontSize: '0.7rem', fontWeight: 600, marginTop: '0.2rem' }}>
+                          ⚠ Incomplete
+                        </div>
+                      )}
+                      <div style={{ marginTop: '0.35rem' }}>
+                        <span className={`patient-status status-${patient.stage}`} style={{
+                          fontSize: '0.65rem',
+                          padding: '0.15rem 0.4rem',
+                          borderRadius: '3px',
+                          textTransform: 'uppercase',
+                          display: 'inline-block'
+                        }}>
+                          {STAGE_LABELS[patient.stage]}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
           </div>
+        </div>
 
-          {patients.length === 0 ? (
-            <p className="no-queue">No patients assigned to you today.</p>
-          ) : (
-            <ol className="nurse-queue-list">
-              {patients.map((patient, index) => (
-                <li
-                  key={patient.id}
-                  className={`nurse-queue-item stage-${patient.stage}`}
-                >
-                  <span className="queue-order">#{index + 1}</span>
-                  <div className="queue-patient-info">
-                    <span className="queue-patient-name">{patient.patientName}</span>
-                    <span className="queue-apt-type">
-                      {patient.age} yrs • {patient.appointmentType}
-                    </span>
-                    <span className="queue-doctor">Arrival: {patient.arrivalTime}</span>
-                    {!patient.formsComplete && (
-                      <span style={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: 600 }}>
-                        ⚠ Forms incomplete
-                      </span>
-                    )}
+        {/* MIDDLE COLUMN: Patient Information */}
+        {selectedPatient ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            
+            {/* Patient Header */}
+            <div className="info-box">
+              <div className="info-box-content">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.75rem' }}>
+                  <div>
+                    <h2 style={{ margin: '0 0 0.35rem 0', fontSize: '1.4rem' }}>
+                      {selectedPatient.patientName}
+                    </h2>
+                    <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                      {selectedPatient.age} years • {selectedPatient.gender} • {selectedPatient.appointmentType}
+                    </div>
                   </div>
-                  <div className="queue-stage-badges">
-                    {(['waiting', 'consultation', 'completed'] as const).map((stage) => (
-                      <button
-                        key={stage}
-                        type="button"
-                        className={`stage-btn ${patient.stage === stage ? 'active' : ''}`}
-                        onClick={() => setPatientStage(patient.id, stage)}
-                      >
-                        {STAGE_LABELS[stage]}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="queue-actions">
+                  
+                  {selectedPatient.stage === 'waiting' && (
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => setPatientStage(selectedPatient.id, 'consultation')}
+                    >
+                      Start Visit
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ 
+                  padding: '0.65rem', 
+                  background: '#f0f9ff', 
+                  borderRadius: '6px',
+                  borderLeft: '3px solid #0369a1',
+                  fontSize: '0.9rem'
+                }}>
+                  <strong style={{ fontSize: '0.8rem', color: '#0369a1' }}>Chief Complaint:</strong>
+                  <div style={{ marginTop: '0.2rem' }}>{selectedPatient.symptoms}</div>
+                </div>
+
+                {!selectedPatient.formsComplete && (
+                  <div style={{ marginTop: '0.75rem' }}>
                     <button
                       type="button"
                       className="btn-small"
-                      onClick={() => setSelectedPatientId(patient.id)}
+                      onClick={() => flagMissingForms(selectedPatient.id)}
                     >
-                      {selectedPatientId === patient.id ? 'Viewing' : 'View Details'}
+                      Flag Incomplete Forms
                     </button>
-                    {!patient.formsComplete && (
-                      <button
-                        type="button"
-                        className="btn-small"
-                        onClick={() => flagMissingForms(patient.id)}
-                        title="Flag for nurse attention"
-                      >
-                        Flag forms
-                      </button>
+                    {flagFormsFeedback === selectedPatient.id && (
+                      <span className="feedback-msg" style={{ marginLeft: '0.5rem' }}>Nurse notified</span>
                     )}
                   </div>
-                  {flagFormsFeedback === patient.id && (
-                    <span className="feedback-msg">Nurse notified about missing forms</span>
-                  )}
-                </li>
-              ))}
-            </ol>
-          )}
-        </div>
-      </div>
+                )}
 
-      {/* Patient Details Panel */}
-      {selectedPatient ? (
-        <>
-          <div className="info-box">
-            <h2 className="info-box-title">
-              Patient: {selectedPatient.patientName}
-            </h2>
-            <div className="info-box-content">
-              <div style={{ display: 'flex', gap: '2rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                <div>
-                  <span style={{ fontSize: '0.85rem', color: '#666' }}>Age:</span>
-                  <strong style={{ marginLeft: '0.5rem' }}>{selectedPatient.age} years</strong>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.85rem', color: '#666' }}>Gender:</span>
-                  <strong style={{ marginLeft: '0.5rem' }}>{selectedPatient.gender}</strong>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.85rem', color: '#666' }}>Visit Type:</span>
-                  <strong style={{ marginLeft: '0.5rem' }}>{selectedPatient.appointmentType}</strong>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.85rem', color: '#666' }}>Forms:</span>
-                  <strong
-                    style={{
-                      marginLeft: '0.5rem',
-                      color: selectedPatient.formsComplete ? '#166534' : '#dc2626',
-                    }}
-                  >
-                    {selectedPatient.formsComplete ? 'Complete' : 'Incomplete'}
-                  </strong>
-                </div>
+                {selectedPatient.stage === 'completed' && (
+                  <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: '#f0fdf4', borderRadius: '6px', color: '#166534', fontSize: '0.85rem', fontWeight: 600 }}>
+                    ✓ Visit completed
+                  </div>
+                )}
               </div>
+            </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <p style={{ margin: 0, fontSize: '0.9rem', color: '#555' }}>
-                  <strong>Chief Complaint:</strong> {selectedPatient.symptoms}
-                </p>
-              </div>
-
-              {/* Tabs for patient information */}
-              <div style={{ borderBottom: '2px solid #e5e7eb', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('intake')}
-                    className="stage-btn"
-                    style={{
-                      background: activeTab === 'intake' ? '#0369a1' : '#fff',
-                      color: activeTab === 'intake' ? '#fff' : '#555',
-                      borderColor: activeTab === 'intake' ? '#0369a1' : '#ccc',
-                      borderRadius: '8px 8px 0 0',
-                    }}
-                  >
-                    Intake Form
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('history')}
-                    className="stage-btn"
-                    style={{
-                      background: activeTab === 'history' ? '#0369a1' : '#fff',
-                      color: activeTab === 'history' ? '#fff' : '#555',
-                      borderColor: activeTab === 'history' ? '#0369a1' : '#ccc',
-                      borderRadius: '8px 8px 0 0',
-                    }}
-                  >
-                    Medical History
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('tests')}
-                    className="stage-btn"
-                    style={{
-                      background: activeTab === 'tests' ? '#0369a1' : '#fff',
-                      color: activeTab === 'tests' ? '#fff' : '#555',
-                      borderColor: activeTab === 'tests' ? '#0369a1' : '#ccc',
-                      borderRadius: '8px 8px 0 0',
-                    }}
-                  >
-                    Test Results
-                  </button>
-                </div>
-              </div>
-
-              {/* Tab Content */}
-              {activeTab === 'intake' && selectedPatient.intakeForm && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-                      ALLERGIES
-                    </div>
-                    <div style={{ padding: '0.75rem', background: '#f9fafb', borderRadius: '8px' }}>
-                      {selectedPatient.intakeForm.allergies || 'None reported'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-                      CURRENT MEDICATIONS
-                    </div>
-                    <div style={{ padding: '0.75rem', background: '#f9fafb', borderRadius: '8px' }}>
-                      {selectedPatient.intakeForm.medications || 'None'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-                      MEDICAL HISTORY
-                    </div>
-                    <div style={{ padding: '0.75rem', background: '#f9fafb', borderRadius: '8px' }}>
-                      {selectedPatient.intakeForm.medicalHistory || 'No significant history'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600 }}>
-                      EMERGENCY CONTACT
-                    </div>
-                    <div style={{ padding: '0.75rem', background: '#f9fafb', borderRadius: '8px' }}>
-                      {selectedPatient.intakeForm.emergencyContact}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'history' && (
-                <>
-                  {selectedPatient.medicalHistory && selectedPatient.medicalHistory.length > 0 ? (
-                    <ul className="records-list">
-                      {selectedPatient.medicalHistory.map((record, index) => (
-                        <li key={index} className="record-item">
-                          <div className="record-header">
-                            <span className="record-date">{record.date}</span>
-                            <span>{record.diagnosis}</span>
-                          </div>
-                          <p className="record-summary">{record.notes}</p>
-                          <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
-                            Provider: {record.doctor}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="no-queue">No previous visits on record</p>
-                  )}
-                </>
-              )}
-
-              {activeTab === 'tests' && (
-                <>
-                  {!showTestForm && (
+            {/* Patient Information Tabs */}
+            <div className="info-box">
+              <div style={{ borderBottom: '2px solid #e5e7eb' }}>
+                <div style={{ display: 'flex', gap: '0.25rem', padding: '0 1rem' }}>
+                  {(['intake', 'history', 'tests'] as const).map(tab => (
                     <button
+                      key={tab}
                       type="button"
-                      className="btn-secondary"
-                      onClick={() => setShowTestForm(true)}
-                      style={{ marginBottom: '1rem' }}
-                    >
-                      + Add Test Result
-                    </button>
-                  )}
-
-                  {showTestForm && (
-                    <form
-                      className="portal-form compact"
-                      onSubmit={(e) => {
-                        e.preventDefault()
-                        addTestResult()
+                      onClick={() => setActiveTab(tab)}
+                      style={{
+                        background: activeTab === tab ? '#0369a1' : 'transparent',
+                        color: activeTab === tab ? '#fff' : '#555',
+                        border: 'none',
+                        borderBottom: activeTab === tab ? '3px solid #0369a1' : '3px solid transparent',
+                        borderRadius: 0,
+                        padding: '0.65rem 0.85rem',
+                        marginBottom: '-2px',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        textTransform: 'capitalize'
                       }}
-                      style={{ marginBottom: '1rem', padding: '1rem', background: '#f9fafb', borderRadius: '8px' }}
                     >
-                      <div className="form-row">
-                        <label>Test Type</label>
-                        <input
-                          type="text"
-                          placeholder="e.g., X-Ray, Blood Test, ECG"
-                          value={newTestResult.type}
-                          onChange={(e) => setNewTestResult({ ...newTestResult, type: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="form-row">
-                        <label>Result</label>
-                        <input
-                          type="text"
-                          placeholder="e.g., Normal, Abnormal"
-                          value={newTestResult.result}
-                          onChange={(e) => setNewTestResult({ ...newTestResult, result: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="form-row">
-                        <label>Notes (optional)</label>
-                        <input
-                          type="text"
-                          placeholder="Additional details"
-                          value={newTestResult.notes}
-                          onChange={(e) => setNewTestResult({ ...newTestResult, notes: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-actions">
-                        <button type="submit" className="btn-primary">
-                          Add Result
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-secondary"
-                          onClick={() => {
-                            setShowTestForm(false)
-                            setNewTestResult({ type: '', result: '', notes: '' })
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </form>
-                  )}
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                  {selectedPatient.testResults && selectedPatient.testResults.length > 0 ? (
-                    <ul className="records-list">
-                      {selectedPatient.testResults.map((test) => (
-                        <li key={test.id} className="record-item">
-                          <div className="record-header">
-                            <span className="record-date">{test.date}</span>
-                            <span>{test.type}</span>
-                          </div>
-                          <p className="record-summary">
-                            <strong>Result:</strong> {test.result}
-                            {test.notes && (
-                              <>
-                                <br />
-                                <strong>Notes:</strong> {test.notes}
-                              </>
-                            )}
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    !showTestForm && <p className="no-queue">No test results available</p>
-                  )}
-                </>
+              <div className="info-box-content" style={{ padding: '1.25rem', maxHeight: '450px', overflowY: 'auto' }}>
+                
+                {/* Intake Tab */}
+                {activeTab === 'intake' && selectedPatient.intakeForm && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    {[
+                      { label: 'Allergies', value: selectedPatient.intakeForm.allergies || 'None reported' },
+                      { label: 'Medications', value: selectedPatient.intakeForm.medications || 'None' },
+                      { label: 'Medical History', value: selectedPatient.intakeForm.medicalHistory || 'None' },
+                      { label: 'Emergency Contact', value: selectedPatient.intakeForm.emergencyContact }
+                    ].map(({ label, value }) => (
+                      <div key={label}>
+                        <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600, textTransform: 'uppercase' }}>
+                          {label}
+                        </div>
+                        <div style={{ padding: '0.65rem', background: '#f9fafb', borderRadius: '6px', fontSize: '0.9rem' }}>
+                          {value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* History Tab */}
+                {activeTab === 'history' && (
+                  <>
+                    {selectedPatient.medicalHistory && selectedPatient.medicalHistory.length > 0 ? (
+                      <ul className="records-list">
+                        {selectedPatient.medicalHistory.map((record, index) => (
+                          <li key={index} className="record-item">
+                            <div className="record-header">
+                              <span className="record-date">{record.date}</span>
+                              <span style={{ fontSize: '0.9rem' }}>{record.diagnosis}</span>
+                            </div>
+                            <p className="record-summary" style={{ fontSize: '0.85rem' }}>{record.notes}</p>
+                            <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.35rem' }}>
+                              {record.doctor}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="no-queue">No previous visits</p>
+                    )}
+                  </>
+                )}
+
+                {/* Tests Tab */}
+                {activeTab === 'tests' && (
+                  <>
+                    {!showTestForm && (
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => setShowTestForm(true)}
+                        style={{ marginBottom: '0.85rem', fontSize: '0.85rem' }}
+                      >
+                        + Add Test Result
+                      </button>
+                    )}
+
+                    {showTestForm && (
+                      <form
+                        className="portal-form compact"
+                        onSubmit={(e) => {
+                          e.preventDefault()
+                          addTestResult()
+                        }}
+                        style={{ marginBottom: '0.85rem', padding: '0.85rem', background: '#f9fafb', borderRadius: '6px' }}
+                      >
+                        <div className="form-row">
+                          <label style={{ fontSize: '0.85rem' }}>Test Type</label>
+                          <input
+                            type="text"
+                            placeholder="X-Ray, Blood Test, ECG"
+                            value={newTestResult.type}
+                            onChange={(e) => setNewTestResult({ ...newTestResult, type: e.target.value })}
+                            required
+                            style={{ fontSize: '0.85rem' }}
+                          />
+                        </div>
+                        <div className="form-row">
+                          <label style={{ fontSize: '0.85rem' }}>Result</label>
+                          <input
+                            type="text"
+                            placeholder="Normal, Abnormal"
+                            value={newTestResult.result}
+                            onChange={(e) => setNewTestResult({ ...newTestResult, result: e.target.value })}
+                            required
+                            style={{ fontSize: '0.85rem' }}
+                          />
+                        </div>
+                        <div className="form-row">
+                          <label style={{ fontSize: '0.85rem' }}>Notes</label>
+                          <input
+                            type="text"
+                            placeholder="Optional"
+                            value={newTestResult.notes}
+                            onChange={(e) => setNewTestResult({ ...newTestResult, notes: e.target.value })}
+                            style={{ fontSize: '0.85rem' }}
+                          />
+                        </div>
+                        <div className="form-actions">
+                          <button type="submit" className="btn-primary btn-small">Add</button>
+                          <button
+                            type="button"
+                            className="btn-secondary btn-small"
+                            onClick={() => {
+                              setShowTestForm(false)
+                              setNewTestResult({ type: '', result: '', notes: '' })
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {selectedPatient.testResults && selectedPatient.testResults.length > 0 ? (
+                      <ul className="records-list">
+                        {selectedPatient.testResults.map((test) => (
+                          <li key={test.id} className="record-item">
+                            <div className="record-header">
+                              <span className="record-date">{test.date}</span>
+                              <span style={{ fontSize: '0.9rem' }}>{test.type}</span>
+                            </div>
+                            <p className="record-summary" style={{ fontSize: '0.85rem' }}>
+                              <strong>Result:</strong> {test.result}
+                              {test.notes && (
+                                <>
+                                  <br />
+                                  <strong>Notes:</strong> {test.notes}
+                                </>
+                              )}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      !showTestForm && <p className="no-queue">No test results</p>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+          </div>
+        ) : (
+          <div className="info-box" style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ textAlign: 'center', color: '#999', fontSize: '0.95rem' }}>
+              ← Select a patient
+            </div>
+          </div>
+        )}
+
+        {/* RIGHT COLUMN: Visit Notes */}
+        {selectedPatient && selectedPatient.stage === 'consultation' ? (
+          <div className="info-box" style={{ position: 'sticky', top: '1rem', maxHeight: '85vh', overflowY: 'auto' }}>
+            <h2 className="info-box-title">Visit Notes</h2>
+            <div className="info-box-content">
+              <form className="portal-form" style={{ gap: '0.65rem' }}>
+                {[
+                  { label: 'Symptoms', field: 'symptoms', placeholder: 'Patient-reported symptoms...', rows: 2 },
+                  { label: 'Observations', field: 'observations', placeholder: 'Exam findings...', rows: 2 },
+                  { label: 'Assessment *', field: 'assessment', placeholder: 'Diagnosis...', rows: 3, required: true },
+                  { label: 'Treatment', field: 'treatmentPlan', placeholder: 'Treatment plan...', rows: 2 },
+                  { label: 'Prescriptions', field: 'prescriptions', placeholder: 'Medications...', rows: 2 }
+                ].map(({ label, field, placeholder, rows, required }) => (
+                  <div key={field} className="form-row">
+                    <label style={{ fontSize: '0.8rem' }}>{label}</label>
+                    <textarea
+                      placeholder={placeholder}
+                      value={clinicalNote[field as keyof ClinicalNote] as string}
+                      onChange={(e) => updateClinicalNote(field as keyof ClinicalNote, e.target.value)}
+                      style={{ minHeight: `${rows * 25}px`, resize: 'vertical', fontSize: '0.85rem' }}
+                      required={required}
+                    />
+                  </div>
+                ))}
+
+                <div className="form-row">
+                  <label className="checkbox-label" style={{ fontSize: '0.85rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={clinicalNote.followUpRecommended}
+                      onChange={(e) => updateClinicalNote('followUpRecommended', e.target.checked)}
+                    />
+                    <span>Recommend follow-up</span>
+                  </label>
+                </div>
+
+                {clinicalNote.followUpRecommended && (
+                  <div className="form-row">
+                    <label style={{ fontSize: '0.8rem' }}>Follow-up Notes</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Return in 2 weeks"
+                      value={clinicalNote.followUpNotes}
+                      onChange={(e) => updateClinicalNote('followUpNotes', e.target.value)}
+                      style={{ fontSize: '0.85rem' }}
+                    />
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={completeVisit}
+                    style={{ width: '100%', background: '#15803d', fontSize: '0.9rem' }}
+                  >
+                    Complete Visit
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={saveVisitNotes}
+                    style={{ width: '100%', fontSize: '0.9rem' }}
+                  >
+                    Save Notes
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setClinicalNote(INITIAL_CLINICAL_NOTE)}
+                    style={{ width: '100%', fontSize: '0.85rem' }}
+                  >
+                    Clear
+                  </button>
+                </div>
+                {saveNoteFeedback && (
+                  <span className="feedback-msg" style={{ display: 'block', textAlign: 'center', fontSize: '0.8rem' }}>
+                    {saveNoteFeedback}
+                  </span>
+                )}
+              </form>
+            </div>
+          </div>
+        ) : (
+          <div className="info-box" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'sticky', top: '1rem' }}>
+            <div style={{ textAlign: 'center', color: '#999', fontSize: '0.9rem', padding: '1rem' }}>
+              {selectedPatient ? (
+                selectedPatient.stage === 'completed' ? '✓ Visit completed' : 'Start visit to take notes'
+              ) : (
+                'Select a patient'
               )}
             </div>
           </div>
+        )}
 
-          {/* Visit Notes Section - Only show when in consultation */}
-          {selectedPatient.stage === 'consultation' && (
-            <div className="info-box">
-              <h2 className="info-box-title">Visit Notes</h2>
-              <div className="info-box-content">
-                <p className="portal-note">
-                  Document symptoms, observations, and assessment. Text-based notes only.
-                </p>
-
-                <form className="portal-form">
-                  <div className="form-row">
-                    <label>Symptoms</label>
-                    <textarea
-                      placeholder="Patient-reported symptoms..."
-                      value={clinicalNote.symptoms}
-                      onChange={(e) => updateClinicalNote('symptoms', e.target.value)}
-                      style={{ minHeight: '80px', resize: 'vertical' }}
-                    />
-                  </div>
-
-                  <div className="form-row">
-                    <label>Observations</label>
-                    <textarea
-                      placeholder="Physical examination findings, vital signs..."
-                      value={clinicalNote.observations}
-                      onChange={(e) => updateClinicalNote('observations', e.target.value)}
-                      style={{ minHeight: '80px', resize: 'vertical' }}
-                    />
-                  </div>
-
-                  <div className="form-row">
-                    <label>Assessment (Required)</label>
-                    <textarea
-                      placeholder="Diagnosis, clinical impression..."
-                      value={clinicalNote.assessment}
-                      onChange={(e) => updateClinicalNote('assessment', e.target.value)}
-                      style={{ minHeight: '100px', resize: 'vertical' }}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-row">
-                    <label>Treatment Plan</label>
-                    <textarea
-                      placeholder="Recommended treatment, lifestyle changes..."
-                      value={clinicalNote.treatmentPlan}
-                      onChange={(e) => updateClinicalNote('treatmentPlan', e.target.value)}
-                      style={{ minHeight: '80px', resize: 'vertical' }}
-                    />
-                  </div>
-
-                  <div className="form-row">
-                    <label>Prescriptions</label>
-                    <textarea
-                      placeholder="Medications, dosage, frequency..."
-                      value={clinicalNote.prescriptions}
-                      onChange={(e) => updateClinicalNote('prescriptions', e.target.value)}
-                      style={{ minHeight: '80px', resize: 'vertical' }}
-                    />
-                  </div>
-
-                  <div className="form-row">
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={clinicalNote.followUpRecommended}
-                        onChange={(e) => updateClinicalNote('followUpRecommended', e.target.checked)}
-                      />
-                      <span>Recommend follow-up appointment</span>
-                    </label>
-                  </div>
-
-                  {clinicalNote.followUpRecommended && (
-                    <div className="form-row">
-                      <label>Follow-up Notes</label>
-                      <input
-                        type="text"
-                        placeholder="e.g., Return in 2 weeks, schedule with nurse"
-                        value={clinicalNote.followUpNotes}
-                        onChange={(e) => updateClinicalNote('followUpNotes', e.target.value)}
-                      />
-                    </div>
-                  )}
-
-                  <div className="form-actions">
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      onClick={saveVisitNotes}
-                    >
-                      Save Notes
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      onClick={completeVisit}
-                      style={{ background: '#15803d' }}
-                    >
-                      Complete Visit
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => setClinicalNote(INITIAL_CLINICAL_NOTE)}
-                    >
-                      Clear Form
-                    </button>
-                  </div>
-                  {saveNoteFeedback && (
-                    <span className="feedback-msg" style={{ marginTop: '0.5rem', display: 'block' }}>
-                      {saveNoteFeedback}
-                    </span>
-                  )}
-                </form>
-              </div>
-            </div>
-          )}
-
-          {selectedPatient.stage === 'waiting' && (
-            <div className="info-box">
-              <div className="info-box-content">
-                <p className="portal-note">
-                  Patient is waiting. Mark as "In consultation" to begin writing visit notes.
-                </p>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => setPatientStage(selectedPatient.id, 'consultation')}
-                >
-                  Start Visit
-                </button>
-              </div>
-            </div>
-          )}
-
-          {selectedPatient.stage === 'completed' && (
-            <div className="info-box">
-              <div className="info-box-content">
-                <p className="portal-note" style={{ color: '#166534', fontWeight: 600 }}>
-                  ✓ Visit completed. Notes have been saved to patient record.
-                </p>
-              </div>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="info-box">
-          <div className="info-box-content">
-            <p className="no-queue">Select a patient from the queue above to view details and write visit notes.</p>
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* Quick Actions */}
-      <div className="info-box quick-actions-box">
+      <div className="info-box quick-actions-box" style={{ marginTop: '1.5rem' }}>
         <h2 className="info-box-title">Quick actions</h2>
         <div className="info-box-content quick-actions">
-          <Link to="/" className="action-link">
-            Home
-          </Link>
+          <Link to="/" className="action-link">Home</Link>
+          <Link to="/dashboard/doctor/information" className="action-link">Your Information</Link>
         </div>
       </div>
 
-      <Link to="/" className="back-link">
-        ← Back to Home
-      </Link>
+      <Link to="/" className="back-link">← Back to Home</Link>
     </div>
   )
 }
