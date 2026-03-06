@@ -102,6 +102,9 @@ source venv/Scripts/activate
 cd backend
 pip install -r requirements.txt
 uvicorn main:app --reload
+
+#NOTE:To enable LAN hosting, install https certificate (if hosting does not work check firewall settings)
+npm install --save-dev vite-plugin-mkcert
 ```
 
 ---
@@ -125,6 +128,7 @@ uvicorn main:app --reload
    ```bash
    npm install -D vite
     ```
+     
 4. **Open the app in your browser** at the URL shown in the terminal (usually **http://localhost:5173**).
 
 To stop the server, press `Ctrl+C` in the terminal.
