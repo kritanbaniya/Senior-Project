@@ -3,7 +3,7 @@
 // and a logout button. no props needed thanks to the context.
 
 import { Link, NavLink } from 'react-router-dom'
-import { useAuth } from './context/AuthContext'
+import { useAuth } from '../context/AuthContext'
 
 // renders the site logo, nav links, and an auth action button.
 // when logged out, clicking "login" calls openLogin() which makes
