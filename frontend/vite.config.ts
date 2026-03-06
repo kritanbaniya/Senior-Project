@@ -4,6 +4,8 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import mkcert from "vite-plugin-mkcert";
+import tailwindcss from "@tailwindcss/vite";
+import path from "node:path";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -12,11 +14,17 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
+      tailwindcss(),
       ...(useHttps ? [mkcert()] : []),
     ],
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
+    },
     server: {
-      host: true,               // LAN access
-      https: useHttps,          // only if VITE_HTTPS=true
+      host: true,
+      ...(useHttps ? { https: {} } : {}),
     },
   };
 });
