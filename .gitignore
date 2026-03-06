@@ -36,3 +36,6 @@ dist-ssr
 *.txt
 .sql
 *.sql
+
+# Windows Junk
+Thumbs.db
