@@ -1,3 +1,4 @@
+//This Navigation Bar is leftover from the original template. It is not currently used in the application, but it may be useful for future development. It is a simple navigation bar with links to the home page, about page, help page, contact page, and login page. It also includes a brand logo and name.
 import { Link } from "react-router-dom";
 
 export default function TopNav() {
