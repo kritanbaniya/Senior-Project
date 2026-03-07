@@ -11,14 +11,14 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: hsl(199, 42%, 84%);
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  /*--background: oklch(1 0 0);*/
   --foreground: oklch(0.129 0.042 264.695);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
@@ -52,12 +52,7 @@
 }
 
 a {
-  font-weight: 500;
-  color: #646cff;
   text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
 }
 
 body {
@@ -78,10 +73,7 @@ h2 {
   color: #000000;
 }
 #root {
-  max-width: none;
-  margin: 0 auto;
-  padding: 0 2rem 2rem;
-  text-align: center;
+  min-height: 50vh;
 }
 .left_title {
   font-size: 1.5rem;
@@ -93,76 +85,15 @@ h2 {
 h2.left_title {
   font-size: 1rem;
 }
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #C7C0F0;
-  margin: 0 -2rem 2rem -2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.header-inner {
-  width: 50%;
-  margin: 0 auto;
-  padding: 18px 24px;                /* bar height */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;    /* logo left, nav right */
-}
-
-.header-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-}
-
-.header-brand-text {
-  font-size: 28px;
-  font-weight: 700;
-  color: #3D3762;
-  transition: color 0.2s;
-}
-
-.header-logo {
-  height: 44px;
-  width: auto;
-  object-fit: contain;
-}
 
 .header-logo:hover {
   color: #ff9b29;
 }
 
 /* Navigation Group */
-.header-nav {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-}
-
-.header-link {
-  text-decoration: none;
-  font-weight: 700;
-  color: #3D3762;
-  font-size: px;
-  transition: color 0.2s;
-}
 
 .header-link:hover {
   opacity: 0.85;
-}
-
-.header-nav a {
-  color: rgba(0, 0, 0, 0.9);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-.header-nav a:hover {
-  color: #ff9b29;
 }
 
 .header-logout-button:hover {
@@ -232,7 +163,7 @@ button:focus-visible {
 .clinic-info-page {
   text-align: left;
   max-width: 640px;
-  margin: 0 auto;
+  margin: 40px auto;
   padding: 1rem 0;
 }
 .page-title {
@@ -1464,10 +1395,13 @@ button:focus-visible {
 
 .welcome-banner {
   margin: 0 -2rem 1rem -2rem;
-  padding: 0.5rem 2rem;
+  padding: 0.5rem 0.5em;
   background-color: #0f0f79;
-  font-size: 0.95rem;
-  text-align: left;
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 500;
+  text-align: center;
+
 }
 
 @media (prefers-color-scheme: light) {

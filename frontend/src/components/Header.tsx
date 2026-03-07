@@ -8,23 +8,24 @@ function Header() {
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     [
-      "text-sm font-medium transition-colors",
-      "text-slate-700 hover:text-violet-700",
-      isActive ? "text-violet-700" : "",
+      "text-lg font-medium transition-colors duration-200",
+      isActive ? "text-yellow-700" : "text-slate-700",
+      "hover:text-yellow-500",
     ].join(" ");
 
   return (
-    <header className="border-b border-violet-100 bg-[#C7C0F0]">
-      <div className="mx-auto flex h-24 w-full max-w-7xl items-center justify-between px-6 lg:px-10">
-        <Link to="/" className="flex items-center gap-3">
+    <header className="sticky top-0 z-50 w-full bg-violet-200">
+      <div className="mx-auto flex h-15 max-w-screen-2xl items-center justify-between px-8 md:px-14 lg:px-20">
+        <Link to="/" className="flex items-center gap-4">
           <img
             src="/assets/ClinicIQ Logo.png"
-            className="h-11 w-auto object-contain"
             alt="ClinicIQ"
+            className="h-12 w-14 object-contain"
           />
-          <span className="text-3xl font-bold tracking-tight text-[#3D3762]">
-            ClinicIQ
-          </span>
+          <div className="text-4xl font-semibold leading-[54px]">
+            <span className="text-slate-700">Clinic</span>
+            <span className="text-indigo-500">IQ</span>
+          </div>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
@@ -42,15 +43,15 @@ function Header() {
             <Button
               type="button"
               onClick={() => void logout()}
-              className="rounded-xl bg-violet-500 px-5 py-2 text-white shadow-sm hover:bg-violet-600"
+              className="rounded-lg bg-indigo-400 px-5 py-5 text-lg font-medium text-white shadow-sm hover:bg-indigo-500"
             >
-              Log Out
+              LOG OUT
             </Button>
           ) : (
             <Button
               type="button"
               onClick={openLogin}
-              className="rounded-xl bg-violet-500 px-5 py-2 text-white shadow-sm hover:bg-violet-600"
+              className="rounded-lg bg-indigo-400 px-5 py-5 text-lg font-medium text-white shadow-sm hover:bg-indigo-500"
             >
               Login
             </Button>
@@ -62,15 +63,15 @@ function Header() {
             <Button
               type="button"
               onClick={() => void logout()}
-              className="rounded-xl bg-violet-500 px-4 py-2 text-white shadow-sm hover:bg-violet-600"
+              className="rounded-lg bg-indigo-400 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500"
             >
-              Log Out
+              LOG OUT
             </Button>
           ) : (
             <Button
               type="button"
               onClick={openLogin}
-              className="rounded-xl bg-violet-500 px-4 py-2 text-white shadow-sm hover:bg-violet-600"
+              className="rounded-lg bg-indigo-400 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500"
             >
               Login
             </Button>

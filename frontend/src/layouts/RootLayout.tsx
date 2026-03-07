@@ -19,7 +19,7 @@ export default function RootLayout() {
       <Header />
       {!loading && profile && (
         <div className="welcome-banner">
-          welcome {profile.full_name ?? 'user'}
+          Welcome! {profile.full_name ?? 'user'}
         </div>
       )}
       <Outlet />
