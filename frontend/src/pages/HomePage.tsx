@@ -1,21 +1,23 @@
-import { Link } from 'react-router-dom'
+import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
-    <div className="home-page info-box homepage-landing">
-      <h1 className="page-title">CLINIC IQ</h1>
-      <p className="homepage-subtitle">Choose where you want to go</p>
-      <div className="homepage-actions">
-        <Link to="/dashboard/patient" className="homepage-card">
-          <span className="homepage-card-title">DashBoard</span>
-          <span className="homepage-card-desc">go to your own dashboard</span>
-        </Link>
-        
-        <Link to="/clinic-discovery" className="homepage-card">
-          <span className="homepage-card-title">Clinic Nearby</span>
-          <span className="homepage-card-desc">Find and check in at nearby clinics</span>
-        </Link>
-      </div>
-    </div>
-  )
+    <main className="min-h-screen bg-gradient-to-b from-[#f7f7fb] via-[#eef4ff] to-[#dfe9ff]">
+      <section className="mx-auto flex max-w-7xl flex-col items-center px-6 pb-24 pt-18 text-center md:px-10 lg:px-16">
+        <div className="flex w-full max-w-[844px] flex-col items-center gap-10">
+          <div className="flex w-full flex-col items-center gap-6">
+            <h1 className="w-full text-center text-5xl font-bold tracking-tight text-slate-700 md:text-6xl">
+              Secure Healthcare Portal
+            </h1>
+
+            <p className="max-w-[649px] text-center text-lg leading-8 text-slate-700/75 md:text-2xl md:leading-9">
+              Seamlessly manage patient care and medical records in one secure,
+              easy-to-use platform
+            </p>
+          </div>
+
+        </div>
+      </section>
+    </main>
+  );
 }
