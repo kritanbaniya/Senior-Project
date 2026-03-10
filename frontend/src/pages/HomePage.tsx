@@ -80,7 +80,7 @@ export default function HomePage() {
       </section>
 
       <section className="px-6 pb-20">
-        <div className="mx-auto flex max-w-[1325px] flex-col items-center gap-5">
+        <div className="mx-auto flex max-w-[1325px] flex-col items-center gap-8">
           <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-2">
             <LoginCard
               title="Patient Login"
@@ -96,7 +96,7 @@ export default function HomePage() {
             />
           </div>
 
-          <div className="flex h-20 items-center justify-center rounded-2xl bg-white px-8 shadow-[0px_4px_4px_rgba(0,0,0,0.25)]">
+          <div className="flex h-20 items-center justify-center rounded-2xl bg-white px-6 shadow-[0px_4px_4px_rgba(0,0,0,0.25)]">
             <p className="text-center text-xl leading-9 md:text-2xl">
               <span className="font-normal text-black">New to ClinicIQ? </span>
               <button
