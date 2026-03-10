@@ -34,13 +34,13 @@ function LoginCard({
         <input
           type="text"
           placeholder="Email or Username"
-          className="mb-6 h-16 rounded-lg border border-black/25 px-5 text-xl font-light outline-none placeholder:text-black/25 focus:border-indigo-400"
+          className="mb-6 h-16 rounded-lg border border-black/25 px-5 text-xl font-lightbold outline-none placeholder:text-black/25 focus:border-indigo-400"
         />
 
         <input
           type="password"
           placeholder="Password"
-          className="mb-3 h-16 rounded-lg border border-black/25 px-5 text-xl font-light outline-none placeholder:text-black/25 focus:border-indigo-400"
+          className="mb-3 h-16 rounded-lg border border-black/25 px-5 text-xl font-lightbold outline-none placeholder:text-black/25 focus:border-indigo-400"
         />
 
         <button
