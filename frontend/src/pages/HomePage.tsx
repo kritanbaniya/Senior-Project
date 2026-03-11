@@ -22,7 +22,7 @@ export default function HomePage() {
 
       <section className="px-6 pb-20">
         <div className="mx-auto flex max-w-[1325px] flex-col items-center gap-8">
-          <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="grid w-full grid-cols-1 gap-8 lg:grid-cols-2">
             <LoginPanel
               title="Patient Login"
               subtitle="For patients managing personal health records"

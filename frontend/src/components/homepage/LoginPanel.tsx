@@ -25,7 +25,7 @@ const roleLabels: Record<SignupRole, string> = {
   patient: "Patient",
   nurse: "Nurse",
   doctor: "Doctor",
-  clinic: "Clinic Admin",
+  clinic: "Clinic Administrator",
 };
 
 export default function LoginPanel({
@@ -40,7 +40,7 @@ export default function LoginPanel({
 
   const [mode, setMode] = useState<LoginPanelMode>("login");
 
-  const [email, setEmail] = useState("");
+  const [email, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -66,7 +66,7 @@ export default function LoginPanel({
   const panelHeaderClasses = useMemo(
     () =>
       [
-        "flex h-[120px] items-center gap-4 border-b border-neutral-200 px-8 md:px-10",
+        "flex h-[120px] items-center gap-4 border-b border-neutral-200 px-8 md:px-42",
         highlighted
           ? "bg-gradient-to-r from-violet-400 to-indigo-400 text-white"
           : "bg-white text-slate-700",
@@ -301,16 +301,20 @@ export default function LoginPanel({
         {mode === "login" && (
           <form onSubmit={handleLoginSubmit} className="flex flex-col">
             <input
+              id="login-email"
+              name="email"
               type="email"
               placeholder="Email or Username"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
               className="mb-6 h-16 rounded-lg border border-black/25 px-5 text-xl outline-none placeholder:text-black/25 focus:border-indigo-400"
             />
 
             <div className="relative mb-3">
               <input
+                id="login-password"
+                name="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
@@ -327,13 +331,13 @@ export default function LoginPanel({
               </button>
             </div>
 
-            <button
+            <Link
               type="button"
               onClick={() => switchMode("forgot")}
-              className="mb-8 w-fit bg-transparent p-0 text-left text-xl font-normal text-indigo-400 transition hover:text-indigo-500"
+              className="mb-8 w-fit text-xl font-normal text-indigo-400 transition hover:text-indigo-500"
             >
               Forgot password?
-            </button>
+            </Link>
 
             <button
               type="submit"
@@ -348,6 +352,8 @@ export default function LoginPanel({
         {mode === "forgot" && (
           <form onSubmit={handleForgotSubmit} className="flex flex-col">
             <input
+              id="reset-email"
+              name="email"
               type="email"
               placeholder="Enter your login email"
               value={resetEmail}
@@ -363,14 +369,6 @@ export default function LoginPanel({
                 className="h-14 rounded-lg bg-indigo-400 px-6 text-lg font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {submitting ? "Sending..." : "Send reset link"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => switchMode("login")}
-                className="h-14 rounded-lg border border-slate-300 bg-white px-6 text-lg font-medium text-slate-700 transition hover:bg-slate-50"
-              >
-                Back to login
               </button>
             </div>
           </form>
@@ -400,6 +398,8 @@ export default function LoginPanel({
             )}
 
             <input
+              id="signup-full-name"
+              name="fullName"
               type="text"
               placeholder="Full Name"
               value={signupFullName}
@@ -409,6 +409,8 @@ export default function LoginPanel({
             />
 
             <input
+              id="signup-email"
+              name="email"
               type="email"
               placeholder="Email"
               value={signupEmail}
@@ -419,6 +421,8 @@ export default function LoginPanel({
 
             <div className="relative mb-6">
               <input
+                id="signup-password"
+                name="password"
                 type={showSignupPassword ? "text" : "password"}
                 placeholder="Password"
                 value={signupPassword}
@@ -437,6 +441,8 @@ export default function LoginPanel({
 
             <div className="relative mb-6">
               <input
+                id="signup-confirm-password"
+                name="confirmPassword"
                 type={showSignupConfirmPassword ? "text" : "password"}
                 placeholder="Confirm Password"
                 value={signupConfirmPassword}
@@ -467,14 +473,6 @@ export default function LoginPanel({
               >
                 {submitting ? "Signing up..." : "Create account"}
               </button>
-
-              <button
-                type="button"
-                onClick={() => switchMode("login")}
-                className="h-14 rounded-lg border border-slate-300 bg-white px-6 text-lg font-medium text-slate-700 transition hover:bg-slate-50"
-              >
-                Back to login
-              </button>
             </div>
           </form>
         )}
@@ -499,13 +497,6 @@ export default function LoginPanel({
               Back to Login
             </button>
           )}
-
-          <Link
-            to="/reset-password"
-            className="font-medium text-slate-500 transition hover:text-slate-700"
-          >
-            Reset Password Page
-          </Link>
         </div>
       </div>
     </div>
