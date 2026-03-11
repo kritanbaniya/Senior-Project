@@ -22,7 +22,7 @@ function Header() {
             alt="ClinicIQ"
             className="h-12 w-14 object-contain"
           />
-          <div className="text-4xl font-semibold leading-[54px]">
+          <div className="text-4xl font-bold leading-[54px]">
             <span className="text-slate-700">Clinic</span>
             <span className="text-indigo-500">IQ</span>
           </div>

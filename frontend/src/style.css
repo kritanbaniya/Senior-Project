@@ -68,9 +68,9 @@ h1 {
 }
 
 h2 {
-  font-size: 1.2em;
-  line-height: 1;
-  color: #000000;
+  /*font-size: 1.2em;*/
+  line-height: 1.0;
+  /*color: #000000;*/
 }
 #root {
   min-height: 50vh;
@@ -140,11 +140,9 @@ button {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
-  font-size: 1em;
   font-weight: 900;
   font-family: inherit;
   font-weight: bold;
-  text-transform: uppercase;
   background-color: #8D7BEE;
   color: #ffffff;
   cursor: pointer;
