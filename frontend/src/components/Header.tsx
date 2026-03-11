@@ -45,7 +45,7 @@ function Header() {
               onClick={() => void logout()}
               className="rounded-lg bg-indigo-400 px-5 py-5 text-lg font-medium text-white shadow-sm hover:bg-indigo-500"
             >
-              LOG OUT
+              Log Out
             </Button>
           ) : (
             <Button
@@ -65,7 +65,7 @@ function Header() {
               onClick={() => void logout()}
               className="rounded-lg bg-indigo-400 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500"
             >
-              LOG OUT
+              Log Out
             </Button>
           ) : (
             <Button
