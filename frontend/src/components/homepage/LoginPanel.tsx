@@ -80,7 +80,7 @@ export default function LoginPanel({
   };
 
   const resetAllFields = () => {
-    setEmail("");
+    setUsername("");
     setPassword("");
     setResetEmail("");
     setSignupFullName("");
@@ -333,6 +333,7 @@ export default function LoginPanel({
 
             <Link
               type="button"
+              to="#"
               onClick={() => switchMode("forgot")}
               className="mb-8 w-fit text-xl font-normal text-indigo-400 transition hover:text-indigo-500"
             >
