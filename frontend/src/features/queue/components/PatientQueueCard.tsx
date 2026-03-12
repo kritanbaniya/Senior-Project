@@ -57,7 +57,7 @@ export default function PatientQueueCard({
             leave queue
           </button>
         </>
-      ) : row && (row.status === 'waiting' || row.status === 'called') ? (
+      ) : row?.status === 'waiting' ? (
         <>
           <p className="pd-card-desc">You are in active queue.</p>
           <div className="pd-queue-stats">
@@ -73,6 +73,16 @@ export default function PatientQueueCard({
           <button type="button" className="pd-btn pd-btn-secondary" onClick={onLeave}>
             leave queue
           </button>
+        </>
+      ) : row?.status === 'called' ? (
+        <>
+          <p className="pd-card-desc">You have been called! Please proceed to the front desk.</p>
+          <div className="pd-queue-stats">
+            <div className="pd-queue-stat">
+              <span className="pd-queue-label">Position</span>
+              <span className="pd-queue-value">{activePosition ?? '-'}</span>
+            </div>
+          </div>
         </>
       ) : (
         <>
