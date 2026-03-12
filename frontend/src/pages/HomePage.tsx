@@ -5,7 +5,7 @@ import LoginPanel from "@/components/homepage/LoginPanel.tsx";
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f5f6f8]">
-      <section className="px-6 pb-10 pt-24">
+      <section className="px-6 pb-10 pt-12">
         <div className="mx-auto flex w-full max-w-[844px] flex-col items-center gap-10">
           <div className="flex flex-col items-center gap-6">
             <h1 className="text-center text-5xl font-bold text-slate-700 md:text-6xl">
@@ -47,7 +47,7 @@ export default function HomePage() {
                 to="/"
                 className="font-semibold text-indigo-400 transition hover:text-indigo-500"
               >
-                Use the Sign Up option in a panel
+                Click Sign Up
               </Link>
             </p>
           </div>

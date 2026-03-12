@@ -434,9 +434,9 @@ export default function LoginPanel({
               <button
                 type="button"
                 onClick={() => setShowSignupPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent p-0 text-slate-500 hover:text-slate-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent p-0 text-slate-500 hover:text-slate-700 !outline-none focus:!outline-none focus-visible:!outline-none"
               >
-                {showSignupPassword ? <EyeOff size={22} /> : <Eye size={22} />}
+                {showSignupPassword ? <EyeOff size={30} /> : <Eye size={30} />}
               </button>
             </div>
 
@@ -456,12 +456,12 @@ export default function LoginPanel({
                 onClick={() =>
                   setShowSignupConfirmPassword((prev) => !prev)
                 }
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent p-0 text-slate-500 hover:text-slate-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent p-0 text-slate-500 hover:text-slate-700 !outline-none focus:!outline-none focus-visible:!outline-none"
               >
                 {showSignupConfirmPassword ? (
-                  <EyeOff size={22} />
+                  <EyeOff size={30} />
                 ) : (
-                  <Eye size={22} />
+                  <Eye size={30} />
                 )}
               </button>
             </div>
@@ -483,7 +483,7 @@ export default function LoginPanel({
             <button
               type="button"
               onClick={() => switchMode("signup")}
-              className="bg-transparent p-0 font-semibold text-indigo-400 transition hover:text-indigo-500"
+              className="rounded-lg px-2 py-1.5 bg-indigo-400 p-0 font-semibold text-white transition hover:bg-indigo-500"
             >
               Sign Up
             </button>
@@ -493,7 +493,7 @@ export default function LoginPanel({
             <button
               type="button"
               onClick={() => switchMode("login")}
-              className="bg-transparent p-0 font-medium text-slate-600 transition hover:text-slate-800"
+              className="bg-transparent p-0 font-medium text-indigo-400 transition hover:text-indigo-500"
             >
               Back to Login
             </button>

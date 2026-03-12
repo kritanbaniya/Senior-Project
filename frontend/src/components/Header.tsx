@@ -1,10 +1,14 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "@/components/ui/button";
 
 function Header() {
   const { profile, openLogin, logout } = useAuth();
   const isLoggedIn = !!profile;
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
+  
+  const showLoginButton = !isLoggedIn && !isHomePage;
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     [
@@ -29,33 +33,25 @@ function Header() {
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          <NavLink to="/about" className={navLinkClass}>
-            About
-          </NavLink>
-          <NavLink to="/help" className={navLinkClass}>
-            Help
-          </NavLink>
-          <NavLink to="/contact" className={navLinkClass}>
-            Contact Us
-          </NavLink>
-
-          {isLoggedIn ? (
+          {isLoggedIn && (
             <Button
               type="button"
               onClick={() => void logout()}
               className="rounded-lg bg-indigo-400 px-5 py-5 text-lg font-medium text-white shadow-sm hover:bg-indigo-500"
             >
-              Log Out
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              onClick={openLogin}
-              className="rounded-lg bg-indigo-400 px-5 py-5 text-lg font-medium text-white shadow-sm hover:bg-indigo-500"
-            >
-              Login
+            Log Out
             </Button>
           )}
+
+          {showLoginButton && (
+            <Button
+            type="button"
+            onClick={openLogin}
+            className="rounded-lg bg-indigo-400 px-5 py-5 text-lg font-medium text-white shadow-sm hover:bg-indigo-500"
+            >
+            Login
+            </Button>
+            )}
         </nav>
 
         <div className="md:hidden">
