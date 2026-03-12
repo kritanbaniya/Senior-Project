@@ -56,7 +56,10 @@ a {
 }
 
 body {
-  background-color: #f5f6f8;
+  background-image: url('components/Hospital\ Background.webp');
+  background-repeat: no-repeat;
+  background-position: center, bottom center;
+  background-size: auto 100%;
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
@@ -67,6 +70,7 @@ h2 {
   line-height: 1.0;
   /*color: #000000;*/
 }
+
 #root {
   min-height: 50vh;
 }

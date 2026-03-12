@@ -20,7 +20,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f6f8]">
+    <main className="min-h-screen">
       <section className="px-6 pb-10 pt-12">
         <div className="mx-auto flex w-full max-w-[844px] flex-col items-center gap-10">
           <div className="flex flex-col items-center gap-6">
