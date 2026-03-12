@@ -85,7 +85,6 @@ If any command is not found or the version is too old, install or upgrade using 
 ### Run these commands in Git Bash
 ```bash
 # Using Windows Git bash
-
 git clone <repository-url>
 cd Senior-Project
 
@@ -105,30 +104,26 @@ uvicorn main:app --reload
 
 #NOTE:To enable LAN hosting, install https certificate (if hosting does not work check firewall settings)
 npm install --save-dev vite-plugin-mkcert
+
 ```
+## ShadCN/UI Components
+We use [shadcn/ui](https://ui.shadcn.com) for beautiful, accessible, and fully customizable UI components.  
+These components are NOT installed as an npm package — the CLI copies the code directly into our repo (in `@/components/ui`), so we own and can tweak everything with Tailwind CSS.
 
----
-
-## How to run the frontend locally
-
-1. **Open a terminal** (e.g. Git Bash, PowerShell, or Command Prompt).
-
-2. **Go to the project and into the frontend folder:**
-   ```bash
-   cd Senior-Project
-   cd frontend
-   ```
+### Setup Status
+✅ **Initialization is already complete**  
+Your `components.json`, Tailwind config, and global styles (`src/style.css`) are committed to the repo.  
+After cloning or pulling the latest main branch and running `npm install`, **you do NOT need to run `npx shadcn@latest init`** again.  
+The CLI will detect the config automatically.
 
 
-3. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-   enter (y) to install vite if u dont have it 
-   ```bash
-   npm install -D vite
-    ```
-     
-4. **Open the app in your browser** at the URL shown in the terminal (usually **http://localhost:5173**).
+# Browse the full list of available components here:  
+#   👉 **[https://ui.shadcn.com/docs/components](https://ui.shadcn.com/docs/components)**  
+#   *(Click any component to see live previews, usage examples, props, and copy-paste code if needed for reference.)*
 
-To stop the server, press `Ctrl+C` in the terminal.
+### In your project root, run this command to add one or more: ###
+```bash
+#In Windows Git Bash or VSCode Terminal:
+#Note: Component button is already installed, try another component
+   npx shadcn@latest add button
+   npx shadcn@latest add [insert name of component]
