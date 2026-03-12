@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
-
+import NurseAppointmentCalendar from './NurseAppointmentCalendar'
 
 
 
@@ -211,7 +211,7 @@ export default function NurseAppointmentManager() {
                 .select('*')
                 .eq('clinic_id', await thisNursesClinic());
                 //.order("appointment_date", { ascending: false });      FUTURE: ADJUST ORDER BY THIS 
-        // console.log("APPOINTMENT DATA:", data);
+        console.log("APPOINTMENT DATA:", data);
         // console.log("ERROR:", error);
 
         if (error) {
@@ -373,6 +373,25 @@ export default function NurseAppointmentManager() {
             {/* <pre>{JSON.stringify(appointmentsList, null, 2)}</pre> */}
             <div className="info-box appointments-section">
                 <h2 className="info-box-title">Appointment scheduling</h2>
+                
+                <NurseAppointmentCalendar
+  appointments={appointmentsList}
+  onSelectAppointment={handleEditAppointment}
+  onSelectSlot={(start) => {
+    const yyyy = start.getFullYear()
+    const mm = String(start.getMonth() + 1).padStart(2, '0')
+    const dd = String(start.getDate()).padStart(2, '0')
+    const hh = String(start.getHours()).padStart(2, '0')
+    const min = String(start.getMinutes()).padStart(2, '0')
+
+    setScheduleForm((f) => ({
+      ...f,
+      date: `${yyyy}-${mm}-${dd}`,
+      time: `${hh}:${min}`,
+    }))
+    setShowScheduleForm(true)
+  }}
+/>
                 <div className="info-box-content">
                     {/* <h3><pre>{JSON.stringify(doctorList, null, 2)}</pre></h3> */}
                     <p>View, create, and modify appointments.</p>
@@ -511,6 +530,7 @@ export default function NurseAppointmentManager() {
                                     </div>
                             </form>)
                             :(<></>)}
+                            
                             
                 </div>
             </div>

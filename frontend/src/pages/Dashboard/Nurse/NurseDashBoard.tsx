@@ -24,7 +24,7 @@ export default function NurseDashBoard() {
   } = useNurseQueue(selectedClinicId)
 
   return (
-    <div className="clinic-info-page nurse-dashboard">
+    <div className="nurse-dashboard">
       <h1 className="page-title">Nurse Dashboard</h1>
 
       <div className="info-box queue-section">
