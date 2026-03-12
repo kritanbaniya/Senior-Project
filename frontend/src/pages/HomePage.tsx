@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BriefcaseMedical, Users } from "lucide-react";
 import LoginPanel from "@/components/homepage/LoginPanel.tsx";
+import FeatureCard from "@/components/homepage/FeatureCard.tsx";
 
 type ActivePanel = "patient" | "provider";
 
@@ -69,6 +70,12 @@ export default function HomePage() {
               />
             </div>
           </div>
+        </div>
+      </section>
+      
+      <section className="px-6 pb-20">
+        <div className="mx-auto max-w-[1270px]">
+          <FeatureCard />
         </div>
       </section>
     </main>
