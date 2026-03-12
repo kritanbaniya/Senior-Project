@@ -325,9 +325,9 @@ export default function LoginPanel({
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent p-0 text-slate-500 hover:text-slate-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent p-0 text-slate-500 hover:text-slate-700 !outline-none focus:!outline-none focus-visible:!outline-none"
               >
-                {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
+                {showPassword ? <EyeOff size={30} /> : <Eye size={30} />}
               </button>
             </div>
 
@@ -479,7 +479,7 @@ export default function LoginPanel({
         )}
 
         <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-lg">
-          {mode !== "signup" && (
+          {mode !== "signup" && mode !== "forgot" && (
             <button
               type="button"
               onClick={() => switchMode("signup")}

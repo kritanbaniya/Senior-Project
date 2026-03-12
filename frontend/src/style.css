@@ -132,13 +132,9 @@ h2.left_title {
 }
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
   font-weight: 900;
   font-family: inherit;
   font-weight: bold;
-  background-color: #8D7BEE;
-  color: #ffffff;
   cursor: pointer;
   transition: border-color 0.25s;
 }
