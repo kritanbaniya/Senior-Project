@@ -308,7 +308,7 @@ export default function LoginPanel({
               value={email}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
-              className="mb-6 h-16 rounded-lg border border-black/25 px-5 text-xl outline-none placeholder:text-black/25 focus:border-indigo-400"
+              className="mb-6 h-16 rounded-lg border border-black/25 px-5 text-xl outline-none placeholder:text-black/25 focus:border-indigo-500"
             />
 
             <div className="relative mb-3">
@@ -343,7 +343,7 @@ export default function LoginPanel({
             <button
               type="submit"
               disabled={submitting}
-              className="h-16 rounded-lg bg-indigo-400 text-2xl font-semibold text-white shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
+              className="h-14 w-full rounded-lg bg-indigo-400 text-2xl font-semibold text-white transition hover:bg-indigo-500"
             >
               {submitting ? "Logging in..." : "Login"}
             </button>
@@ -470,9 +470,9 @@ export default function LoginPanel({
               <button
                 type="submit"
                 disabled={submitting}
-                className="h-14 rounded-lg bg-indigo-400 px-6 text-lg font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
+                className="h-12 w-full rounded-lg bg-indigo-400 text-lg font-semibold text-white transition hover:bg-indigo-500"
               >
-                {submitting ? "Signing up..." : "Create account"}
+                {submitting ? "Signing up..." : "Create Account"}
               </button>
             </div>
           </form>
@@ -483,9 +483,9 @@ export default function LoginPanel({
             <button
               type="button"
               onClick={() => switchMode("signup")}
-              className="rounded-lg px-2 py-1.5 bg-indigo-400 p-0 font-semibold text-white transition hover:bg-indigo-500"
+              className="rounded-lg h-14 w-full bg-indigo-400 text-2xl font-semibold text-white transition hover:bg-indigo-500"
             >
-              Sign Up
+              Create a New Account
             </button>
           )}
 

@@ -1,4 +1,4 @@
-import { Activity, Users } from "lucide-react";
+import { BriefcaseMedical, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import LoginPanel from "@/components/homepage/LoginPanel.tsx";
 
@@ -34,22 +34,10 @@ export default function HomePage() {
             <LoginPanel
               title="Provider Login"
               subtitle="For healthcare professionals managing patient care."
-              icon={<Activity className="h-12 w-12" strokeWidth={2.25} />}
+              icon={<BriefcaseMedical className="h-12 w-12" strokeWidth={2.25} />}
               highlighted
               signupRoleOptions={["nurse", "doctor", "clinic"]}
             />
-          </div>
-
-          <div className="flex h-20 items-center justify-center rounded-2xl bg-white px-6 shadow-[0px_4px_4px_rgba(0,0,0,0.25)]">
-            <p className="text-center text-xl leading-9 md:text-2xl">
-              <span className="font-normal text-black">New to ClinicIQ? </span>
-              <Link
-                to="/"
-                className="font-semibold text-indigo-400 transition hover:text-indigo-500"
-              >
-                Click Sign Up
-              </Link>
-            </p>
           </div>
         </div>
       </section>
