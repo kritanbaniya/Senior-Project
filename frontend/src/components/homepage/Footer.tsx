@@ -1,12 +1,28 @@
+/**
+ * This file defines the Footer component, which displays the footer section of the homepage.
+ * The footer includes links to the Privacy Policy, Terms of Service, and Support pages, as well as a copyright notice.
+ */
+
 export default function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer-links">
-        <a href="/privacy">Privacy Policy</a>
-        <a href="/terms">Terms of Service</a>
-        <a href="/support">Support</a>
+    <footer className="w-full">
+      <div className="mx-auto flex max-w-[766px] flex-col items-center gap-4 text-center">
+        <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-3 text-[20px] font-normal leading-10 text-slate-700/50 md:text-[30px]">
+          <span className="cursor-pointer transition hover:text-slate-700/70">
+            Privacy Policy
+          </span>
+          <span className="cursor-pointer transition hover:text-slate-700/70">
+            Terms of Service
+          </span>
+          <span className="cursor-pointer transition hover:text-slate-700/70">
+            Support
+          </span>
+        </div>
+
+        <p className="text-center text-[20px] font-normal leading-10 text-slate-700/50 md:text-[30px]">
+          Digital Worms © 2026
+        </p>
       </div>
-      <div className="footer-copy">Digital Worms © 2026</div>
     </footer>
   );
 }

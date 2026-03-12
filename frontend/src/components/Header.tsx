@@ -1,3 +1,8 @@
+/**
+ * This file defines the Header component, which displays the header section of the application.
+ * The header includes the ClinicIQ logo, navigation links, and login/logout buttons based on the user's authentication status.
+ */
+
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "@/components/ui/button";

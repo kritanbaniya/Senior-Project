@@ -1,7 +1,14 @@
+/**
+ * This file defines the HomePage component, which serves as the landing page for the application.
+ * It includes a hero section with a title and subtitle, two login panels for patients and providers, and a feature card section.
+ * The login panels have interactive hover effects that highlight the active panel and dim the inactive one.
+ */
+
 import { useState } from "react";
 import { BriefcaseMedical, Users } from "lucide-react";
 import LoginPanel from "@/components/homepage/LoginPanel.tsx";
 import FeatureCard from "@/components/homepage/FeatureCard.tsx";
+import Footer from "@/components/homepage/Footer.tsx";
 
 type ActivePanel = "patient" | "provider";
 
@@ -72,10 +79,11 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      
-      <section className="px-6 pb-20">
-        <div className="mx-auto max-w-[1270px]">
+
+      <section className="px-6 pb-12">
+        <div className="mx-auto flex max-w-[1270px] flex-col items-center gap-10">
           <FeatureCard />
+          <Footer />
         </div>
       </section>
     </main>
