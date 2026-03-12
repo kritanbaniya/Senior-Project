@@ -142,9 +142,9 @@ export default function ResetPassword() {
                       }
                     >
                       {showPassword ? (
-                        <EyeOff className="h-8 w-8" />
+                        <EyeOff className="h-7 w-7" />
                       ) : (
-                        <Eye className="h-8 w-8" />
+                        <Eye className="h-7 w-7" />
                       )}
                     </button>
                   </div>
@@ -180,9 +180,9 @@ export default function ResetPassword() {
                       }
                     >
                       {showConfirmPassword ? (
-                        <EyeOff className="h-8 w-8" />
+                        <EyeOff className="h-7 w-7" />
                       ) : (
-                        <Eye className="h-8 w-8" />
+                        <Eye className="h-7 w-7" />
                       )}
                     </button>
                   </div>
@@ -195,13 +195,6 @@ export default function ResetPassword() {
                 >
                   {submitting ? "Updating..." : "Update Password"}
                 </button>
-
-                <Link
-                  to="/"
-                  className="mx-auto text-lg font-medium text-slate-500 transition hover:text-slate-700"
-                >
-                  Back to home
-                </Link>
               </form>
             )}
           </div>
