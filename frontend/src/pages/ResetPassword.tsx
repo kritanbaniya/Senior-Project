@@ -67,7 +67,7 @@ export default function ResetPassword() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-violet-100 via-white to-indigo-100 px-6 py-12">
+    <main className="min-h-screen px-6 py-12">
       <div className="mx-auto flex max-w-6xl items-center justify-center">
         <div className="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0px_10px_30px_rgba(0,0,0,0.10)]">
           <div className="flex items-center gap-4 bg-gradient-to-r from-violet-400 to-indigo-400 px-8 py-6 text-white">
