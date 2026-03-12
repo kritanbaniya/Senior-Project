@@ -36,7 +36,7 @@ function FeatureItem({
         <h3 className="text-2xl font-semibold leading-10 text-slate-700">
           {title}
         </h3>
-        <p className="text-lg font-light leading-8 text-black/50">
+        <p className="text-lg font-lightbold leading-8 text-slate-700/75">
           {description}
         </p>
       </div>
@@ -72,7 +72,7 @@ export default function FeatureCard() {
           <FeatureItem
             icon={<WalletCards className="h-12 w-12" strokeWidth={2.25} />}
             title="Manage Prescriptions"
-            description="View your prescriptions information such as dose, timings, and number of refills."
+            description="View your prescriptions information such as dose and number of refills."
           />
         </div>
       </div>
