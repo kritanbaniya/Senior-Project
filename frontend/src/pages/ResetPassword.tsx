@@ -136,15 +136,15 @@ export default function ResetPassword() {
                     <button
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent p-0 text-slate-500 transition hover:text-slate-700"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent p-0 text-slate-500 transition hover:text-slate-700 !outline-none focus:!outline-none focus-visible:!outline-none"
                       aria-label={
                         showPassword ? "Hide password" : "Show password"
                       }
                     >
                       {showPassword ? (
-                        <EyeOff className="h-5 w-5" />
+                        <EyeOff className="h-8 w-8" />
                       ) : (
-                        <Eye className="h-5 w-5" />
+                        <Eye className="h-8 w-8" />
                       )}
                     </button>
                   </div>
@@ -172,7 +172,7 @@ export default function ResetPassword() {
                       onClick={() =>
                         setShowConfirmPassword((prev) => !prev)
                       }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent p-0 text-slate-500 transition hover:text-slate-700"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent p-0 text-slate-500 transition hover:text-slate-700 !outline-none focus:!outline-none focus-visible:!outline-none"
                       aria-label={
                         showConfirmPassword
                           ? "Hide confirm password"
@@ -180,9 +180,9 @@ export default function ResetPassword() {
                       }
                     >
                       {showConfirmPassword ? (
-                        <EyeOff className="h-5 w-5" />
+                        <EyeOff className="h-8 w-8" />
                       ) : (
-                        <Eye className="h-5 w-5" />
+                        <Eye className="h-8 w-8" />
                       )}
                     </button>
                   </div>
@@ -198,7 +198,7 @@ export default function ResetPassword() {
 
                 <Link
                   to="/"
-                  className="mx-auto text-sm font-medium text-slate-500 transition hover:text-slate-700"
+                  className="mx-auto text-lg font-medium text-slate-500 transition hover:text-slate-700"
                 >
                   Back to home
                 </Link>
