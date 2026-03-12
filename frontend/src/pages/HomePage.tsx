@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { BriefcaseMedical, Users } from "lucide-react";
+import HeroSection from "@/components/homepage/Hero.tsx";
 import LoginPanel from "@/components/homepage/LoginPanel.tsx";
 import FeatureCard from "@/components/homepage/FeatureCard.tsx";
 import Footer from "@/components/homepage/Footer.tsx";
@@ -29,20 +30,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen">
-      <section className="px-6 pb-10 pt-12">
-        <div className="mx-auto flex w-full max-w-[844px] flex-col items-center gap-10">
-          <div className="flex flex-col items-center gap-6">
-            <h1 className="text-center text-5xl font-bold text-slate-700 md:text-6xl">
-              Secure Healthcare Portal
-            </h1>
-
-            <p className="max-w-[649px] text-center text-xl leading-9 text-slate-700/75 md:text-2xl">
-              Seamlessly manage patient care and medical records in one secure,
-              easy-to-use platform
-            </p>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       <section className="px-6 pb-20">
         <div className="mx-auto flex max-w-[1325px] flex-col items-center gap-8">
