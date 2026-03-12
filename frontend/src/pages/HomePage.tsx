@@ -1,5 +1,4 @@
 import { BriefcaseMedical, Users } from "lucide-react";
-import { Link } from "react-router-dom";
 import LoginPanel from "@/components/homepage/LoginPanel.tsx";
 
 export default function HomePage() {
