@@ -1483,6 +1483,20 @@ button:focus-visible {
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
+/*Applies a custom background and text color to inputs that are autofilled by the browser, ensuring they match the design of the patient dashboard*/
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #C7C0F0 inset !important;  /* Much larger to fully cover any edges */
+  box-shadow: 0 0 0 1000px #C7C0F0 inset !important;         /* Non-prefixed fallback */
+  -webkit-text-fill-color: #000 !important;                   /* Your text color – adjust if needed */
+  background-color: #C7C0F0 !important;
+  border: none !important;                                    /* Force-remove any inner border */
+  outline: none !important;                                   /* Kill any outline/glow */
+  transition: background-color 5000s ease-in-out 0s !important; /* Delays Chrome's flash/change */
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
