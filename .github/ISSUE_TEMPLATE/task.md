@@ -2,7 +2,7 @@
 
 name: Task
 about: General development task
-title: "[TASK] "
+title: ""
 labels: task
 assignees: ""
 
