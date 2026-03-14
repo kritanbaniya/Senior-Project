@@ -1,12 +1,19 @@
-## Pull Request Summary
+## Related Issue
+
+Fixes #
+
+<!-- Replace # with the Github issue number, for example: Fixes #12 
+     Otherwise, please delete the Related Issue section of the PR-->
+---
+
+## Summary
 
 Provide a short description of what this PR does.
 
 Example:
-
-* Implements homepage redesign
-* Fixes login redirect bug
-* Adds HeroSection component
+- Implements homepage redesign
+- Fixes login redirect bug
+- Adds HeroSection component
 
 ---
 
@@ -14,18 +21,9 @@ Example:
 
 List the major changes included in this PR.
 
-*
-*
-*
-
----
-
-## Related Issue
-
-Link the issue this PR resolves. (if applicable)
-
-Example:
-Fixes #12
+- 
+- 
+- 
 
 ---
 
@@ -33,11 +31,11 @@ Fixes #12
 
 Please select the relevant option:
 
-* [ ] Bug fix
-* [ ] New feature
-* [ ] Enhancement
-* [ ] Refactor
-* [ ] Documentation update
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Enhancement
+- [ ] Refactor
+- [ ] Documentation update
 
 ---
 
@@ -45,11 +43,9 @@ Please select the relevant option:
 
 Describe how this change was tested.
 
-Example:
-
-* Ran frontend locally
-* Verified login flow
-* Confirmed dashboard redirect works
+- Ran frontend locally
+- Verified expected behavior
+- Tested edge cases if applicable
 
 ---
 
@@ -57,11 +53,11 @@ Example:
 
 Before submitting this PR, please confirm:
 
-* [ ] Code compiles and runs locally
-* [ ] No unnecessary console logs
-* [ ] Relevant issue is linked
-* [ ] Changes were tested
-* [ ] PR title clearly describes the change
+- [ ] Code compiles and runs locally
+- [ ] No unnecessary console logs
+- [ ] Relevant issue is linked
+- [ ] Changes were tested
+- [ ] PR title clearly describes the change
 
 ---
 
