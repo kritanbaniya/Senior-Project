@@ -11,6 +11,7 @@ import ClinicInfo from './pages/ClinicInfo'
 import ResetPassword from './pages/ResetPassword'
 import PatientDashboard from './pages/Dashboard/Patient/PatientDashboard'
 import PatientYourInformation from './pages/Dashboard/Patient/PatientYourInformation'
+import PatientPDFUpload from './pages/Patient/PatientPDFUpload'
 import NurseDashBoard from './pages/Dashboard/Nurse/NurseDashBoard'
 import NurseYourInformation from './pages/Dashboard/Nurse/Nurseinformation'
 import DoctorDashBoard from './pages/Dashboard/Doctor/DoctorDashBoard'
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="patient" element={<RoleGuard allowedRole="patient" />}>
                 <Route index element={<PatientDashboard />} />
                 <Route path="information" element={<PatientYourInformation />} />
+                <Route path="pdf-upload" element={<PatientPDFUpload />} />
               </Route>
               <Route path="nurse" element={<RoleGuard allowedRole="nurse" />}>
                 <Route index element={<NurseDashBoard />} />
