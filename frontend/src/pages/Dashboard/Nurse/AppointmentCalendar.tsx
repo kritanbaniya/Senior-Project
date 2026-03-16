@@ -8,13 +8,12 @@ import getDay from 'date-fns/getDay'
 import enUS from 'date-fns/locale/en-US'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 
-import type { Appointment , MemberList } from '../../types.ts'
+import type { Appointment } from '../../types.ts'
 
 
 const locales = {
   'en-US': enUS,
 }
-
 const localizer = dateFnsLocalizer({
   format,
   parse,
@@ -23,7 +22,6 @@ const localizer = dateFnsLocalizer({
   locales,
 })
 
-// local to this, so dont move 
 type CalendarEvent = {
   id: string
   title: string
@@ -31,20 +29,22 @@ type CalendarEvent = {
   end: Date
   raw: Appointment
 }
-type Props = {
+type Props = { // define the prop's types
   appointments: Appointment[]
   onSelectAppointment?: (apt: Appointment) => void
   onSelectSlot?: (start: Date) => void
 }
 
 export default function AppointmentCalendar({
-  appointments,
-  onSelectAppointment,
-  onSelectSlot,
+  appointments, // list of appointments to display 
+  onSelectAppointment, // function passed in (can be nurse/patient)
+  onSelectSlot,// 
 }: Props) {
   const [currentView, setCurrentView] = useState<View>(Views.MONTH)
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
 
+  //// TREATING DATA 
+  // create list of events from list of appointments 
   const events: CalendarEvent[] = useMemo(() => {
     return appointments
       .filter((apt) => {
@@ -65,7 +65,10 @@ export default function AppointmentCalendar({
         }
       })
   }, [appointments])
+  // ^ dependency: which refreshes on the appointments state from parent
 
+
+  //// USE CALENDAR COMPONENT 
   return (
     <div style={{ height: '650px', margin: '20px 0' }}>
       <Calendar
@@ -73,8 +76,8 @@ export default function AppointmentCalendar({
         events={events}
         date={currentDate}
         view={currentView}
-        onNavigate={(newDate) => setCurrentDate(newDate)}
-        onView={(newView) => setCurrentView(newView)}
+        onNavigate={(newDate) => setCurrentDate(newDate)} // aware of today's date
+        onView={(newView) => setCurrentView(newView)} // set view type
         startAccessor="start"
         endAccessor="end"
         views={[Views.MONTH, Views.WEEK, Views.DAY]}
@@ -90,8 +93,8 @@ export default function AppointmentCalendar({
           onSelectSlot?.(slotInfo.start)
         }}
         eventPropGetter={(event) => {
-          let backgroundColor = '#3174ad'
-
+          let backgroundColor = '#3174ad' // default
+          // COLOR BY VISIT TYPE 
           if (event.raw.visit_type === 'Vaccination') {
             backgroundColor = '#2e8b57'
           } else if (event.raw.visit_type === 'Consultation') {
@@ -108,6 +111,7 @@ export default function AppointmentCalendar({
               borderRadius: '6px',
               border: 'none',
               padding: '2px 4px',
+
             },
           }
         }}

@@ -16,10 +16,6 @@ create type AppointmentStatus as enum ( 'scheduled', 'completed' , 'cancelled' )
 
 */
 
-
-
-
-
 type Response =
   | "Failed"
   | "Success"
@@ -102,8 +98,11 @@ export default function NurseAppointmentManager() {
             setPatientList(data ?? []);
     }
 
-    
+    // Select after doing the supabase insert, and using that to confirm submission. 
+    // which can render a "completed!" thing 
 
+
+    
     ////////////////////////////////////////////////
     ///// C R U D !!! 
         // I GOT SPIDERS CRAWLING DOWN MY SPINE, 
@@ -167,6 +166,22 @@ export default function NurseAppointmentManager() {
             console.log("ERROR: APPOINTMENT CREATION FAILED");
         }
     }
+    const handleNewAppointment = (start: Date) => {
+        const yyyy = start.getFullYear()
+        const mm = String(start.getMonth() + 1).padStart(2, '0')
+        const dd = String(start.getDate()).padStart(2, '0')
+        const hh = String(start.getHours()).padStart(2, '0')
+        const min = String(start.getMinutes()).padStart(2, '0')
+
+        setScheduleForm((f) => ({
+            ...f,
+            date: `${yyyy}-${mm}-${dd}`,
+            time: `${hh}:${min}`,
+        }))
+
+        setShowAptUpdateForm(false)
+        setShowScheduleForm(true)
+    }
 
 
     //// R: READ APPOINTMENT 
@@ -215,17 +230,7 @@ export default function NurseAppointmentManager() {
                 .select('*')
                 .eq('Appointment_id', apt.Appointment_id)
                 .single();
-        if(error || !data ){
-            // setAptUpdateData({
-            //     Appointment_id: '', 
-            //     appointment_date:  '',  
-            //     patient_name:  '',  
-            //     patient_email:  '',  
-            //     clinician_name:  '',  
-            //     clinic_name:  '',  
-            //     checkin_at: null,
-            //     seen_at: null,
-            //     visit_type:  ''});
+        if(error || !data ){ 
             return 
         }console.log(data);
 
@@ -336,6 +341,7 @@ export default function NurseAppointmentManager() {
     }, [doctorList])
 
 
+
     return (
         <> 
             {/* Appointment management */}
@@ -346,20 +352,8 @@ export default function NurseAppointmentManager() {
                 <AppointmentCalendar
                     appointments={appointmentsList}
                     onSelectAppointment={handleEditAppointment}
-                    onSelectSlot={(start) => {
-                        const yyyy = start.getFullYear()
-                        const mm = String(start.getMonth() + 1).padStart(2, '0')
-                        const dd = String(start.getDate()).padStart(2, '0')
-                        const hh = String(start.getHours()).padStart(2, '0')
-                        const min = String(start.getMinutes()).padStart(2, '0')
-
-                        setScheduleForm((f) => ({
-                        ...f,
-                        date: `${yyyy}-${mm}-${dd}`,
-                        time: `${hh}:${min}`,
-                        }))
-                        setShowScheduleForm(true)
-                    }}/>
+                    onSelectSlot={handleNewAppointment}
+                    />
 
 
                 <div className="info-box-content">
@@ -369,7 +363,7 @@ export default function NurseAppointmentManager() {
                             
                             {/* C CREAT NEW Appointment */}
                             {!showScheduleForm ? (
-                                <button type="button" className="btn-primary" onClick={() => setShowScheduleForm(true)}>Create appointment</button>
+                                <button type="button" className="btn-primary" onClick={() => handleNewAppointment(new Date())}>Create appointment</button>
                             ) : (
                                 <form 
                                     className="portal-form" 
