@@ -1,15 +1,16 @@
-import { useMemo, useState } from 'react'
-import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar"
-import type { View } from "react-big-calendar"
-import format from 'date-fns/format'
-import parse from 'date-fns/parse'
-import startOfWeek from 'date-fns/startOfWeek'
-import getDay from 'date-fns/getDay'
-import enUS from 'date-fns/locale/en-US'
-import 'react-big-calendar/lib/css/react-big-calendar.css'
+import { useMemo, useState } from "react";
+import {
+  Calendar,
+  dateFnsLocalizer,
+  Views,
+  type View,
+  type SlotInfo,
+} from "react-big-calendar";
+import { format, parse, startOfWeek, getDay } from "date-fns";
+import { enUS } from "date-fns/locale";
+import "react-big-calendar/lib/css/react-big-calendar.css";
 
-import type { Appointment } from './types.ts'
-
+import type { Appointment } from "./types.ts";
 
 const locales = {
   'en-US': enUS,
@@ -76,8 +77,8 @@ export default function AppointmentCalendar({
         events={events}
         date={currentDate}
         view={currentView}
-        onNavigate={(newDate) => setCurrentDate(newDate)} // aware of today's date
-        onView={(newView) => setCurrentView(newView)} // set view type
+        onNavigate={(newDate: Date) => setCurrentDate(newDate)} // aware of today's date
+        onView={(newView: View) => setCurrentView(newView)} // set view type
         startAccessor="start"
         endAccessor="end"
         views={[Views.MONTH, Views.WEEK, Views.DAY]}
@@ -86,13 +87,13 @@ export default function AppointmentCalendar({
         step={30}
         timeslots={2}
         defaultView={Views.MONTH}
-        onSelectEvent={(event) => {
+        onSelectEvent={(event : CalendarEvent) => {
           onSelectAppointment?.(event.raw)
         }}
-        onSelectSlot={(slotInfo) => {
-          onSelectSlot?.(slotInfo.start)
+        onSelectSlot={(slotInfo : SlotInfo) => {
+          onSelectSlot?.(slotInfo.start as Date)
         }}
-        eventPropGetter={(event) => {
+        eventPropGetter={(event : CalendarEvent) => {
           let backgroundColor = '#3174ad' // default
           // COLOR BY VISIT TYPE 
           if (event.raw.visit_type === 'Vaccination') {
