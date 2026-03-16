@@ -20,6 +20,9 @@ export default function NurseDashBoard() {
     approvePending,
     moveRow,
     callNextPatient,
+    callSinglePatient,
+    beginVisit,
+    noShow,
     markCompleted,
   } = useNurseQueue(selectedClinicId)
 
@@ -50,7 +53,14 @@ export default function NurseDashBoard() {
       {selectedClinicId && canManageQueue && (
         <>
           <PendingQueuePanel rows={pendingRows} onApprove={approvePending} />
-          <ActiveQueuePanel rows={activeRows} onMove={moveRow} onCallNext={callNextPatient} />
+          <ActiveQueuePanel
+            rows={activeRows}
+            onMove={moveRow}
+            onCallNext={callNextPatient}
+            onCallPatient={callSinglePatient}
+            onStartVisit={beginVisit}
+            onNoShow={noShow}
+          />
           <InProgressQueuePanel rows={inProgressRows} onComplete={markCompleted} />
         </>
       )}

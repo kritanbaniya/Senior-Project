@@ -22,6 +22,8 @@ export type QueueEntryRow = {
   completed_at: string | null
   created_at: string
   updated_at: string
+  is_active: boolean
+  patient_name: string | null
 }
 
 export type ClinicListItem = {
@@ -38,6 +40,3 @@ export type StaffPermissionRow = {
   manage_queue: boolean
 }
 
-export type QueuePersonView = QueueEntryRow & {
-  patient_name: string
-}
