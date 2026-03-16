@@ -1,48 +1,25 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
-import NurseAppointmentCalendar from './NurseAppointmentCalendar'
-
+import AppointmentCalendar from './AppointmentCalendar.tsx'
+import type { Appointment , MemberList } from '../../types.ts'
 
 
 //// TO BE REMOVED AFTER SUPABASE IMPLEMENTATION IS COMPLETE 
 // NEED SUPABASE ENUM 
 const MOCK_APPOINTMENT_TYPES = ['General Check-up', 'Follow-up', 'Consultation', 'Vaccination', 'Lab Work']
 type AppointmentStatus = 'scheduled' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled'
-type Appointment = {
-  id: string
-  date: string
-  time: string
-  doctor: string
-  type: string
-  status: AppointmentStatus
-  patientName: string
-}
+/*
 
- 
+enums and stuff implemented in supabase already. 
+create type AppointmentTypes as enum ('General Check-up', 'Follow-up', 'Consultation', 'Vaccination', 'Lab Work'); 
+create type AppointmentStatus as enum ( 'scheduled', 'completed' , 'cancelled' ); 
 
-//// USED TYPE: 
-// for appointment list 
-type NewAppointment = {
-  Appointment_id: string; 
-  appointment_date: string;  
-  patient_name: string;
-  patient_email: string;
-  clinician_name: string;
-  clinic_name: string;
-  checkin_at: string | null;
-  seen_at: string | null;
-  visit_type: string; 
-};
-// for doctor list 
-type MemberList = {
-  clinic_name: string; 
-  full_name: string;  
-  role: string;
-  created_at: string;
-  user_id: string;
-  clinic_id: string; 
-};
-// appointment Creation status 
+*/
+
+
+
+
+
 type Response =
   | "Failed"
   | "Success"
@@ -54,14 +31,6 @@ export default function NurseAppointmentManager() {
     const [showScheduleForm, setShowScheduleForm] = useState(false)
     const [showAptUpdateForm, setShowAptUpdateForm] = useState(false)
     const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null)
-
-
-
-
-
-
-
-
 
 
 
@@ -202,7 +171,7 @@ export default function NurseAppointmentManager() {
 
     //// R: READ APPOINTMENT 
     // pass data from backend to ui 
-    const [appointmentsList, setAppointmentsList] = useState<NewAppointment[]>([]); // useState<Record<string, unknown>[]>([]);
+    const [appointmentsList, setAppointmentsList] = useState<Appointment[]>([]); // useState<Record<string, unknown>[]>([]);
     const readAppointments = async () => {
         const { data, error } = 
             await supabase
@@ -224,7 +193,7 @@ export default function NurseAppointmentManager() {
     
 
     //// U: UPDATE APPOINTMENT  
-    // const [ aptUpdateData, setAptUpdateData ] = useState<NewAppointment>(); // what to upload as well as draw from 
+    // const [ aptUpdateData, setAptUpdateData ] = useState<Appointment>(); // what to upload as well as draw from 
     const [updateForm, setUpdateForm] = useState({
         appointmentId:'', 
         patientId: '',
@@ -233,7 +202,7 @@ export default function NurseAppointmentManager() {
         doctorId: '',
         type: MOCK_APPOINTMENT_TYPES[0],
     })
-    const handleEditAppointment = async (apt: NewAppointment) => {
+    const handleEditAppointment = async (apt: Appointment) => {
         const { data, error } = 
             await supabase
                 // .schema("public")
@@ -374,24 +343,25 @@ export default function NurseAppointmentManager() {
             <div className="info-box appointments-section">
                 <h2 className="info-box-title">Appointment scheduling</h2>
                 
-                <NurseAppointmentCalendar
-  appointments={appointmentsList}
-  onSelectAppointment={handleEditAppointment}
-  onSelectSlot={(start) => {
-    const yyyy = start.getFullYear()
-    const mm = String(start.getMonth() + 1).padStart(2, '0')
-    const dd = String(start.getDate()).padStart(2, '0')
-    const hh = String(start.getHours()).padStart(2, '0')
-    const min = String(start.getMinutes()).padStart(2, '0')
+                <AppointmentCalendar
+                    appointments={appointmentsList}
+                    onSelectAppointment={handleEditAppointment}
+                    onSelectSlot={(start) => {
+                        const yyyy = start.getFullYear()
+                        const mm = String(start.getMonth() + 1).padStart(2, '0')
+                        const dd = String(start.getDate()).padStart(2, '0')
+                        const hh = String(start.getHours()).padStart(2, '0')
+                        const min = String(start.getMinutes()).padStart(2, '0')
 
-    setScheduleForm((f) => ({
-      ...f,
-      date: `${yyyy}-${mm}-${dd}`,
-      time: `${hh}:${min}`,
-    }))
-    setShowScheduleForm(true)
-  }}
-/>
+                        setScheduleForm((f) => ({
+                        ...f,
+                        date: `${yyyy}-${mm}-${dd}`,
+                        time: `${hh}:${min}`,
+                        }))
+                        setShowScheduleForm(true)
+                    }}/>
+
+
                 <div className="info-box-content">
                     {/* <h3><pre>{JSON.stringify(doctorList, null, 2)}</pre></h3> */}
                     <p>View, create, and modify appointments.</p>
