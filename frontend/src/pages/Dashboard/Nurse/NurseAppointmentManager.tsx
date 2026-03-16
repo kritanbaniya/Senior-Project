@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
-import AppointmentCalendar from './AppointmentCalendar.tsx'
+import AppointmentCalendar from '../../AppointmentCalendar.tsx'
 import type { Appointment , MemberList } from '../../types.ts'
 
 
