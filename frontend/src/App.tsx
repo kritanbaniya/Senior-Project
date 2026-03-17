@@ -16,7 +16,14 @@ import NurseYourInformation from './pages/Dashboard/Nurse/Nurseinformation'
 import DoctorDashBoard from './pages/Dashboard/Doctor/DoctorDashBoard'
 import DoctorYourInformation from './pages/Dashboard/Doctor/DoctorInformation'
 import ClinicADashBoard from './pages/Dashboard/Clinic/ClinicADashBoard'
-import './style.css'
+import Support from './pages/Support'
+
+/**
+ * This file defines the main App component, which sets up the routing for the application.
+ * It uses React Router to define routes for the homepage, clinic nearby, clinic discovery, clinic info, reset password, and dashboard pages.
+ * The dashboard routes are protected by authentication and role-based guards to ensure that only authorized users can access them.
+ * The AuthProvider and ClinicProvider components are used to provide authentication and clinic-related context to the entire application.
+ */
 
 export default function App() {
   return (
@@ -29,6 +36,7 @@ export default function App() {
             <Route path="/clinic" element={<ClinicInfo />} />
             <Route path="/clinic-discovery" element={<ClinicDiscovery />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/support" element={<Support />} />
 
             <Route path="/dashboard" element={<DashboardGuard />}>
               <Route path="patient" element={<RoleGuard allowedRole="patient" />}>

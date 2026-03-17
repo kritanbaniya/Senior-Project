@@ -24,12 +24,11 @@ export function usePatientQueue(clinicId: string | null) {
 
       if (!latest) {
         setCurrentRow(null)
-        setExitState(null)
         setLoading(false)
         return
       }
 
-      if (latest.status === 'left' || latest.status === 'cancelled' || latest.status === 'completed') {
+      if (latest.status === 'left' || latest.status === 'cancelled' || latest.status === 'completed' || latest.status === 'no_show') {
         setExitState('left')
         // allow patient to join again after a terminal visit status
         setCurrentRow(null)

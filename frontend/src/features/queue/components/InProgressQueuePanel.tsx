@@ -1,7 +1,7 @@
-import type { QueuePersonView } from '../types'
+import type { QueueEntryRow } from '../types'
 
 type InProgressQueuePanelProps = {
-  rows: QueuePersonView[]
+  rows: QueueEntryRow[]
   onComplete: (entryId: string) => void
 }
 
@@ -16,7 +16,7 @@ export default function InProgressQueuePanel({ rows, onComplete }: InProgressQue
           <ul className="appointment-list">
             {rows.map((row) => (
               <li key={row.id} className="appointment-item nurse-apt-item">
-                <span className="apt-patient">{row.patient_name}</span>
+                <span className="apt-patient">{row.patient_name ?? 'patient'}</span>
                 <span className="apt-type">{row.status}</span>
                 <button type="button" className="btn-small" onClick={() => onComplete(row.id)}>
                   mark completed
