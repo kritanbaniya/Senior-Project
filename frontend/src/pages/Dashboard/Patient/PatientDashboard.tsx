@@ -94,7 +94,7 @@ export type PatientInfo = {
 
 export default function PatientDashboard() {
   const location = useLocation()
-  const { selectedClinicId, setSelectedClinicId } = useClinicContext()
+  const { selectedClinicId, selectedClinicName, setSelectedClinicId, setSelectedClinicName } = useClinicContext()
   const locationClinicId = (location.state as { clinicId?: string } | null)?.clinicId ?? null
 
   const [appointments, setAppointments] = useState<Appointment[]>([
@@ -116,7 +116,7 @@ export default function PatientDashboard() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [info, setInfo] = useState<PatientInfo | null>(null)
-  const activeClinicId = locationClinicId ?? selectedClinicId
+  const activeClinicId = selectedClinicId
   const {
     loading: queueLoading,
     error: queueError,
@@ -301,6 +301,7 @@ export default function PatientDashboard() {
 
             <PatientQueueCard
               clinicSelected={Boolean(activeClinicId)}
+              selectedClinicName={selectedClinicName}
               loading={queueLoading}
               row={queueRow}
               activePosition={activePosition}
@@ -308,6 +309,10 @@ export default function PatientDashboard() {
               exitState={exitState}
               onJoin={join}
               onLeave={leave}
+              onClearClinic={() => {
+                setSelectedClinicId(null)
+                setSelectedClinicName(null)
+              }}
             />
             {queueError && <p className="pd-empty">{queueError}</p>}
 
