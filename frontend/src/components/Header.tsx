@@ -20,31 +20,17 @@ function Header() {
   return (
     <header className="sticky top-0 z-50 w-full bg-violet-200">
       <div className="mx-auto flex h-15 max-w-screen-2xl items-center justify-between px-8 md:px-14 lg:px-20">
-        <div className="flex items-center gap-4">
-          <Link to={homePath} className="flex items-center gap-4">
-            <img
-              src="/assets/ClinicIQ Logo.png"
-              alt="ClinicIQ"
-              className="h-12 w-14 object-contain"
-            />
-            <div className="text-4xl font-bold leading-[54px]">
-              <span className="text-slate-700">Clinic</span>
-              <span className="text-indigo-500">IQ</span>
-            </div>
-          </Link>
-
-          {isLoggedIn && (
-            <Link to={homePath}>
-              <Button
-                type="button"
-                variant="ghost"
-                className="hidden text-lg font-medium text-slate-700 hover:text-indigo-500 md:inline-flex"
-              >
-                Home
-              </Button>
-            </Link>
-          )}
-        </div>
+        <Link to={homePath} className="flex items-center gap-4">
+          <img
+            src="/assets/ClinicIQ Logo.png"
+            alt="ClinicIQ"
+            className="h-12 w-14 object-contain"
+          />
+          <div className="text-4xl font-bold leading-[54px]">
+            <span className="text-slate-700">Clinic</span>
+            <span className="text-indigo-500">IQ</span>
+          </div>
+        </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
           {isLoggedIn && (
@@ -68,19 +54,7 @@ function Header() {
           )}
         </nav>
 
-        <div className="flex items-center gap-3 md:hidden">
-          {isLoggedIn && (
-            <Link to={homePath}>
-              <Button
-                type="button"
-                variant="ghost"
-                className="px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-500"
-              >
-                Home
-              </Button>
-            </Link>
-          )}
-
+        <div className="md:hidden">
           {isLoggedIn ? (
             <Button
               type="button"

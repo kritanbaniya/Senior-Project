@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getHomePath } from "@/lib/getHomePath";
 
 type SignupRole = "patient" | "nurse" | "doctor" | "clinic";
 
@@ -100,28 +101,22 @@ export default function LoginPanel({
   };
 
   const routeToDashboard = async () => {
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
+  const { data } = await supabase.auth.getUser();
+  const user = data.user;
 
-    if (!user) {
-      navigate("/dashboard/patient");
-      return;
-    }
+  if (!user) {
+    navigate("/");
+    return;
+  }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
 
-    const role = profile?.role;
-
-    if (role === "patient") navigate("/dashboard/patient");
-    else if (role === "nurse") navigate("/dashboard/nurse");
-    else if (role === "doctor") navigate("/dashboard/doctor");
-    else if (role === "clinic") navigate("/dashboard/clinic");
-    else navigate("/");
-  };
+  navigate(getHomePath(profile?.role));
+};
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
