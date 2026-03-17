@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
 
 type DoctorStage = 'waiting' | 'consultation' | 'completed'
 
@@ -230,151 +231,128 @@ export default function DoctorDashBoard() {
   }
 
   return (
-    <div className="clinic-info-page doctor-dashboard" style={{ maxWidth: '100%', width: '100%' }}>
-      <h1 className="page-title">Doctor Dashboard</h1>
+    <div className="w-full max-w-full p-6 space-y-6">
+      <h1 className="text-3xl font-bold text-gray-900">Doctor Dashboard</h1>
 
-      {/* Three-column layout: Queue | Patient Info | Visit Notes */}
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 420px', gap: '1.5rem', alignItems: 'start' }}>
+      {/* Three-column grid layout */}
+      <div className="grid grid-cols-[260px_1fr_420px] gap-6 items-start">
         
         {/* LEFT COLUMN: Patient Queue */}
-        <div className="info-box queue-section" style={{ position: 'sticky', top: '1rem', maxHeight: '85vh', overflowY: 'auto' }}>
-          <h2 className="info-box-title">Patient Queue</h2>
-          <div className="info-box-content">
-
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 sticky top-4 max-h-[85vh] overflow-y-auto">
+          <div className="p-5 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Patient Queue</h2>
+          </div>
+          <div className="p-4">
             {patients.length === 0 ? (
-              <p className="no-queue">No patients assigned.</p>
+              <p className="text-sm text-gray-500">No patients assigned.</p>
             ) : (
-              <ol className="nurse-queue-list" style={{ marginBottom: 0 }}>
+              <div className="space-y-2">
                 {patients.map((patient, index) => (
-                  <li
+                  <div
                     key={patient.id}
-                    className={`nurse-queue-item stage-${patient.stage}`}
                     onClick={() => setSelectedPatientId(patient.id)}
-                    style={{
-                      cursor: 'pointer',
-                      border: selectedPatientId === patient.id ? '2px solid #0369a1' : '1px solid rgba(0,0,0,0.08)',
-                      background: selectedPatientId === patient.id ? '#f0f9ff' : undefined,
-                      gridTemplateColumns: 'auto 1fr',
-                      padding: '0.65rem',
-                      marginBottom: '0.5rem'
-                    }}
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                      selectedPatientId === patient.id
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-200 hover:border-blue-300'
+                    } ${
+                      patient.stage === 'consultation' ? 'border-l-4 border-l-green-500' :
+                      patient.stage === 'waiting' ? 'border-l-4 border-l-amber-500' :
+                      'border-l-4 border-l-gray-400 opacity-60'
+                    }`}
                   >
-                    <span className="queue-order" style={{ fontSize: '0.85rem' }}>#{index + 1}</span>
-                    <div>
-                      <div className="queue-patient-name" style={{ marginBottom: '0.2rem', fontSize: '0.9rem' }}>
-                        {patient.patientName}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#666' }}>
-                        {patient.age}y • {patient.appointmentType}
-                      </div>
-                      {!patient.formsComplete && (
-                        <div style={{ color: '#dc2626', fontSize: '0.7rem', fontWeight: 600, marginTop: '0.2rem' }}>
-                          ⚠ Incomplete
+                    <div className="flex items-start gap-2">
+                      <span className="text-xs font-bold text-gray-500">#{index + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm truncate">{patient.patientName}</div>
+                        <div className="text-xs text-gray-600 mt-0.5">
+                          {patient.age}y • {patient.appointmentType}
                         </div>
-                      )}
-                      <div style={{ marginTop: '0.35rem' }}>
-                        <span className={`patient-status status-${patient.stage}`} style={{
-                          fontSize: '0.65rem',
-                          padding: '0.15rem 0.4rem',
-                          borderRadius: '3px',
-                          textTransform: 'uppercase',
-                          display: 'inline-block'
-                        }}>
+                        {!patient.formsComplete && (
+                          <div className="text-xs text-red-600 font-semibold mt-1">
+                            ⚠ Incomplete
+                          </div>
+                        )}
+                        <span 
+                          className={`inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-md ${
+                            patient.stage === 'consultation' ? 'bg-green-100 text-green-800' :
+                            patient.stage === 'waiting' ? 'bg-amber-100 text-amber-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}
+                        >
                           {STAGE_LABELS[patient.stage]}
                         </span>
                       </div>
                     </div>
-                  </li>
+                  </div>
                 ))}
-              </ol>
+              </div>
             )}
           </div>
         </div>
 
         {/* MIDDLE COLUMN: Patient Information */}
         {selectedPatient ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="space-y-5">
             
             {/* Patient Header */}
-            <div className="info-box">
-              <div className="info-box-content">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.75rem' }}>
-                  <div>
-                    <h2 style={{ margin: '0 0 0.35rem 0', fontSize: '1.4rem' }}>
-                      {selectedPatient.patientName}
-                    </h2>
-                    <div style={{ fontSize: '0.85rem', color: '#666' }}>
-                      {selectedPatient.age} years • {selectedPatient.gender} • {selectedPatient.appointmentType}
-                    </div>
-                  </div>
-                  
-                  {selectedPatient.stage === 'waiting' && (
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      onClick={() => setPatientStage(selectedPatient.id, 'consultation')}
-                    >
-                      Start Visit
-                    </button>
-                  )}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{selectedPatient.patientName}</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedPatient.age} years • {selectedPatient.gender} • {selectedPatient.appointmentType}
+                  </p>
                 </div>
-
-                <div style={{ 
-                  padding: '0.65rem', 
-                  background: '#f0f9ff', 
-                  borderRadius: '6px',
-                  borderLeft: '3px solid #0369a1',
-                  fontSize: '0.9rem'
-                }}>
-                  <strong style={{ fontSize: '0.8rem', color: '#0369a1' }}>Chief Complaint:</strong>
-                  <div style={{ marginTop: '0.2rem' }}>{selectedPatient.symptoms}</div>
-                </div>
-
-                {!selectedPatient.formsComplete && (
-                  <div style={{ marginTop: '0.75rem' }}>
-                    <button
-                      type="button"
-                      className="btn-small"
-                      onClick={() => flagMissingForms(selectedPatient.id)}
-                    >
-                      Flag Incomplete Forms
-                    </button>
-                    {flagFormsFeedback === selectedPatient.id && (
-                      <span className="feedback-msg" style={{ marginLeft: '0.5rem' }}>Nurse notified</span>
-                    )}
-                  </div>
-                )}
-
-                {selectedPatient.stage === 'completed' && (
-                  <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: '#f0fdf4', borderRadius: '6px', color: '#166534', fontSize: '0.85rem', fontWeight: 600 }}>
-                    ✓ Visit completed
-                  </div>
+                
+                {selectedPatient.stage === 'waiting' && (
+                  <Button onClick={() => setPatientStage(selectedPatient.id, 'consultation')}>
+                    Start Visit
+                  </Button>
                 )}
               </div>
+
+              <div className="p-3 bg-blue-50 border-l-4 border-blue-600 rounded">
+                <p className="text-xs font-semibold text-blue-700 uppercase">Chief Complaint:</p>
+                <p className="text-sm text-gray-900 mt-1">{selectedPatient.symptoms}</p>
+              </div>
+
+              {!selectedPatient.formsComplete && (
+                <div className="mt-3 flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => flagMissingForms(selectedPatient.id)}
+                  >
+                    Flag Incomplete Forms
+                  </Button>
+                  {flagFormsFeedback === selectedPatient.id && (
+                    <span className="text-xs text-green-600 font-medium">Nurse notified</span>
+                  )}
+                </div>
+              )}
+
+              {selectedPatient.stage === 'completed' && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-700 font-semibold">✓ Visit completed</p>
+                </div>
+              )}
             </div>
 
             {/* Patient Information Tabs */}
-            <div className="info-box">
-              <div style={{ borderBottom: '2px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', gap: '0.25rem', padding: '0 1rem' }}>
-                  {(['intake', 'history', 'tests'] as const).map(tab => (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              {/* Tab Headers */}
+              <div className="border-b border-gray-200">
+                <div className="flex px-6">
+                  {(['intake', 'history', 'tests'] as const).map((tab) => (
                     <button
                       key={tab}
-                      type="button"
                       onClick={() => setActiveTab(tab)}
-                      style={{
-                        background: activeTab === tab ? '#0369a1' : 'transparent',
-                        color: activeTab === tab ? '#fff' : '#555',
-                        border: 'none',
-                        borderBottom: activeTab === tab ? '3px solid #0369a1' : '3px solid transparent',
-                        borderRadius: 0,
-                        padding: '0.65rem 0.85rem',
-                        marginBottom: '-2px',
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        textTransform: 'capitalize'
-                      }}
+                      className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors capitalize ${
+                        activeTab === tab
+                          ? 'border-blue-600 text-blue-600'
+                          : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                      }`}
                     >
                       {tab}
                     </button>
@@ -382,11 +360,12 @@ export default function DoctorDashBoard() {
                 </div>
               </div>
 
-              <div className="info-box-content" style={{ padding: '1.25rem', maxHeight: '450px', overflowY: 'auto' }}>
+              {/* Tab Content */}
+              <div className="p-6 max-h-[450px] overflow-y-auto">
                 
                 {/* Intake Tab */}
                 {activeTab === 'intake' && selectedPatient.intakeForm && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div className="space-y-4">
                     {[
                       { label: 'Allergies', value: selectedPatient.intakeForm.allergies || 'None reported' },
                       { label: 'Medications', value: selectedPatient.intakeForm.medications || 'None' },
@@ -394,12 +373,8 @@ export default function DoctorDashBoard() {
                       { label: 'Emergency Contact', value: selectedPatient.intakeForm.emergencyContact }
                     ].map(({ label, value }) => (
                       <div key={label}>
-                        <div style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem', fontWeight: 600, textTransform: 'uppercase' }}>
-                          {label}
-                        </div>
-                        <div style={{ padding: '0.65rem', background: '#f9fafb', borderRadius: '6px', fontSize: '0.9rem' }}>
-                          {value}
-                        </div>
+                        <p className="text-xs font-semibold text-gray-600 uppercase mb-1">{label}</p>
+                        <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-900">{value}</div>
                       </div>
                     ))}
                   </div>
@@ -409,106 +384,104 @@ export default function DoctorDashBoard() {
                 {activeTab === 'history' && (
                   <>
                     {selectedPatient.medicalHistory && selectedPatient.medicalHistory.length > 0 ? (
-                      <ul className="records-list">
+                      <div className="space-y-4">
                         {selectedPatient.medicalHistory.map((record, index) => (
-                          <li key={index} className="record-item">
-                            <div className="record-header">
-                              <span className="record-date">{record.date}</span>
-                              <span style={{ fontSize: '0.9rem' }}>{record.diagnosis}</span>
+                          <div key={index} className="pb-4 border-b border-gray-200 last:border-b-0 last:pb-0">
+                            <div className="flex items-baseline gap-3 mb-1">
+                              <span className="text-sm font-semibold text-blue-600">{record.date}</span>
+                              <span className="text-sm font-medium text-gray-900">{record.diagnosis}</span>
                             </div>
-                            <p className="record-summary" style={{ fontSize: '0.85rem' }}>{record.notes}</p>
-                            <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.35rem' }}>
-                              {record.doctor}
-                            </div>
-                          </li>
+                            <p className="text-sm text-gray-700 mb-1">{record.notes}</p>
+                            <p className="text-xs text-gray-500">{record.doctor}</p>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     ) : (
-                      <p className="no-queue">No previous visits</p>
+                      <p className="text-sm text-gray-500">No previous visits</p>
                     )}
                   </>
                 )}
 
                 {/* Tests Tab */}
                 {activeTab === 'tests' && (
-                  <>
+                  <div className="space-y-3">
                     {!showTestForm && (
-                      <button
-                        type="button"
-                        className="btn-secondary"
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
                         onClick={() => setShowTestForm(true)}
-                        style={{ marginBottom: '0.85rem', fontSize: '0.85rem' }}
+                        className="w-full"
                       >
                         + Add Test Result
-                      </button>
+                      </Button>
                     )}
 
                     {showTestForm && (
                       <form
-                        className="portal-form compact"
                         onSubmit={(e) => {
                           e.preventDefault()
                           addTestResult()
                         }}
-                        style={{ marginBottom: '0.85rem', padding: '0.85rem', background: '#f9fafb', borderRadius: '6px' }}
+                        className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200"
                       >
-                        <div className="form-row">
-                          <label style={{ fontSize: '0.85rem' }}>Test Type</label>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Test Type</label>
                           <input
                             type="text"
                             placeholder="X-Ray, Blood Test, ECG"
                             value={newTestResult.type}
                             onChange={(e) => setNewTestResult({ ...newTestResult, type: e.target.value })}
                             required
-                            style={{ fontSize: '0.85rem' }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
-                        <div className="form-row">
-                          <label style={{ fontSize: '0.85rem' }}>Result</label>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Result</label>
                           <input
                             type="text"
                             placeholder="Normal, Abnormal"
                             value={newTestResult.result}
                             onChange={(e) => setNewTestResult({ ...newTestResult, result: e.target.value })}
                             required
-                            style={{ fontSize: '0.85rem' }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
-                        <div className="form-row">
-                          <label style={{ fontSize: '0.85rem' }}>Notes</label>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Notes (optional)</label>
                           <input
                             type="text"
-                            placeholder="Optional"
+                            placeholder="Additional details"
                             value={newTestResult.notes}
                             onChange={(e) => setNewTestResult({ ...newTestResult, notes: e.target.value })}
-                            style={{ fontSize: '0.85rem' }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
-                        <div className="form-actions">
-                          <button type="submit" className="btn-primary btn-small">Add</button>
-                          <button
+                        <div className="flex gap-2">
+                          <Button type="submit" size="sm">Add</Button>
+                          <Button
                             type="button"
-                            className="btn-secondary btn-small"
+                            variant="outline"
+                            size="sm"
                             onClick={() => {
                               setShowTestForm(false)
                               setNewTestResult({ type: '', result: '', notes: '' })
                             }}
                           >
                             Cancel
-                          </button>
+                          </Button>
                         </div>
                       </form>
                     )}
 
                     {selectedPatient.testResults && selectedPatient.testResults.length > 0 ? (
-                      <ul className="records-list">
+                      <div className="space-y-4">
                         {selectedPatient.testResults.map((test) => (
-                          <li key={test.id} className="record-item">
-                            <div className="record-header">
-                              <span className="record-date">{test.date}</span>
-                              <span style={{ fontSize: '0.9rem' }}>{test.type}</span>
+                          <div key={test.id} className="pb-4 border-b border-gray-200 last:border-b-0 last:pb-0">
+                            <div className="flex items-baseline gap-3 mb-1">
+                              <span className="text-sm font-semibold text-blue-600">{test.date}</span>
+                              <span className="text-sm font-medium text-gray-900">{test.type}</span>
                             </div>
-                            <p className="record-summary" style={{ fontSize: '0.85rem' }}>
+                            <p className="text-sm text-gray-700">
                               <strong>Result:</strong> {test.result}
                               {test.notes && (
                                 <>
@@ -517,133 +490,140 @@ export default function DoctorDashBoard() {
                                 </>
                               )}
                             </p>
-                          </li>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     ) : (
-                      !showTestForm && <p className="no-queue">No test results</p>
+                      !showTestForm && <p className="text-sm text-gray-500">No test results</p>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
             </div>
 
           </div>
         ) : (
-          <div className="info-box" style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ textAlign: 'center', color: '#999', fontSize: '0.95rem' }}>
-              ← Select a patient
-            </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[400px] flex items-center justify-center">
+            <p className="text-gray-400 text-center">← Select a patient</p>
           </div>
         )}
 
         {/* RIGHT COLUMN: Visit Notes */}
         {selectedPatient && selectedPatient.stage === 'consultation' ? (
-          <div className="info-box" style={{ position: 'sticky', top: '1rem', maxHeight: '85vh', overflowY: 'auto' }}>
-            <h2 className="info-box-title">Visit Notes</h2>
-            <div className="info-box-content">
-              <form className="portal-form" style={{ gap: '0.65rem' }}>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 sticky top-4 max-h-[85vh] overflow-y-auto">
+            <div className="p-5 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Visit Notes</h2>
+            </div>
+            <div className="p-5">
+              <form className="space-y-3">
                 {[
                   { label: 'Symptoms', field: 'symptoms', placeholder: 'Patient-reported symptoms...', rows: 2 },
                   { label: 'Observations', field: 'observations', placeholder: 'Exam findings...', rows: 2 },
                   { label: 'Assessment *', field: 'assessment', placeholder: 'Diagnosis...', rows: 3, required: true },
                   { label: 'Treatment', field: 'treatmentPlan', placeholder: 'Treatment plan...', rows: 2 },
                   { label: 'Prescriptions', field: 'prescriptions', placeholder: 'Medications...', rows: 2 }
-                ].map(({ label, field, placeholder, rows, required }) => (
-                  <div key={field} className="form-row">
-                    <label style={{ fontSize: '0.8rem' }}>{label}</label>
+                ].map(({ label, field, placeholder, rows }) => (
+                  <div key={field}>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">{label}</label>
                     <textarea
                       placeholder={placeholder}
                       value={clinicalNote[field as keyof ClinicalNote] as string}
                       onChange={(e) => updateClinicalNote(field as keyof ClinicalNote, e.target.value)}
-                      style={{ minHeight: `${rows * 25}px`, resize: 'vertical', fontSize: '0.85rem' }}
-                      required={required}
+                      rows={rows}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 ))}
 
-                <div className="form-row">
-                  <label className="checkbox-label" style={{ fontSize: '0.85rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={clinicalNote.followUpRecommended}
-                      onChange={(e) => updateClinicalNote('followUpRecommended', e.target.checked)}
-                    />
-                    <span>Recommend follow-up</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="followUp"
+                    checked={clinicalNote.followUpRecommended}
+                    onChange={(e) => updateClinicalNote('followUpRecommended', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="followUp" className="text-sm text-gray-700 cursor-pointer">
+                    Recommend follow-up
                   </label>
                 </div>
 
                 {clinicalNote.followUpRecommended && (
-                  <div className="form-row">
-                    <label style={{ fontSize: '0.8rem' }}>Follow-up Notes</label>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Follow-up Notes</label>
                     <input
                       type="text"
                       placeholder="e.g., Return in 2 weeks"
                       value={clinicalNote.followUpNotes}
                       onChange={(e) => updateClinicalNote('followUpNotes', e.target.value)}
-                      style={{ fontSize: '0.85rem' }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 )}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  <button
+                <div className="space-y-2 pt-2">
+                  <Button
                     type="button"
-                    className="btn-primary"
                     onClick={completeVisit}
-                    style={{ width: '100%', background: '#15803d', fontSize: '0.9rem' }}
+                    className="w-full bg-green-700 hover:bg-green-800"
                   >
                     Complete Visit
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="btn-primary"
                     onClick={saveVisitNotes}
-                    style={{ width: '100%', fontSize: '0.9rem' }}
+                    className="w-full"
                   >
                     Save Notes
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="btn-secondary"
+                    variant="outline"
                     onClick={() => setClinicalNote(INITIAL_CLINICAL_NOTE)}
-                    style={{ width: '100%', fontSize: '0.85rem' }}
+                    className="w-full"
                   >
                     Clear
-                  </button>
+                  </Button>
                 </div>
+
                 {saveNoteFeedback && (
-                  <span className="feedback-msg" style={{ display: 'block', textAlign: 'center', fontSize: '0.8rem' }}>
-                    {saveNoteFeedback}
-                  </span>
+                  <p className="text-xs text-green-600 text-center font-medium">{saveNoteFeedback}</p>
                 )}
               </form>
             </div>
           </div>
         ) : (
-          <div className="info-box" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'sticky', top: '1rem' }}>
-            <div style={{ textAlign: 'center', color: '#999', fontSize: '0.9rem', padding: '1rem' }}>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 sticky top-4 min-h-[300px] flex items-center justify-center">
+            <p className="text-sm text-gray-400 text-center px-4">
               {selectedPatient ? (
                 selectedPatient.stage === 'completed' ? '✓ Visit completed' : 'Start visit to take notes'
               ) : (
                 'Select a patient'
               )}
-            </div>
+            </p>
           </div>
         )}
 
       </div>
 
       {/* Quick Actions */}
-      <div className="info-box quick-actions-box" style={{ marginTop: '1.5rem' }}>
-        <h2 className="info-box-title">Quick actions</h2>
-        <div className="info-box-content quick-actions">
-          <Link to="/" className="action-link">Home</Link>
-          <Link to="/dashboard/doctor/information" className="action-link">Your Information</Link>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="p-5 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Quick actions</h2>
+        </div>
+        <div className="p-5 flex gap-3">
+          <Button asChild>
+            <Link to="/">Home</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/dashboard/doctor/information">Your Information</Link>
+          </Button>
         </div>
       </div>
 
-      <Link to="/" className="back-link">← Back to Home</Link>
+      <Link to="/" className="inline-block text-blue-600 hover:text-blue-800 font-medium transition-colors">
+        ← Back to Home
+      </Link>
     </div>
   )
 }
