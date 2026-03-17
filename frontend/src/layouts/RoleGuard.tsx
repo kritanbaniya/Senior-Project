@@ -6,9 +6,12 @@
 import { useEffect } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import type { UserRole } from '@/lib/getHomePath'
+
+type DefinedUserRole = Exclude<UserRole, null | undefined>
 
 // maps each role to its dashboard base path, used for redirects.
-const ROLE_TO_PATH: Record<string, string> = {
+const ROLE_TO_PATH: Record<DefinedUserRole, string> = {
   patient: '/dashboard/patient',
   nurse: '/dashboard/nurse',
   doctor: '/dashboard/doctor',
@@ -17,13 +20,13 @@ const ROLE_TO_PATH: Record<string, string> = {
 
 // returns the dashboard path for a given role, or "/" if the role is unknown.
 // exported so other components (e.g. sidebar links) can resolve a role to a url.
-export function getDashboardPathForRole(role: string | null): string {
-  if (!role || !ROLE_TO_PATH[role]) return '/'
+export function getDashboardPathForRole(role: UserRole): string {
+  if (!role) return '/'
   return ROLE_TO_PATH[role]
 }
 
 interface RoleGuardProps {
-  allowedRole: string
+  allowedRole: DefinedUserRole
 }
 
 // compares the user's role from AuthContext against allowedRole.
