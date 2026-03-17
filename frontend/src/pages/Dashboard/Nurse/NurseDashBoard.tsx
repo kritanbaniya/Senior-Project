@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { useClinicContext } from '../../../context/ClinicContext'
 import ActiveQueuePanel from '../../../features/queue/components/ActiveQueuePanel'
 import ClinicSelector from '../../../features/queue/components/ClinicSelector'
 import InProgressQueuePanel from '../../../features/queue/components/InProgressQueuePanel'
 import PendingQueuePanel from '../../../features/queue/components/PendingQueuePanel'
 import { useNurseQueue } from '../../../features/queue/useNurseQueue'
-import NurseAppointmentManager from './NurseAppointmentManager'
+import NurseAppointmentManager from '../../../features/appointment/NurseAppointmentManager'
 
 export default function NurseDashBoard() {
   const { selectedClinicId, setSelectedClinicId } = useClinicContext()
@@ -26,8 +27,12 @@ export default function NurseDashBoard() {
     markCompleted,
   } = useNurseQueue(selectedClinicId)
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+
   return (
     <div className="nurse-dashboard">
+
       <h1 className="page-title">Nurse Dashboard</h1>
 
       <div className="info-box queue-section">
@@ -68,8 +73,29 @@ export default function NurseDashBoard() {
       {loading && <p className="no-queue">Loading queue...</p>}
       {error && <p className="no-queue">{error}</p>}
 
-      <NurseAppointmentManager />
-
+      <div className = "pd-layout">
+        {/* Left sidebar */}
+        <aside className={`pd-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+          <div className="pd-sidebar-header">
+            <Link to="/" className="pd-sidebar-logo"><span>ClinicIQ</span></Link>
+            <button type="button" className="pd-sidebar-toggle" onClick={() => setSidebarCollapsed((c) => !c)} aria-label="Toggle sidebar">
+              {sidebarCollapsed ? '→' : '←'}
+            </button>
+          </div>
+          <nav className="pd-nav">
+            <a href="#overview" className="pd-nav-item active">Overview</a>
+            <a href="#appointments" className="pd-nav-item">Appointments</a>
+            <a href="#records" className="pd-nav-item">Records</a>
+            <a href="#medications" className="pd-nav-item">Medications</a>
+            <a href="#vitals" className="pd-nav-item">Vitals</a>
+            <a href="#lab" className="pd-nav-item">Lab results</a>
+            <Link to="/dashboard/patient/information" className="pd-nav-item">Your information</Link>
+            <Link to="/clinic" className="pd-nav-item">Clinic info</Link>
+          </nav>
+        </aside>
+        <div className = "pd-right">
+          <NurseAppointmentManager /></div>
+      </div>
       <div className="info-box quick-actions-box">
         <h2 className="info-box-title">Quick actions</h2>
         <div className="info-box-content quick-actions">

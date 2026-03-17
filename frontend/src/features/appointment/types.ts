@@ -5,8 +5,6 @@
 
 
 
-
-
 export type Appointment = {
   Appointment_id: string
   appointment_date: string
@@ -29,7 +27,4 @@ export type MemberList = {
   user_id: string;
   clinic_id: string; 
 };
-
-
-
 
