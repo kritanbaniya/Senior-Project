@@ -3,7 +3,7 @@
  * The header includes the ClinicIQ logo, navigation links, and login/logout buttons based on the user's authentication status.
  */
 
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "@/components/ui/button";
 
@@ -14,13 +14,6 @@ function Header() {
   const isHomePage = location.pathname === "/";
   
   const showLoginButton = !isLoggedIn && !isHomePage;
-
-  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    [
-      "text-lg font-medium transition-colors duration-200",
-      isActive ? "text-yellow-700" : "text-slate-700",
-      "hover:text-yellow-500",
-    ].join(" ");
 
   return (
     <header className="sticky top-0 z-50 w-full bg-violet-200">

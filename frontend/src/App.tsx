@@ -16,6 +16,7 @@ import NurseYourInformation from './pages/Dashboard/Nurse/Nurseinformation'
 import DoctorDashBoard from './pages/Dashboard/Doctor/DoctorDashBoard'
 import DoctorYourInformation from './pages/Dashboard/Doctor/DoctorInformation'
 import ClinicADashBoard from './pages/Dashboard/Clinic/ClinicADashBoard'
+import Support from './pages/Support'
 
 /**
  * This file defines the main App component, which sets up the routing for the application.
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/clinic" element={<ClinicInfo />} />
             <Route path="/clinic-discovery" element={<ClinicDiscovery />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/support" element={<Support />} />
 
             <Route path="/dashboard" element={<DashboardGuard />}>
               <Route path="patient" element={<RoleGuard allowedRole="patient" />}>

@@ -3,6 +3,8 @@
  * The footer includes links to the Privacy Policy, Terms of Service, and Support pages, as well as a copyright notice.
  */
 
+import { Link } from 'react-router-dom'
+
 export default function Footer() {
   return (
     <footer className="w-full">
@@ -14,9 +16,12 @@ export default function Footer() {
           <span className="cursor-pointer transition hover:text-slate-700/70">
             Terms of Service
           </span>
-          <span className="cursor-pointer transition hover:text-slate-700/70">
+          <Link 
+            to="/support" 
+            className="cursor-pointer transition hover:text-slate-700/70"
+          >
             Support
-          </span>
+          </Link>
         </div>
 
         <p className="text-center text-[20px] font-normal leading-10 text-slate-700/50 md:text-[30px]">
