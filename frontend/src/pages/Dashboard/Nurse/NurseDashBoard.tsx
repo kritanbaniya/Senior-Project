@@ -102,7 +102,6 @@ export default function NurseDashBoard() {
           </nav>
         </aside>
         <div className = "pd-right">
-          <AppointmentSwitch/>
           <NurseAppointmentManager /></div>
           
       </div>

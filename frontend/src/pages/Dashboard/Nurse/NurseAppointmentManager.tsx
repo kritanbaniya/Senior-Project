@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase.ts'
 import AppointmentCalendar from '../../../features/appointment/AppointmentCalendar.tsx'
 import type { Appointment, MemberList } from '../../../features/appointment/types.ts'
+import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
 
 //// TO BE REMOVED AFTER SUPABASE IMPLEMENTATION IS COMPLETE
 // NEED SUPABASE ENUM
@@ -309,10 +310,11 @@ export default function NurseAppointmentManager() {
       <div className="info-box appointments-section">
         <h2 className="info-box-title">Appointment scheduling</h2>
 
-        <AppointmentCalendar
-          appointments={appointmentsList}
-          onSelectAppointment={handleEditAppointment}
-          onSelectSlot={handleNewAppointment}
+        <AppointmentSwitch
+            appointments={appointmentsList}
+            onSelectAppointment={handleEditAppointment}
+            onDeleteAppointment={(apt) => deleteAppointments(apt.Appointment_id)}
+            onSelectSlot={handleNewAppointment}
         />
 
         <div className="info-box-content">
@@ -416,7 +418,7 @@ export default function NurseAppointmentManager() {
             </form>
           )}
 
-          <div className="nurse-appointment-list">
+          {/* <div className="nurse-appointment-list">
             <p className="small-label">Appointments (today & upcoming)</p>
             <ul className="appointment-list">
               {appointmentsList.map((apt) => (
@@ -442,7 +444,7 @@ export default function NurseAppointmentManager() {
                 </li>
               ))}
             </ul>
-          </div>
+          </div> */}
 
           {showAptUpdateForm ? (
             <form

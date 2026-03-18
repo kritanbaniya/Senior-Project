@@ -9,7 +9,7 @@ import type { Appointment, MemberList } from '../../../features/appointment/type
 export default function PatientAppointmentManager() {
     return(
         <>
-
+            
             <AppointmentCalendar
             appointments={appointmentsList}
             onSelectAppointment={handleEditAppointmentRequest}

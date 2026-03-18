@@ -1,43 +1,47 @@
-
-
-
-
-import AppointmentList from "./AppointmentList";
-import AppointmentCalendar from "./AppointmentCalendar";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import AppointmentCalendar from "./AppointmentCalendar.tsx";
+import AppointmentList from "./AppointmentList.tsx";
 import type { Appointment } from "./types.ts";
-import { Button } from "@/components/ui/button.tsx";
 
-
-export default function AppointmentSwitch() {
-    const [view, SetView ] = useState(false); 
-    // 1 is calendar, 0 is list 
-
-    
-
-    return(
-        <>
-            <Button 
-                type = "button"
-                onClick={() => SetView(!view)}>
-            </Button>
-            {view ? 
-            (<>
-                <p>Appointment Calender</p>
-            </>):
-            (<>
-                <p>Appointmnet List</p>
-                <AppointmentList/>
-            </>)}
-            
-        </>
-    )
+type Props = {
+  appointments: Appointment[]
+  onSelectAppointment?: (apt: Appointment) => void
+  onDeleteAppointment?: (apt: Appointment) => void
+  onSelectSlot?: (start: Date) => void
 }
 
+export default function AppointmentSwitch({
+  appointments,
+  onSelectAppointment,
+  onDeleteAppointment,
+  onSelectSlot,
+}: Props) {
+  const [view, setView] = useState<"calendar" | "list">("calendar")
 
+  return (
+    <>
+      <div className="form-actions">
+        <button type="button" onClick={() => setView("calendar")}>
+          Calendar
+        </button>
+        <button type="button" onClick={() => setView("list")}>
+          List
+        </button>
+      </div>
 
-
-
-
-
-
+      {view === "calendar" ? (
+        <AppointmentCalendar
+          appointments={appointments}
+          onSelectAppointment={onSelectAppointment}
+          onSelectSlot={onSelectSlot}
+        />
+      ) : (
+        <AppointmentList
+          appointments={appointments}
+          onSelectAppointment={onSelectAppointment}
+          onDeleteAppointment={onDeleteAppointment}
+        />
+      )}
+    </>
+  )
+}
