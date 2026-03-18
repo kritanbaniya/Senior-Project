@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase.ts'
-import AppointmentCalendar from './AppointmentCalendar.tsx'
-import type { Appointment, MemberList } from './types.ts'
+import { supabase } from '../../../lib/supabase.ts'
+import AppointmentCalendar from '../../../features/appointment/AppointmentCalendar.tsx'
+import type { Appointment, MemberList } from '../../../features/appointment/types.ts'
 
 //// TO BE REMOVED AFTER SUPABASE IMPLEMENTATION IS COMPLETE
 // NEED SUPABASE ENUM

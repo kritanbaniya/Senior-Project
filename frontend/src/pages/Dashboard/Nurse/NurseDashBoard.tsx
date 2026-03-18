@@ -6,7 +6,9 @@ import ClinicSelector from '../../../features/queue/components/ClinicSelector'
 import InProgressQueuePanel from '../../../features/queue/components/InProgressQueuePanel'
 import PendingQueuePanel from '../../../features/queue/components/PendingQueuePanel'
 import { useNurseQueue } from '../../../features/queue/useNurseQueue'
-import NurseAppointmentManager from '../../../features/appointment/NurseAppointmentManager'
+import NurseAppointmentManager from './NurseAppointmentManager'
+import AppointmentSwitch from '@/features/appointment/AppointmentSwitch'
+
 
 export default function NurseDashBoard() {
   const { selectedClinicId, setSelectedClinicId } = useClinicContext()
@@ -73,6 +75,12 @@ export default function NurseDashBoard() {
       {loading && <p className="no-queue">Loading queue...</p>}
       {error && <p className="no-queue">{error}</p>}
 
+
+
+
+
+
+
       <div className = "pd-layout">
         {/* Left sidebar */}
         <aside className={`pd-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
@@ -94,8 +102,21 @@ export default function NurseDashBoard() {
           </nav>
         </aside>
         <div className = "pd-right">
+          <AppointmentSwitch/>
           <NurseAppointmentManager /></div>
+          
       </div>
+
+
+
+
+
+
+
+
+
+
+
       <div className="info-box quick-actions-box">
         <h2 className="info-box-title">Quick actions</h2>
         <div className="info-box-content quick-actions">
