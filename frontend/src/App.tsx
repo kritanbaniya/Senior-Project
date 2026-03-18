@@ -4,8 +4,6 @@ import { ClinicProvider } from './context/ClinicContext'
 import RootLayout from './layouts/RootLayout'
 import DashboardGuard from './layouts/DashboardGuard'
 import RoleGuard from './layouts/RoleGuard'
-import HomePage from './pages/HomePage'
-import ClinicNearby from './pages/ClinicNearby'
 import ClinicDiscovery from './pages/Dashboard/Patient/ClinicDiscovery/ClinicDiscoveryPage'
 import ClinicInfo from './pages/ClinicInfo'
 import ResetPassword from './pages/ResetPassword'
@@ -17,13 +15,15 @@ import DoctorDashBoard from './pages/Dashboard/Doctor/DoctorDashBoard'
 import DoctorYourInformation from './pages/Dashboard/Doctor/DoctorInformation'
 import ClinicADashBoard from './pages/Dashboard/Clinic/ClinicADashBoard'
 import Support from './pages/Support'
+import HomeGate from './pages/HomeGate'
 
 /**
  * This file defines the main App component, which sets up the routing for the application.
  * It uses React Router to define routes for the homepage, clinic nearby, clinic discovery, clinic info, reset password, and dashboard pages.
  * The dashboard routes are protected by authentication and role-based guards to ensure that only authorized users can access them.
  * The AuthProvider and ClinicProvider components are used to provide authentication and clinic-related context to the entire application.
- */
+ * The path "/" is manipulated with the help of HomeGate. It redirects users to their respective dashboard
+*/
 
 export default function App() {
   return (
@@ -31,8 +31,7 @@ export default function App() {
       <ClinicProvider>
         <Routes>
           <Route element={<RootLayout />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/clinic-nearby" element={<ClinicNearby />} />
+            <Route path="/" element={<HomeGate />} />
             <Route path="/clinic" element={<ClinicInfo />} />
             <Route path="/clinic-discovery" element={<ClinicDiscovery />} />
             <Route path="/reset-password" element={<ResetPassword />} />

@@ -4,10 +4,11 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
+import type { UserRole } from '@/lib/getHomePath'
 
 interface Profile {
   full_name: string | null
-  role: string | null
+  role: UserRole
 }
 
 interface AuthContextValue {

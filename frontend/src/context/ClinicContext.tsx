@@ -2,7 +2,9 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 
 type ClinicContextValue = {
   selectedClinicId: string | null
+  selectedClinicName: string | null
   setSelectedClinicId: (clinicId: string | null) => void
+  setSelectedClinicName: (clinicName: string | null) => void
 }
 
 const ClinicContext = createContext<ClinicContextValue | null>(null)
@@ -15,13 +17,16 @@ export function useClinicContext(): ClinicContextValue {
 
 export function ClinicProvider({ children }: { children: ReactNode }) {
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null)
+  const [selectedClinicName, setSelectedClinicName] = useState<string | null>(null)
 
   const value = useMemo(
     () => ({
       selectedClinicId,
+      selectedClinicName,
       setSelectedClinicId,
+      setSelectedClinicName,
     }),
-    [selectedClinicId]
+    [selectedClinicId, selectedClinicName]
   )
 
   return <ClinicContext.Provider value={value}>{children}</ClinicContext.Provider>
