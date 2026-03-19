@@ -17,6 +17,8 @@ import ClinicADashBoard from './pages/Dashboard/Clinic/ClinicADashBoard'
 import Support from './pages/Support'
 import HomeGate from './pages/HomeGate'
 
+import PatientAppointmentManager from './pages/Dashboard/Patient/PatientAppointmentManager'
+import NurseAppointmentManager from './pages/Dashboard/Nurse/NurseAppointmentManager'
 /**
  * This file defines the main App component, which sets up the routing for the application.
  * It uses React Router to define routes for the homepage, clinic nearby, clinic discovery, clinic info, reset password, and dashboard pages.
@@ -40,10 +42,12 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardGuard />}>
               <Route path="patient" element={<RoleGuard allowedRole="patient" />}>
                 <Route index element={<PatientDashboard />} />
+                <Route path="appointments" element={<PatientAppointmentManager />} />
                 <Route path="information" element={<PatientYourInformation />} />
               </Route>
               <Route path="nurse" element={<RoleGuard allowedRole="nurse" />}>
                 <Route index element={<NurseDashBoard />} />
+                <Route path="appointments" element={<NurseAppointmentManager />} />
                 <Route path="information" element={<NurseYourInformation />} />
               </Route>
               <Route path="doctor" element={<RoleGuard allowedRole="doctor" />}>

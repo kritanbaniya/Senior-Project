@@ -211,7 +211,7 @@ export default function PatientDashboard() {
         </div>
         <nav className="pd-nav">
           <a href="#overview" className="pd-nav-item active">Overview</a>
-          <a href="#appointments" className="pd-nav-item">Appointments</a>
+          <a href="/dashboard/patient/appointments" className="pd-nav-item">Appointments</a>
           <a href="#records" className="pd-nav-item">Records</a>
           <a href="#medications" className="pd-nav-item">Medications</a>
           <a href="#vitals" className="pd-nav-item">Vitals</a>
