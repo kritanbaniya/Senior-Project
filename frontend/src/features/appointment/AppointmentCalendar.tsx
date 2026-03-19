@@ -6,22 +6,14 @@ import {
   type View,
   type SlotInfo,
 } from "react-big-calendar";
-import { format, parse, startOfWeek, getDay } from "date-fns";
+import { format, parse, startOfWeek, getDay, startOfDay } from "date-fns";
 import { enUS } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-
 import type { Appointment } from "./types.ts";
 
-const locales = {
-  'en-US': enUS,
-}
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-  locales,
-})
+
+
+
 
 type CalendarEvent = {
   id: string
@@ -36,6 +28,20 @@ type Props = { // define the prop's types
   onSelectSlot?: (start: Date) => void
 }
 
+
+const locales = {
+  'en-US': enUS,
+}
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  locales,
+})
+
+
+
 export default function AppointmentCalendar({
   appointments, // list of appointments to display 
   onSelectAppointment, // function passed in (can be nurse/patient)
@@ -43,6 +49,7 @@ export default function AppointmentCalendar({
 }: Props) {
   const [currentView, setCurrentView] = useState<View>(Views.MONTH)
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
+  const today = startOfDay(new Date())
 
   //// TREATING DATA 
   // create list of events from list of appointments 
@@ -87,6 +94,26 @@ export default function AppointmentCalendar({
         step={30}
         timeslots={2}
         defaultView={Views.MONTH}
+        dayPropGetter={(date: Date) => {
+          const cellDate = startOfDay(date)
+          if (cellDate < today) {
+            return {
+              style: {
+                backgroundColor: '#e4e3e3',
+                color: '#9ca3af',
+              },
+            }
+          }
+          if (cellDate.getTime() === today.getTime()) {
+            return {
+              style: {
+                backgroundColor: '#cfc8ee', // light blue
+                border: '2px solid #8374be', 
+              },
+            }
+          }
+          return {}
+        }}
         onSelectEvent={(event : CalendarEvent) => {
           onSelectAppointment?.(event.raw)
         }}
