@@ -150,8 +150,7 @@ export default function NurseAppointmentManager() {
     type: '',
   })
 
-  // check for when supabase recieves information
-  // const [appointmentResponse, setAppointmentResponse] = useState<Response>('Loading')
+  // check for when supabase recieves information 
   const [createStatus, setCreateStatus] = useState<AppointmentCreateStatus>('idle')
   const [createMessage, setCreateMessage] = useState('')
 
@@ -251,7 +250,6 @@ export default function NurseAppointmentManager() {
 
   //// R: READ APPOINTMENT
   const [appointmentsList, setAppointmentsList] = useState<Appointment[]>([])
-
   const readAppointments = async (clinicId: string) => {
     const { data, error } = await supabase
       .schema('public')
@@ -347,7 +345,7 @@ export default function NurseAppointmentManager() {
       .delete()
       .eq('Appointment_id', aptid)
 
-      
+
     if(debuglog == true){console.log('DELETE DATA:', data)}
     if (error) {
       console.log('DELETE ERROR:', error)
@@ -356,7 +354,11 @@ export default function NurseAppointmentManager() {
     await readAppointments(clinicId)
   }
 
-  ////////////////////////////////////////////////
+
+
+
+  
+  ////////////////////////////////////////////////////////////////////////////////////////////////
   //// REACT HOOKS !
   useEffect(() => {
     loadClinic()
