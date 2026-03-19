@@ -1,8 +1,8 @@
-    import { useEffect, useState } from 'react'
-    import { supabase } from '../../../lib/supabase.ts' 
-    import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx';
-    import type { Appointment, AppointmentViewPrefs, AppointmentType } from '@/features/appointment/types.ts';
-
+import { useEffect, useState } from 'react'
+import { supabase } from '../../../lib/supabase.ts' 
+import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx';
+import type { Appointment, AppointmentViewPrefs, AppointmentType } from '@/features/appointment/types.ts';
+import PatientSideBar from './PatientSideBar'
 
 
 
@@ -195,6 +195,20 @@ export default function PatientAppointmentManager() {
 
         return(
             <>
+
+
+
+    <div className="pd-layout">
+      {/* Left sidebar */}
+      <PatientSideBar/> 
+
+
+
+
+            
+      <div className="pd-right">
+      <div className="info-box appointments-section">
+        <h2 className="info-box-title">Appointments</h2>
                 {/* VIEWING APPOINTMENTS */}
                 <AppointmentSwitch
                 appointments={appointmentsList} // send a subset of appointments
@@ -206,7 +220,7 @@ export default function PatientAppointmentManager() {
                 viewPrefs={viewPrefs}
                 onUpdateViewPrefs = {updateViewPrefs}
                 />
-
+</div></div></div>
             </>
         );
     } 
@@ -225,4 +239,3 @@ export default function PatientAppointmentManager() {
 
 
 
-    

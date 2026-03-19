@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase.ts' 
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
 import type { AppointmentViewPrefs, Appointment, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
+ 
+
+import NurseSideBar from './NurseSideBar';  
+
 
 // to make console log conditional 
 const debuglog: boolean = false
@@ -503,6 +507,15 @@ export default function NurseAppointmentManager() {
 
   return (
     <>
+
+    <div className="pd-layout">
+      {/* Left sidebar */}
+      <NurseSideBar/> 
+
+
+
+
+      <div className="pd-right">
       <div className="info-box appointments-section">
         <h2 className="info-box-title">Appointment scheduling</h2>
         {(!clinic || !viewPrefs) ? (<p>Loading clinic...</p>) 
@@ -735,7 +748,7 @@ export default function NurseAppointmentManager() {
         </>)}
 
 
-      </div>
+      </div></div></div>
     </>
   )
 }
