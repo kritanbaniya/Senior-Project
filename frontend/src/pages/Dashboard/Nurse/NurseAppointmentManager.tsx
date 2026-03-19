@@ -1,19 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase.ts' 
-import type { Appointment, MemberList } from '../../../features/appointment/types.ts'
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
-import type { AppointmentViewPrefs } from "@/features/appointment/types.ts"; 
-
+import type { AppointmentViewPrefs, Appointment, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
 
 // to make console log conditional 
 const debuglog: boolean = false
-
-type AppointmentType =
-  | 'General Check-up'
-  | 'Follow-up'
-  | 'Consultation'
-  | 'Vaccination'
-  | 'Lab Work'
+ 
 
 type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
@@ -45,6 +37,7 @@ type UpdateAppointmentForm = {
  
 export default function NurseAppointmentManager() {
   const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
+    mode: 'calendar',
     page: 1,
     totalpages: 1,
     rowsPerPage: 10, // user can edit the number of rows per page 
@@ -262,7 +255,7 @@ export default function NurseAppointmentManager() {
       `Appointment created for ${patientName} on ${scheduleForm.date} at ${scheduleForm.time} with ${doctorName}.`
     )
 
-    await readAppointments(clinicId)
+    await readAppointments(clinicId, viewPrefs)
   }
   // function passed to appointment components 
   const handleNewAppointment = (start: Date) => {
@@ -297,22 +290,50 @@ export default function NurseAppointmentManager() {
     clinicId: string,            // retrieve this clinic ID 
     prefs: AppointmentViewPrefs  // query based on these preferences 
   ) => {
-    // range(from, to)
-    const from = (prefs.page - 1) * prefs.rowsPerPage // first row on page 
-    const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
 
-
-    // CREATE QUERY & ADD RULES 
+    //   CREATE initial QUERY & ADD RULES 
     let query = supabase
       .schema('public')
       .from('appointmentlist_display2')
-      .select('*', { count: 'exact' })
+      .select('*', { count: prefs.mode === 'list' ? 'exact' : undefined })
       .eq('clinic_id', clinicId)
-    const nowIso = new Date().toISOString()
+
+      
+    // IF CALENDAR MODE 
+    if (prefs.mode === 'calendar') {
+      // from 
+      if (prefs.rangeStart) {
+        query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
+      }
+      if (prefs.rangeEnd) {
+        query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
+      }
+
+      for (const rule of prefs.sortRules) {
+        query = query.order(rule.field, {
+          ascending: rule.direction === 'asc',
+        })
+      }
+
+    // USE THE QUERY TO OBTAIN RETURN DATA 
+      const { data, error } = await query
+      if (error) {
+        console.log('APPOINTMENT READ ERROR:', error)
+        setAppointmentsList([])
+        return
+      }
+      setAppointmentsList(data ?? [])
+      return
+    }
+
+    // list mode
+    const from = (prefs.page - 1) * prefs.rowsPerPage // first row on page 
+    const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
+
     if (prefs.dateMode === 'upcoming') {
-      query = query.gte('appointment_date', nowIso)
+      query = query.gte('appointment_date', new Date().toISOString())
     } else if (prefs.dateMode === 'past') {
-      query = query.lt('appointment_date', nowIso)
+      query = query.lt('appointment_date', new Date().toISOString())
     } else if (
       prefs.dateMode === 'range' &&
       prefs.rangeStart &&
@@ -321,6 +342,7 @@ export default function NurseAppointmentManager() {
       query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
       query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
     }
+
     for (const rule of prefs.sortRules) {
       query = query.order(rule.field, {
         ascending: rule.direction === 'asc',
@@ -329,18 +351,16 @@ export default function NurseAppointmentManager() {
 
     // USE THE QUERY TO OBTAIN RETURN DATA 
     const { data, error, count } = await query.range(from, to)
-    console.log('APPOINTMENT DATA:', count, data)
-
-    // if error, break 
-    if (error || !count ) {
+    if (error) {
       console.log('APPOINTMENT READ ERROR:', error)
       setAppointmentsList([])
       return
     }
-
-    // send data to component states 
     setAppointmentsList(data ?? [])
-    viewPrefs.totalpages = count ? (Math.ceil(count/viewPrefs.rowsPerPage)) : (1)
+    setViewPrefs((prev) => ({
+      ...prev,
+      totalpages: count ? Math.ceil(count / prev.rowsPerPage) : 1,
+    }))
   }
 
   //// U: UPDATE APPOINTMENT
@@ -426,7 +446,7 @@ export default function NurseAppointmentManager() {
       console.log('DELETE ERROR:', error)
       return
     }
-    await readAppointments(clinicId)
+    await readAppointments(clinicId, viewPrefs)
   }
 
 

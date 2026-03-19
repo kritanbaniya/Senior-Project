@@ -1,16 +1,9 @@
 import { useState , useEffect } from "react";
 import AppointmentCalendar from "./AppointmentCalendar.tsx";
 import AppointmentList from "./AppointmentList.tsx";
-import type { Appointment, AppointmentViewPrefs } from "./types.ts"; 
+import type { ApptProps } from "./types.ts"; 
 
-type Props = {
-  appointments: Appointment[]
-  onSelectAppointment?: (apt: Appointment) => void
-  onDeleteAppointment?: (apt: Appointment) => void
-  onSelectSlot?: (start: Date) => void
-  viewPrefs: AppointmentViewPrefs
-  onUpdateViewPrefs: (updates: Partial<AppointmentViewPrefs>) => void
-}
+
 
 export default function AppointmentSwitch({
   appointments,
@@ -19,7 +12,7 @@ export default function AppointmentSwitch({
   onSelectSlot,
   viewPrefs,
   onUpdateViewPrefs,
-}: Props) {
+}: ApptProps) {
   const [view, setView] = useState<"calendar" | "list">("calendar")
 
   useEffect(() => {
@@ -29,10 +22,10 @@ export default function AppointmentSwitch({
   return (
     <>
       <div className="form-actions">
-        <button type="button" onClick={() => setView("calendar")}>
+        <button type="button" onClick={() => {setView("calendar"); onUpdateViewPrefs({mode: 'calendar'})}}>
           Calendar
         </button>
-        <button type="button" onClick={() => setView("list")}>
+        <button type="button" onClick={() => {setView("list"); onUpdateViewPrefs({mode: 'list'})}}>
           List
         </button>
       </div>

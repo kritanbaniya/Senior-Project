@@ -2,7 +2,12 @@
 
 
 
-
+export type AppointmentType =
+  | 'General Check-up'
+  | 'Follow-up'
+  | 'Consultation'
+  | 'Vaccination'
+  | 'Lab Work'
 
 
 export type Appointment = {
@@ -46,15 +51,26 @@ type SortRule = {
   direction: SortDirection
 }
 export type AppointmentViewPrefs = {
+  mode: 'list' | 'calendar'
+  // list-only
   page: number
   rowsPerPage: number
   totalpages: number 
+  // both 
   sortRules: SortRule[]
   dateMode: DateMode
   rangeStart: string
   rangeEnd: string
 }
 
+export type ApptProps = {// define the prop's types
+  appointments: Appointment[]
+  onSelectAppointment?: (apt: Appointment) => void
+  onDeleteAppointment?: (apt: Appointment) => void
+  onSelectSlot?: (start: Date) => void
+  viewPrefs: AppointmentViewPrefs
+  onUpdateViewPrefs: (updates: Partial<AppointmentViewPrefs>) => void
+}
 
 
 

@@ -1,19 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import type { Appointment , AppointmentViewPrefs } from "./types.ts"; 
+import { useEffect,  useState } from "react";
+import type {  ApptProps} from "./types.ts"; 
 
 
 
 
 
 
-type Props = {
-  appointments: Appointment[]
-  onSelectAppointment?: (apt: Appointment) => void
-  onDeleteAppointment?: (apt: Appointment) => void
-  onSelectSlot?: (start: Date) => void
-  viewPrefs: AppointmentViewPrefs
-  onUpdateViewPrefs: (updates: Partial<AppointmentViewPrefs>) => void
-}
+
 
 
 
@@ -28,7 +21,7 @@ export default function AppointmentList({
   onSelectSlot,
   viewPrefs,
   onUpdateViewPrefs,
-}: Props) { 
+}: ApptProps) { 
   // pull info from view pref obj 
   let page = viewPrefs ? (viewPrefs.page) : (1)
   let totalPages = viewPrefs ? (viewPrefs.totalpages) : (1)
@@ -55,11 +48,10 @@ export default function AppointmentList({
         return
       } 
     }
-
-
   useEffect(()=>{
     setPageNum(String(page))
   }, [page, rowsInput])
+ 
 
 
   return (

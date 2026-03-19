@@ -6,8 +6,7 @@ import ClinicSelector from '../../../features/queue/components/ClinicSelector'
 import InProgressQueuePanel from '../../../features/queue/components/InProgressQueuePanel'
 import PendingQueuePanel from '../../../features/queue/components/PendingQueuePanel'
 import { useNurseQueue } from '../../../features/queue/useNurseQueue'
-import NurseAppointmentManager from './NurseAppointmentManager'
-import AppointmentSwitch from '@/features/appointment/AppointmentSwitch'
+import NurseAppointmentManager from './NurseAppointmentManager' 
 
 
 export default function NurseDashBoard() {

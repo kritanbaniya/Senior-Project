@@ -5,21 +5,19 @@ import {
   Views,
   type View,
   type SlotInfo,
-} from "react-big-calendar";
-import { format, parse, startOfWeek, getDay, startOfDay } from "date-fns";
+} from "react-big-calendar"; 
+import {
+  format,
+  parse,
+  startOfWeek, 
+  getDay,
+  startOfDay, 
+} from "date-fns";
 import { enUS } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import type { Appointment , AppointmentViewPrefs } from "./types.ts"; 
+import type { Appointment  , ApptProps} from "./types.ts"; 
 
 
-type Props = {// define the prop's types
-  appointments: Appointment[]
-  onSelectAppointment?: (apt: Appointment) => void
-  onDeleteAppointment?: (apt: Appointment) => void
-  onSelectSlot?: (start: Date) => void
-  viewPrefs: AppointmentViewPrefs
-  onUpdateViewPrefs: (updates: Partial<AppointmentViewPrefs>) => void
-}
 
 
 
@@ -51,10 +49,12 @@ export default function AppointmentCalendar({
   onSelectSlot,// 
   viewPrefs,
   onUpdateViewPrefs,
-}: Props) {
+}: ApptProps) {
   const [currentView, setCurrentView] = useState<View>(Views.MONTH)
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
   const today = startOfDay(new Date())
+
+
 
   //// TREATING DATA 
   // create list of events from list of appointments 
@@ -81,6 +81,9 @@ export default function AppointmentCalendar({
   // ^ dependency: which refreshes on the appointments state from parent
 
 
+
+  
+
   //// USE CALENDAR COMPONENT 
   return (
     <div style={{ height: '650px', margin: '20px 0' }}>
@@ -91,6 +94,26 @@ export default function AppointmentCalendar({
         view={currentView}
         onNavigate={(newDate: Date) => setCurrentDate(newDate)} // aware of today's date
         onView={(newView: View) => setCurrentView(newView)} // set view type
+        
+        onRangeChange={(range) => {
+          if (Array.isArray(range) && range.length > 0) {
+            const start = range[0]
+            const end = range[range.length - 1]
+
+            onUpdateViewPrefs({
+              mode: "calendar",
+              rangeStart: format(start, "yyyy-MM-dd"),
+              rangeEnd: format(end, "yyyy-MM-dd"),
+            })
+          } else if ("start" in range && "end" in range) {
+            onUpdateViewPrefs({
+              mode: "calendar",
+              rangeStart: format(range.start, "yyyy-MM-dd"),
+              rangeEnd: format(range.end, "yyyy-MM-dd"),
+            })
+          }
+        }}
+        
         startAccessor="start"
         endAccessor="end"
         views={[Views.MONTH, Views.WEEK, Views.DAY]}
