@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase.ts' 
 import type { Appointment, MemberList } from '../../../features/appointment/types.ts'
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
+import type { AppointmentViewPrefs } from "@/features/appointment/types.ts"; 
+
+
+// to make console log conditional 
+const debuglog: boolean = false
 
 type AppointmentType =
   | 'General Check-up'
@@ -12,6 +17,8 @@ type AppointmentType =
 
 type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
+
+// FOR THE FORMS (need to be refacs)
 type AppointmentForm = {
   patientId: string
   date: string
@@ -29,10 +36,46 @@ type UpdateAppointmentForm = {
   type: AppointmentType | ''
 }
 
-const debuglog: boolean = false
 
+
+
+
+
+
+ 
 export default function NurseAppointmentManager() {
-  
+  const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
+    page: 1,
+    totalpages: 1,
+    rowsPerPage: 10, // user can edit the number of rows per page 
+    sortRules: [ // by default, sort by date 
+      { field: 'appointment_date', direction: 'asc' },
+    ], 
+    dateMode: 'upcoming',
+    rangeStart: '',
+    rangeEnd: '',
+  }) // viewPref CANNOT be undefined 
+  // call back function; update viewpreferences from child components 
+  const updateViewPrefs = (updates: Partial<AppointmentViewPrefs>) => {
+    setViewPrefs((prev) => {  // old object 
+      const next = {
+      ...prev,    // copy what remains the same 
+      ...updates, // overwrite with what changes 
+      }
+
+      if (
+        updates.rowsPerPage !== undefined &&
+        updates.rowsPerPage !== prev.rowsPerPage
+      ) {
+        next.page = 1
+      }
+      return next
+    })
+  }
+
+
+
+
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   //// COMPONENT RENDER VARIABLES - decides if a part of the page gets mounted
@@ -250,22 +293,54 @@ export default function NurseAppointmentManager() {
 
   //// R: READ APPOINTMENT
   const [appointmentsList, setAppointmentsList] = useState<Appointment[]>([])
-  const readAppointments = async (clinicId: string) => {
-    const { data, error } = await supabase
+  const readAppointments = async (
+    clinicId: string,            // retrieve this clinic ID 
+    prefs: AppointmentViewPrefs  // query based on these preferences 
+  ) => {
+    // range(from, to)
+    const from = (prefs.page - 1) * prefs.rowsPerPage // first row on page 
+    const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
+
+
+    // CREATE QUERY & ADD RULES 
+    let query = supabase
       .schema('public')
       .from('appointmentlist_display2')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('clinic_id', clinicId)
+    const nowIso = new Date().toISOString()
+    if (prefs.dateMode === 'upcoming') {
+      query = query.gte('appointment_date', nowIso)
+    } else if (prefs.dateMode === 'past') {
+      query = query.lt('appointment_date', nowIso)
+    } else if (
+      prefs.dateMode === 'range' &&
+      prefs.rangeStart &&
+      prefs.rangeEnd
+    ) {
+      query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
+      query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
+    }
+    for (const rule of prefs.sortRules) {
+      query = query.order(rule.field, {
+        ascending: rule.direction === 'asc',
+      })
+    }
 
-    if(debuglog == true){
-    console.log('APPOINTMENT DATA:', data)}
+    // USE THE QUERY TO OBTAIN RETURN DATA 
+    const { data, error, count } = await query.range(from, to)
+    console.log('APPOINTMENT DATA:', count, data)
 
-    if (error) {
+    // if error, break 
+    if (error || !count ) {
+      console.log('APPOINTMENT READ ERROR:', error)
       setAppointmentsList([])
       return
     }
 
+    // send data to component states 
     setAppointmentsList(data ?? [])
+    viewPrefs.totalpages = count ? (Math.ceil(count/viewPrefs.rowsPerPage)) : (1)
   }
 
   //// U: UPDATE APPOINTMENT
@@ -357,7 +432,7 @@ export default function NurseAppointmentManager() {
 
 
 
-  
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
   //// REACT HOOKS !
   useEffect(() => {
@@ -365,28 +440,32 @@ export default function NurseAppointmentManager() {
     retrieveAppointmentTypes()
   }, [])
 
-  // only load data when the clinic information is retrieved 
-  useEffect(() => {
-    if (!clinic) return
 
-    readAppointments(clinic)
+  // only load patient and doctor data when the clinic information is retrieved 
+  useEffect(() => {
+    if (!clinic) return 
     retrievePracticioners(clinic)
     retrievePatients(clinic)
   }, [clinic])
+  // load the subset of appointments when we have the clinic 
+  //    OR when the viewPreferences are updated 
+  useEffect(() => {
+    if (!clinic) return
+    readAppointments(clinic, viewPrefs)
+  }, [clinic, viewPrefs])
 
-  // Rerender components when these change 
+
+  // Rerender components when these values are retrieved/updated 
   useEffect(() => {
     if (patientList.length > 0 && scheduleForm.patientId === '') {
       setScheduleForm((f) => ({ ...f, patientId: patientList[0].user_id }))
     }
   }, [patientList])
-
   useEffect(() => {
     if (practicionerList.length > 0 && scheduleForm.doctorId === '') {
       setScheduleForm((f) => ({ ...f, doctorId: practicionerList[0].user_id }))
     }
   }, [practicionerList])
-
   useEffect(() => {
     if (appointmentTypes.length > 0) {
       setScheduleForm((f) => ({
@@ -400,239 +479,239 @@ export default function NurseAppointmentManager() {
       }))
     }
   }, [appointmentTypes])
-
+  
 
   return (
     <>
       <div className="info-box appointments-section">
         <h2 className="info-box-title">Appointment scheduling</h2>
-
-        {!clinic ? (
-        <p>Loading clinic...</p>
-      ) : (<>
-        <AppointmentSwitch
-          appointments={appointmentsList}
-          onSelectAppointment={handleEditAppointment}
-          onDeleteAppointment={(apt) =>
-            deleteAppointments(apt.Appointment_id, clinic)
-          }
-          onSelectSlot={handleNewAppointment}
-        />
+        {(!clinic || !viewPrefs) ? (<p>Loading clinic...</p>) 
+        : (<>
+          {/* VIEWING APPOINTMENTS */}
+          <AppointmentSwitch
+            appointments={appointmentsList} // send a subset of appointments
+            // functions to handle appointment CRUD actions 
+            onSelectAppointment={handleEditAppointment} 
+            onDeleteAppointment={(apt) =>
+              deleteAppointments(apt.Appointment_id, clinic)
+            }
+            onSelectSlot={handleNewAppointment}
+            // function to handle appointment view changes (changing query)
+            viewPrefs={viewPrefs}
+            onUpdateViewPrefs = {updateViewPrefs}
+          />
       
 
-        <div className="info-box-content"> 
-          {/* STATUS MESSAGE */}
-          {createStatus === 'idle' && (
-            <p className="small-label">View, create, and modify appointments.</p>
-          )}
-          {createStatus === 'loading' && (
-            <p className="small-label">Creating appointment...</p>
-          )}
-          {createStatus === 'success' && (
-            <p className="success-message" style={{color: 'green' }}>{createMessage}</p>
-          )}
-          {createStatus === 'failed' && (
-            <p className="error-message" style={{color: 'red' }}>{createMessage}</p>
-          )}
+          {/* CREATION / EDITING FORM */}
+          <div className="info-box-content"> 
+            {/* STATUS MESSAGE */}
+            {createStatus === 'idle' && (
+              <p className="small-label">View, create, and modify appointments.</p>
+            )}
+            {createStatus === 'loading' && (
+              <p className="small-label">Creating appointment...</p>
+            )}
+            {createStatus === 'success' && (
+              <p className="success-message" style={{color: 'green' }}>{createMessage}</p>
+            )}
+            {createStatus === 'failed' && (
+              <p className="error-message" style={{color: 'red' }}>{createMessage}</p>
+            )}
 
+            {/* FORMS */}
+            {!showScheduleForm ? (
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => handleNewAppointment(new Date())}
+              >
+                Create appointment
+              </button>
+            ) : (
+              <form
+                className="portal-form"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  createAppointment(clinic)
+                }}
+              >
+                <div className="form-row">
+                  <label>Patient name</label>
+                  <select
+                    value={scheduleForm.patientId}
+                    onChange={(e) =>
+                      setScheduleForm((f) => ({ ...f, patientId: e.target.value }))
+                    }
+                  >
+                    {patientList.map((d) => (
+                      <option key={d.user_id} value={d.user_id}>
+                        {d.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
+                <div className="form-row">
+                  <label>Date</label>
+                  <input
+                    type="date"
+                    value={scheduleForm.date}
+                    //min={getNowForDateTimeInput().date} redundant, and mismatching style. but may still be useful
+                    onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))}
+                    required
+                  />
+                </div>
 
-          {/* FORMS */}
-          {!showScheduleForm ? (
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => handleNewAppointment(new Date())}
-            >
-              Create appointment
-            </button>
-          ) : (
-            <form
-              className="portal-form"
-              onSubmit={(e) => {
-                e.preventDefault()
-                createAppointment(clinic)
-              }}
-            >
-              <div className="form-row">
-                <label>Patient name</label>
-                <select
-                  value={scheduleForm.patientId}
-                  onChange={(e) =>
-                    setScheduleForm((f) => ({ ...f, patientId: e.target.value }))
-                  }
-                >
-                  {patientList.map((d) => (
-                    <option key={d.user_id} value={d.user_id}>
-                      {d.full_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div className="form-row">
+                  <label>Time</label>
+                  <input
+                    type="time"
+                    value={scheduleForm.time}
+                    onChange={(e) => setScheduleForm((f) => ({ ...f, time: e.target.value }))}
+                    required
+                  />
+                </div>
 
-              <div className="form-row">
-                <label>Date</label>
-                <input
-                  type="date"
-                  value={scheduleForm.date}
-                  //min={getNowForDateTimeInput().date} redundant, and mismatching style. but may still be useful
-                  onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))}
-                  required
-                />
-              </div>
+                <div className="form-row">
+                  <label>Provider</label>
+                  <select
+                    value={scheduleForm.doctorId}
+                    onChange={(e) =>
+                      setScheduleForm((f) => ({ ...f, doctorId: e.target.value }))
+                    }
+                  >
+                    {practicionerList.map((d) => (
+                      <option key={d.user_id} value={d.user_id}>
+                        {d.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="form-row">
-                <label>Time</label>
-                <input
-                  type="time"
-                  value={scheduleForm.time}
-                  onChange={(e) => setScheduleForm((f) => ({ ...f, time: e.target.value }))}
-                  required
-                />
-              </div>
+                <div className="form-row">
+                  <label>Visit type</label>
+                  <select
+                    name="type"
+                    value={scheduleForm.type}
+                    onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
+                  >
+                    {appointmentTypes.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="form-row">
-                <label>Provider</label>
-                <select
-                  value={scheduleForm.doctorId}
-                  onChange={(e) =>
-                    setScheduleForm((f) => ({ ...f, doctorId: e.target.value }))
-                  }
-                >
-                  {practicionerList.map((d) => (
-                    <option key={d.user_id} value={d.user_id}>
-                      {d.full_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div className="form-actions">
+                  <button type="submit" className="btn-primary">
+                    Create
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => {
+                      setShowScheduleForm(false)
+                      setCreateStatus('idle')
+                      setCreateMessage('')
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+            {showAptUpdateForm ? (
+              <form
+                className="portal-form"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  updateAppointments()
+                }}
+              >
+                <div className="form-row">
+                  <label>Patient name</label>
+                  <select
+                    value={updateForm.patientId}
+                    onChange={(e) =>
+                      setUpdateForm((f) => ({ ...f, patientId: e.target.value }))
+                    }
+                  >
+                    {patientList.map((d) => (
+                      <option key={d.user_id} value={d.user_id}>
+                        {d.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="form-row">
-                <label>Visit type</label>
-                <select
-                  name="type"
-                  value={scheduleForm.type}
-                  onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
-                >
-                  {appointmentTypes.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div className="form-row">
+                  <label>Date</label>
+                  <input
+                    type="date"
+                    value={updateForm.date}
+                    onChange={(e) => setUpdateForm((f) => ({ ...f, date: e.target.value }))}
+                    required
+                  />
+                </div>
 
-              <div className="form-actions">
-                <button type="submit" className="btn-primary">
-                  Create
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    setShowScheduleForm(false)
-                    setCreateStatus('idle')
-                    setCreateMessage('')
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-          {showAptUpdateForm ? (
-            <form
-              className="portal-form"
-              onSubmit={(e) => {
-                e.preventDefault()
-                updateAppointments()
-              }}
-            >
-              <div className="form-row">
-                <label>Patient name</label>
-                <select
-                  value={updateForm.patientId}
-                  onChange={(e) =>
-                    setUpdateForm((f) => ({ ...f, patientId: e.target.value }))
-                  }
-                >
-                  {patientList.map((d) => (
-                    <option key={d.user_id} value={d.user_id}>
-                      {d.full_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div className="form-row">
+                  <label>Time</label>
+                  <input
+                    type="time"
+                    value={updateForm.time}
+                    onChange={(e) => setUpdateForm((f) => ({ ...f, time: e.target.value }))}
+                    required
+                  />
+                </div>
 
-              <div className="form-row">
-                <label>Date</label>
-                <input
-                  type="date"
-                  value={updateForm.date}
-                  onChange={(e) => setUpdateForm((f) => ({ ...f, date: e.target.value }))}
-                  required
-                />
-              </div>
+                <div className="form-row">
+                  <label>Provider</label>
+                  <select
+                    value={updateForm.doctorId}
+                    onChange={(e) =>
+                      setUpdateForm((f) => ({ ...f, doctorId: e.target.value }))
+                    }
+                  >
+                    {practicionerList.map((d) => (
+                      <option key={d.user_id} value={d.user_id}>
+                        {d.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="form-row">
-                <label>Time</label>
-                <input
-                  type="time"
-                  value={updateForm.time}
-                  onChange={(e) => setUpdateForm((f) => ({ ...f, time: e.target.value }))}
-                  required
-                />
-              </div>
+                <div className="form-row">
+                  <label>Visit type</label>
+                  <select
+                    value={updateForm.type}
+                    onChange={(e) => setUpdateForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
+                  >
+                    {appointmentTypes.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="form-row">
-                <label>Provider</label>
-                <select
-                  value={updateForm.doctorId}
-                  onChange={(e) =>
-                    setUpdateForm((f) => ({ ...f, doctorId: e.target.value }))
-                  }
-                >
-                  {practicionerList.map((d) => (
-                    <option key={d.user_id} value={d.user_id}>
-                      {d.full_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-row">
-                <label>Visit type</label>
-                <select
-                  value={updateForm.type}
-                  onChange={(e) => setUpdateForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
-                >
-                  {appointmentTypes.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-actions">
-                <button type="submit" className="btn-primary">
-                  Save changes
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setShowAptUpdateForm(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          ) : (
-            <></>
-          )}
-
-
-        </div>
+                <div className="form-actions">
+                  <button type="submit" className="btn-primary">
+                    Save changes
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setShowAptUpdateForm(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <></>
+            )}
+          </div>
         </>)}
 
 

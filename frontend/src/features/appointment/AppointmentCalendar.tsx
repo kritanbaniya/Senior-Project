@@ -9,8 +9,17 @@ import {
 import { format, parse, startOfWeek, getDay, startOfDay } from "date-fns";
 import { enUS } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import type { Appointment } from "./types.ts";
+import type { Appointment , AppointmentViewPrefs } from "./types.ts"; 
 
+
+type Props = {// define the prop's types
+  appointments: Appointment[]
+  onSelectAppointment?: (apt: Appointment) => void
+  onDeleteAppointment?: (apt: Appointment) => void
+  onSelectSlot?: (start: Date) => void
+  viewPrefs: AppointmentViewPrefs
+  onUpdateViewPrefs: (updates: Partial<AppointmentViewPrefs>) => void
+}
 
 
 
@@ -21,14 +30,7 @@ type CalendarEvent = {
   start: Date
   end: Date
   raw: Appointment
-}
-type Props = { // define the prop's types
-  appointments: Appointment[]
-  onSelectAppointment?: (apt: Appointment) => void
-  onSelectSlot?: (start: Date) => void
-}
-
-
+} 
 const locales = {
   'en-US': enUS,
 }
@@ -45,7 +47,10 @@ const localizer = dateFnsLocalizer({
 export default function AppointmentCalendar({
   appointments, // list of appointments to display 
   onSelectAppointment, // function passed in (can be nurse/patient)
+  onDeleteAppointment,
   onSelectSlot,// 
+  viewPrefs,
+  onUpdateViewPrefs,
 }: Props) {
   const [currentView, setCurrentView] = useState<View>(Views.MONTH)
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
