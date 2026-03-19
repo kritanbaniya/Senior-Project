@@ -1,29 +1,39 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../../lib/supabase.ts'
-import AppointmentCalendar from '../../../features/appointment/AppointmentCalendar.tsx'
+import { supabase } from '../../../lib/supabase.ts' 
 import type { Appointment, MemberList } from '../../../features/appointment/types.ts'
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
 
-//// TO BE REMOVED AFTER SUPABASE IMPLEMENTATION IS COMPLETE
-// NEED SUPABASE ENUM
-const MOCK_APPOINTMENT_TYPES = [
-  'General Check-up',
-  'Follow-up',
-  'Consultation',
-  'Vaccination',
-  'Lab Work',
-]
-/*
+type AppointmentType =
+  | 'General Check-up'
+  | 'Follow-up'
+  | 'Consultation'
+  | 'Vaccination'
+  | 'Lab Work'
 
-enums and stuff implemented in supabase already.
-create type AppointmentTypes as enum ('General Check-up', 'Follow-up', 'Consultation', 'Vaccination', 'Lab Work');
-create type AppointmentStatus as enum ( 'scheduled', 'completed' , 'cancelled' );
+type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
-*/
+type AppointmentForm = {
+  patientId: string
+  date: string
+  time: string
+  doctorId: string
+  type: AppointmentType | ''
+}
 
-type Response = 'Failed' | 'Success' | 'Loading'
+type UpdateAppointmentForm = {
+  appointmentId: string
+  patientId: string
+  date: string
+  time: string
+  doctorId: string
+  type: AppointmentType | ''
+}
+
+const debuglog: boolean = false
 
 export default function NurseAppointmentManager() {
+  
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
   //// COMPONENT RENDER VARIABLES - decides if a part of the page gets mounted
   const [showScheduleForm, setShowScheduleForm] = useState(false)
@@ -31,40 +41,55 @@ export default function NurseAppointmentManager() {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   //// HELPER FUNCTIONS:
-  // Retrieve list of doctors in this clinic
-  const [clinicThis, setClinicThis] = useState<string>()
-  const [doctorList, setDoctorList] = useState<MemberList[]>([])
+  // Retrieve Appointment Types 
+  const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
+  const retrieveAppointmentTypes = async () => {
+    const { data, error } = await supabase.rpc('get_appointment_types')
 
-  const thisNursesClinic = async () => {
+    if (error) {
+      console.log('APPOINTMENT TYPES ERROR:', error)
+      setAppointmentTypes([])
+      return
+    }
+
+    const values = (data ?? []).map(
+      (row: { value: string }) => row.value as AppointmentType
+    )
+    setAppointmentTypes(values)
+  }
+  
+  // Retrieve clinic ID
+  const [clinic, setClinic] = useState<string>()
+  const loadClinic = async () => {
     const { data: authData, error: authErr } = await supabase.auth.getUser()
     if (authErr || !authData.user) {
       console.log('AUTH ERROR:', authErr)
       return null
-    }
-    const userId = authData.user.id
+    } 
 
     const { data, error } = await supabase
       .schema('public')
       .from('Memberships')
       .select('clinic_id')
-      .eq('user_id', userId)
+      .eq('user_id', authData.user.id)
       .single()
 
     if (error || !data) {
       console.log('CLINIC ERROR:', error)
-      return null
+      return  
     }
 
-    setClinicThis(data.clinic_id)
-    return data.clinic_id
+    setClinic(data.clinic_id) 
   }
 
-  const retrievePracticioners = async () => {
+  // Retrieve list of practicioner in this clinic
+  const [practicionerList, setPracticionerList] = useState<MemberList[]>([])
+  const retrievePracticioners = async (clinicId: string) => {
     const { data, error } = await supabase
       .schema('public')
       .from('membernamerole')
       .select('*')
-      .eq('clinic_id', await thisNursesClinic())
+      .eq('clinic_id', clinicId)
       .eq('role', 'doctor')
 
     if (error) {
@@ -72,17 +97,17 @@ export default function NurseAppointmentManager() {
       return
     }
 
-    setDoctorList(data ?? [])
+    setPracticionerList(data ?? [])
   }
 
+  // Retrieve Patients in this clinic
   const [patientList, setPatientList] = useState<MemberList[]>([])
-
-  const retrievePatients = async () => {
+  const retrievePatients = async (clinicId: string) => {
     const { data, error } = await supabase
       .schema('public')
       .from('membernamerole')
       .select('*')
-      .eq('clinic_id', await thisNursesClinic())
+      .eq('clinic_id', clinicId)
       .eq('role', 'patient')
 
     if (error) {
@@ -93,71 +118,119 @@ export default function NurseAppointmentManager() {
     setPatientList(data ?? [])
   }
 
-  // Select after doing the supabase insert, and using that to confirm submission.
-  // which can render a "completed!" thing
+  // Get Time Helper // used in a commented piece of code. 
+  function getNowForDateTimeInput() {
+    const now = new Date()
+    now.setSeconds(0, 0)
 
-  ////////////////////////////////////////////////
-  ///// C R U D !!!
-  // I GOT SPIDERS CRAWLING DOWN MY SPINE,
-  // one thousand fourty bugs to pay the fine-
-  // pass data from ui form to function
-  const [scheduleForm, setScheduleForm] = useState({
+    const yyyy = now.getFullYear()
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    const dd = String(now.getDate()).padStart(2, '0')
+    const hh = String(now.getHours()).padStart(2, '0')
+    const min = String(now.getMinutes()).padStart(2, '0')
+
+    return {
+      date: `${yyyy}-${mm}-${dd}`,
+      time: `${hh}:${min}`,
+      combined: `${yyyy}-${mm}-${dd} ${hh}:${min}:00`,
+    }
+  }
+
+  
+
+
+  
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  ///// C R U D !!! 
+  const [scheduleForm, setScheduleForm] = useState<AppointmentForm>({
     patientId: '',
     date: '',
     time: '',
     doctorId: '',
-    type: MOCK_APPOINTMENT_TYPES[0],
+    type: '',
   })
 
   // check for when supabase recieves information
-  const [appointmentResponse, setAppointmentResponse] = useState<Response>('Loading')
+  // const [appointmentResponse, setAppointmentResponse] = useState<Response>('Loading')
+  const [createStatus, setCreateStatus] = useState<AppointmentCreateStatus>('idle')
+  const [createMessage, setCreateMessage] = useState('')
+
 
   //// C: CREATE NEW APPOINTMENT
-  const createAppointment = async () => {
-    setAppointmentResponse('Loading')
-    console.log(appointmentResponse)
-    console.log('FORMSUBMITTED', scheduleForm)
-
-    if (scheduleForm.patientId != null && scheduleForm.doctorId != null) {
-      const appointmentDate = `${scheduleForm.date} ${scheduleForm.time}:00`
-
-      const { data, error } = await supabase
-        .schema('public')
-        .from('Appointments')
-        .insert([
-          {
-            appointment_date: appointmentDate,
-            patient_id: scheduleForm.patientId,
-            clinic_id: clinicThis,
-            clinician_id: scheduleForm.doctorId,
-            created_at: '2026-03-20 14:32:00',
-            checkin_at: null,
-            seen_at: null,
-            visit_type: scheduleForm.type,
-          },
-        ])
-        .select('*')
-        .single()
-
-      console.log(data)
-
-      if (error) {
-        setAppointmentResponse('Failed')
-        console.log('ERROR CREATE:', error)
-        return
-      }
-
-      setAppointmentResponse('Success')
-      console.log(appointmentResponse)
-
-      await readAppointments()
-    } else {
-      setAppointmentResponse('Failed')
+  const createAppointment = async (clinicId: string) => {
+    setCreateStatus('loading')
+    setCreateMessage('')  
+    if(debuglog == true){console.log('FORMSUBMITTED', scheduleForm)}
+    
+    // exit if form is incomplete. 
+    if (  !clinicId ||
+          !scheduleForm.patientId ||
+          !scheduleForm.date ||
+          !scheduleForm.time ||
+          !scheduleForm.doctorId ||
+          !scheduleForm.type) {
+      setCreateStatus('failed')
+      setCreateMessage('Appointment creation failed. Please complete all fields.')
       console.log('ERROR: APPOINTMENT CREATION FAILED')
+      return
     }
-  }
+    // exit if appt time is before current time 
+    const selectedDateTime = new Date(`${scheduleForm.date}T${scheduleForm.time}`)
+    const now = new Date()
+    if (selectedDateTime < now) {
+      setCreateStatus('failed')
+      setCreateMessage('Appointment cannot be created in the past.')
+      return
+    }
 
+
+    // CREATE IT 
+    let appointmentDate = `${scheduleForm.date} ${scheduleForm.time}:00`
+    const { data, error } = await supabase
+      .schema('public')
+      .from('Appointments')
+      .insert([
+        {
+          appointment_date: appointmentDate,
+          patient_id: scheduleForm.patientId,
+          clinic_id: clinicId,
+          clinician_id: scheduleForm.doctorId,
+          checkin_at: null,
+          seen_at: null,
+          visit_type: scheduleForm.type,
+        },
+      ])
+      .select('*')
+      .single()
+ 
+    if (error || !data) {
+      setCreateStatus('failed')
+      setCreateMessage('Appointment creation failed.')
+      console.log('ERROR CREATE:', error)
+      return
+    }
+
+    const patientName =
+    patientList.find((p) => p.user_id === scheduleForm.patientId)?.full_name ?? 'Unknown patient'
+    const doctorName =
+      practicionerList.find((d) => d.user_id === scheduleForm.doctorId)?.full_name ??
+      'Unknown provider'
+    setCreateStatus('success')
+    setCreateMessage(
+      `Appointment created for ${patientName} on ${scheduleForm.date} at ${scheduleForm.time} with ${doctorName}.`
+    )
+
+    await readAppointments(clinicId)
+  }
+  // function passed to appointment components 
   const handleNewAppointment = (start: Date) => {
+    const now = new Date()
+    if (start < now) {
+      setCreateStatus('failed')
+      setCreateMessage('Cannot create an appointment in the past.')
+      return
+    }
+
     const yyyy = start.getFullYear()
     const mm = String(start.getMonth() + 1).padStart(2, '0')
     const dd = String(start.getDate()).padStart(2, '0')
@@ -170,6 +243,8 @@ export default function NurseAppointmentManager() {
       time: `${hh}:${min}`,
     }))
 
+    setCreateStatus('idle')
+    setCreateMessage('')
     setShowAptUpdateForm(false)
     setShowScheduleForm(true)
   }
@@ -177,14 +252,15 @@ export default function NurseAppointmentManager() {
   //// R: READ APPOINTMENT
   const [appointmentsList, setAppointmentsList] = useState<Appointment[]>([])
 
-  const readAppointments = async () => {
+  const readAppointments = async (clinicId: string) => {
     const { data, error } = await supabase
       .schema('public')
       .from('appointmentlist_display2')
       .select('*')
-      .eq('clinic_id', await thisNursesClinic())
+      .eq('clinic_id', clinicId)
 
-    console.log('APPOINTMENT DATA:', data)
+    if(debuglog == true){
+    console.log('APPOINTMENT DATA:', data)}
 
     if (error) {
       setAppointmentsList([])
@@ -195,15 +271,14 @@ export default function NurseAppointmentManager() {
   }
 
   //// U: UPDATE APPOINTMENT
-  const [updateForm, setUpdateForm] = useState({
+  const [updateForm, setUpdateForm] = useState<UpdateAppointmentForm>({
     appointmentId: '',
     patientId: '',
     date: '',
     time: '',
     doctorId: '',
-    type: MOCK_APPOINTMENT_TYPES[0],
+    type: '',
   })
-
   const handleEditAppointment = async (apt: Appointment) => {
     const { data, error } = await supabase
       .schema('public')
@@ -216,7 +291,8 @@ export default function NurseAppointmentManager() {
       return
     }
 
-    console.log(data)
+    if(debuglog == true){
+    console.log(data)}
 
     const d = new Date(data.appointment_date)
     const yyyy = d.getFullYear()
@@ -231,14 +307,13 @@ export default function NurseAppointmentManager() {
       doctorId: data.clinician_id ?? '',
       date: `${yyyy}-${mm}-${dd}`,
       time: `${hh}:${min}`,
-      type: data.visit_type ?? MOCK_APPOINTMENT_TYPES[0],
+      type: data.visit_type ?? appointmentTypes[0],
     })
 
     setShowAptUpdateForm(true)
   }
-
   const updateAppointments = async () => {
-    console.log('UPDATEFORM SUBMITTED:', updateForm)
+    if(debuglog == true){console.log('UPDATEFORM SUBMITTED:', updateForm)}
 
     if (updateForm.appointmentId != null && updateForm.doctorId != null) {
       const appointmentDate = `${updateForm.date} ${updateForm.time}:00`
@@ -256,43 +331,48 @@ export default function NurseAppointmentManager() {
         .select()
         .single()
 
-      console.log('UPDATE DATA:', data)
-      console.log('UPDATE ERROR:', error)
-
-      if (error) {
+      
+      if(debuglog == true){console.log('UPDATE DATA:', data)}
+      if (error) {console.log('UPDATE ERROR:', error)
         return
       }
     }
   }
 
   //// D: DELETE APPOINTMENT
-  const deleteAppointments = async (aptid: string) => {
+  const deleteAppointments = async (aptid: string, clinicId: string) => {
     const { data, error } = await supabase
       .schema('public')
       .from('Appointments')
       .delete()
       .eq('Appointment_id', aptid)
 
-    console.log('DELETE DATA:', data)
-    console.log('DELETE ERROR:', error)
-
+      
+    if(debuglog == true){console.log('DELETE DATA:', data)}
     if (error) {
+      console.log('DELETE ERROR:', error)
       return
     }
-
-    await readAppointments()
+    await readAppointments(clinicId)
   }
 
   ////////////////////////////////////////////////
   //// REACT HOOKS !
   useEffect(() => {
-    readAppointments()
-    retrievePracticioners()
-    retrievePatients()
-
-    return
+    loadClinic()
+    retrieveAppointmentTypes()
   }, [])
 
+  // only load data when the clinic information is retrieved 
+  useEffect(() => {
+    if (!clinic) return
+
+    readAppointments(clinic)
+    retrievePracticioners(clinic)
+    retrievePatients(clinic)
+  }, [clinic])
+
+  // Rerender components when these change 
   useEffect(() => {
     if (patientList.length > 0 && scheduleForm.patientId === '') {
       setScheduleForm((f) => ({ ...f, patientId: patientList[0].user_id }))
@@ -300,26 +380,62 @@ export default function NurseAppointmentManager() {
   }, [patientList])
 
   useEffect(() => {
-    if (doctorList.length > 0 && scheduleForm.doctorId === '') {
-      setScheduleForm((f) => ({ ...f, doctorId: doctorList[0].user_id }))
+    if (practicionerList.length > 0 && scheduleForm.doctorId === '') {
+      setScheduleForm((f) => ({ ...f, doctorId: practicionerList[0].user_id }))
     }
-  }, [doctorList])
+  }, [practicionerList])
+
+  useEffect(() => {
+    if (appointmentTypes.length > 0) {
+      setScheduleForm((f) => ({
+        ...f,
+        type: f.type || appointmentTypes[0],
+      }))
+
+      setUpdateForm((f) => ({
+        ...f,
+        type: f.type || appointmentTypes[0],
+      }))
+    }
+  }, [appointmentTypes])
+
 
   return (
     <>
       <div className="info-box appointments-section">
         <h2 className="info-box-title">Appointment scheduling</h2>
 
+        {!clinic ? (
+        <p>Loading clinic...</p>
+      ) : (<>
         <AppointmentSwitch
-            appointments={appointmentsList}
-            onSelectAppointment={handleEditAppointment}
-            onDeleteAppointment={(apt) => deleteAppointments(apt.Appointment_id)}
-            onSelectSlot={handleNewAppointment}
+          appointments={appointmentsList}
+          onSelectAppointment={handleEditAppointment}
+          onDeleteAppointment={(apt) =>
+            deleteAppointments(apt.Appointment_id, clinic)
+          }
+          onSelectSlot={handleNewAppointment}
         />
+      
 
-        <div className="info-box-content">
-          <p>View, create, and modify appointments.</p>
+        <div className="info-box-content"> 
+          {/* STATUS MESSAGE */}
+          {createStatus === 'idle' && (
+            <p className="small-label">View, create, and modify appointments.</p>
+          )}
+          {createStatus === 'loading' && (
+            <p className="small-label">Creating appointment...</p>
+          )}
+          {createStatus === 'success' && (
+            <p className="success-message" style={{color: 'green' }}>{createMessage}</p>
+          )}
+          {createStatus === 'failed' && (
+            <p className="error-message" style={{color: 'red' }}>{createMessage}</p>
+          )}
 
+
+
+          {/* FORMS */}
           {!showScheduleForm ? (
             <button
               type="button"
@@ -333,7 +449,7 @@ export default function NurseAppointmentManager() {
               className="portal-form"
               onSubmit={(e) => {
                 e.preventDefault()
-                createAppointment()
+                createAppointment(clinic)
               }}
             >
               <div className="form-row">
@@ -357,6 +473,7 @@ export default function NurseAppointmentManager() {
                 <input
                   type="date"
                   value={scheduleForm.date}
+                  //min={getNowForDateTimeInput().date} redundant, and mismatching style. but may still be useful
                   onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))}
                   required
                 />
@@ -380,7 +497,7 @@ export default function NurseAppointmentManager() {
                     setScheduleForm((f) => ({ ...f, doctorId: e.target.value }))
                   }
                 >
-                  {doctorList.map((d) => (
+                  {practicionerList.map((d) => (
                     <option key={d.user_id} value={d.user_id}>
                       {d.full_name}
                     </option>
@@ -393,9 +510,9 @@ export default function NurseAppointmentManager() {
                 <select
                   name="type"
                   value={scheduleForm.type}
-                  onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value }))}
+                  onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
                 >
-                  {MOCK_APPOINTMENT_TYPES.map((t) => (
+                  {appointmentTypes.map((t) => (
                     <option key={t} value={t}>
                       {t}
                     </option>
@@ -410,42 +527,17 @@ export default function NurseAppointmentManager() {
                 <button
                   type="button"
                   className="btn-secondary"
-                  onClick={() => setShowScheduleForm(false)}
+                  onClick={() => {
+                    setShowScheduleForm(false)
+                    setCreateStatus('idle')
+                    setCreateMessage('')
+                  }}
                 >
                   Cancel
                 </button>
               </div>
             </form>
           )}
-
-          {/* <div className="nurse-appointment-list">
-            <p className="small-label">Appointments (today & upcoming)</p>
-            <ul className="appointment-list">
-              {appointmentsList.map((apt) => (
-                <li key={apt.Appointment_id} className="appointment-item nurse-apt-item">
-                  <span className="apt-date">{apt.appointment_date}</span>
-                  <span className="apt-doctor">{apt.clinician_name}</span>
-                  <span className="apt-type">{apt.visit_type}</span>
-                  <span className="apt-patient">{apt.patient_name}</span>
-                  <button
-                    type="button"
-                    className="btn-small"
-                    onClick={() => handleEditAppointment(apt)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-small"
-                    onClick={() => deleteAppointments(apt.Appointment_id)}
-                  >
-                    Delete
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div> */}
-
           {showAptUpdateForm ? (
             <form
               className="portal-form"
@@ -498,7 +590,7 @@ export default function NurseAppointmentManager() {
                     setUpdateForm((f) => ({ ...f, doctorId: e.target.value }))
                   }
                 >
-                  {doctorList.map((d) => (
+                  {practicionerList.map((d) => (
                     <option key={d.user_id} value={d.user_id}>
                       {d.full_name}
                     </option>
@@ -510,9 +602,9 @@ export default function NurseAppointmentManager() {
                 <label>Visit type</label>
                 <select
                   value={updateForm.type}
-                  onChange={(e) => setUpdateForm((f) => ({ ...f, type: e.target.value }))}
+                  onChange={(e) => setUpdateForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
                 >
-                  {MOCK_APPOINTMENT_TYPES.map((t) => (
+                  {appointmentTypes.map((t) => (
                     <option key={t} value={t}>
                       {t}
                     </option>
@@ -536,7 +628,12 @@ export default function NurseAppointmentManager() {
           ) : (
             <></>
           )}
+
+
         </div>
+        </>)}
+
+
       </div>
     </>
   )
