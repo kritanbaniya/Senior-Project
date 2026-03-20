@@ -94,7 +94,7 @@ export default function PatientAppointmentManager() {
             (row: { value: string }) => row.value as AppointmentType
         )
         setAppointmentTypes(values)
-        if(debuglog = true){
+        if(debuglog == true){
             console.log(appointmentTypes)
         }
     }
