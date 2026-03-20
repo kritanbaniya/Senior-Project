@@ -11,6 +11,8 @@ import PatientSideBar from './PatientSideBar'
 
 
 export default function PatientAppointmentManager() {
+    let debuglog : boolean = true
+
 
     const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
         mode: 'calendar',
@@ -78,6 +80,7 @@ export default function PatientAppointmentManager() {
 
     // Retrieve Appointment Types 
     // const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
+    const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
     const retrieveAppointmentTypes = async () => {
         const { data, error } = await supabase.rpc('get_appointment_types')
 
@@ -91,6 +94,9 @@ export default function PatientAppointmentManager() {
             (row: { value: string }) => row.value as AppointmentType
         )
         setAppointmentTypes(values)
+        if(debuglog = true){
+            console.log(appointmentTypes)
+        }
     }
 
     
