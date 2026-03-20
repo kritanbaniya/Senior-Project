@@ -114,8 +114,7 @@ export default function PatientDashboard() {
     type: MOCK_APPOINTMENT_TYPES[0],
     reason: '',
   })
-  const [profileOpen, setProfileOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false) 
   const [info, setInfo] = useState<PatientInfo | null>(null)
   const activeClinicId = selectedClinicId
   const {

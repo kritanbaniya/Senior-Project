@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
+import NurseSideBar from './NurseSideBar';
 
 type NurseInfoRow = {
   id: string
@@ -121,32 +122,10 @@ export default function NurseInformation() {
 
   return (
     <div className="pd-layout">
-      <aside className={`pd-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
-        <div className="pd-sidebar-header">
-          <Link to="/" className="pd-sidebar-logo">
-            <span>ClinicIQ</span>
-          </Link>
-          <button
-            type="button"
-            className="pd-sidebar-toggle"
-            onClick={() => setSidebarCollapsed((c) => !c)}
-            aria-label="Toggle sidebar"
-          >
-            {sidebarCollapsed ? '->' : '<-'}
-          </button>
-        </div>
-        <nav className="pd-nav">
-          <Link to="/dashboard/nurse" className="pd-nav-item">
-            Overview
-          </Link>
-          <Link to="/dashboard/nurse/information" className="pd-nav-item active">
-            Your information
-          </Link>
-          <Link to="/clinic" className="pd-nav-item">
-            Clinic info
-          </Link>
-        </nav>
-      </aside>
+      
+      {/* Left sidebar */}
+      <NurseSideBar/> 
+              
 
       <div className="pd-right">
         <header className="pd-header">

@@ -66,8 +66,12 @@ export default function PatientAppointmentManager() {
             return  
         }
 
+        console.log(data)
         setClinic(data.clinic_id) 
     }
+
+
+
     function emptyf(): void {
         return
     }
@@ -107,34 +111,37 @@ export default function PatientAppointmentManager() {
         .select('*', { count: prefs.mode === 'list' ? 'exact' : undefined })
         .eq('clinic_id', clinicId)
     
-        
+         
         // IF CALENDAR MODE 
         if (prefs.mode === 'calendar') {
         // from 
-        if (prefs.rangeStart) {
-            query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
-        }
-        if (prefs.rangeEnd) {
-            query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
-        }
+            if (prefs.rangeStart) {
+                query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
+            }
+            if (prefs.rangeEnd) {
+                query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
+            }
+        
+            for (const rule of prefs.sortRules) {
+                query = query.order(rule.field, {
+                ascending: rule.direction === 'asc',
+                })
+            }
     
-        for (const rule of prefs.sortRules) {
-            query = query.order(rule.field, {
-            ascending: rule.direction === 'asc',
-            })
-        }
-    
-        // USE THE QUERY TO OBTAIN RETURN DATA 
-        const { data, error } = await query
-        if (error) {
-            console.log('APPOINTMENT READ ERROR:', error)
-            setAppointmentsList([])
+        console.log('APPOINTMENT attempted:')
+            // USE THE QUERY TO OBTAIN RETURN DATA 
+            const { data, error } = await query
+            if (error) {
+                console.log('APPOINTMENT READ ERROR:', error)
+                setAppointmentsList([])
+                return
+            }
+        console.log(data)
+            setAppointmentsList(data)
             return
         }
-        setAppointmentsList(data ?? [])
-        return
-        }
     
+        console.log('APPOINTMENT soon:')
         // list mode
         const from = (prefs.page - 1) * prefs.rowsPerPage // first row on page 
         const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
@@ -170,6 +177,7 @@ export default function PatientAppointmentManager() {
         ...prev,
         totalpages: count ? Math.ceil(count / prev.rowsPerPage) : 1,
         }))
+        console.log('APPOINTMENT READ:', error)
     }
 
 
@@ -181,6 +189,7 @@ export default function PatientAppointmentManager() {
         loadClinic()
         retrieveAppointmentTypes()
     }, [])
+
     useEffect(() => {
         if (!clinic) return
         readAppointments(clinic, viewPrefs)

@@ -1,8 +1,7 @@
 
 
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-
+import { useState, useEffect } from 'react' 
+import { NavLink , Link} from 'react-router-dom'
 
 
 
@@ -21,14 +20,14 @@ return(<>
           </button>
         </div>
         <nav className="pd-nav">
-          <Link to="/dashboard/patient" className="pd-nav-item">Overview</Link>
-          <a href="/dashboard/patient/appointments" className="pd-nav-item">Appointments</a>
+          <NavLink to="/dashboard/patient" end className=  {({ isActive }) => `pd-nav-item ${isActive ? 'active' : ''}`}>Overview</NavLink>
+          <NavLink to="/dashboard/patient/appointments" className={({ isActive }) => `pd-nav-item ${isActive ? 'active' : ''}`}>Appointments</NavLink>
           <a href="/dashboard/patient#records" className="pd-nav-item">Records</a>
           <a href="/dashboard/patient#medications" className="pd-nav-item">Medications</a>
           <a href="/dashboard/patient#vitals" className="pd-nav-item">Vitals</a>
           <a href="/dashboard/patient#lab" className="pd-nav-item">Lab results</a>
-          <Link to="/dashboard/patient/information" className="pd-nav-item active">Your information</Link>
-          <Link to="/clinic" className="pd-nav-item">Clinic info</Link>
+          <NavLink to="/dashboard/patient/information" className={({ isActive }) => `pd-nav-item ${isActive ? 'active' : ''}`}>Your information</NavLink>
+          <NavLink to="/clinic" className="pd-nav-item">Clinic info</NavLink>
         </nav>
       </aside></>);
 
