@@ -45,9 +45,9 @@ const localizer = dateFnsLocalizer({
 export default function AppointmentCalendar({
   appointments, // list of appointments to display 
   onSelectAppointment, // function passed in (can be nurse/patient)
-  onDeleteAppointment,
+  // onDeleteAppointment,
   onSelectSlot,// 
-  viewPrefs,
+  // viewPrefs,
   onUpdateViewPrefs,
 }: ApptProps) {
   const [currentView, setCurrentView] = useState<View>(Views.MONTH)

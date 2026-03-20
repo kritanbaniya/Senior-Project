@@ -28,7 +28,6 @@ export default function NurseDashBoard() {
     markCompleted,
   } = useNurseQueue(selectedClinicId)
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
 
   return (

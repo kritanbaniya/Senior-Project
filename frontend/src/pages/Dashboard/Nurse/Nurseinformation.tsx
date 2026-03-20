@@ -16,7 +16,6 @@ export default function NurseInformation() {
   const { profile } = useAuth()
   const displayName = profile?.full_name?.trim() || 'Nurse'
   const [profileOpen, setProfileOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)

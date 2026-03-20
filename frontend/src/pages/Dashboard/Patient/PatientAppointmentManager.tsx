@@ -77,7 +77,7 @@ export default function PatientAppointmentManager() {
     }
 
     // Retrieve Appointment Types 
-    const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
+    // const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
     const retrieveAppointmentTypes = async () => {
         const { data, error } = await supabase.rpc('get_appointment_types')
 

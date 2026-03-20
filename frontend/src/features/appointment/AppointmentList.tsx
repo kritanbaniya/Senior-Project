@@ -18,7 +18,7 @@ export default function AppointmentList({
   appointments,
   onSelectAppointment,
   onDeleteAppointment,
-  onSelectSlot,
+  // onSelectSlot,
   viewPrefs,
   onUpdateViewPrefs,
 }: ApptProps) { 

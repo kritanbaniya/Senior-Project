@@ -158,23 +158,7 @@ export default function NurseAppointmentManager() {
     setPatientList(data ?? [])
   }
 
-  // Get Time Helper // used in a commented piece of code. 
-  function getNowForDateTimeInput() {
-    const now = new Date()
-    now.setSeconds(0, 0)
 
-    const yyyy = now.getFullYear()
-    const mm = String(now.getMonth() + 1).padStart(2, '0')
-    const dd = String(now.getDate()).padStart(2, '0')
-    const hh = String(now.getHours()).padStart(2, '0')
-    const min = String(now.getMinutes()).padStart(2, '0')
-
-    return {
-      date: `${yyyy}-${mm}-${dd}`,
-      time: `${hh}:${min}`,
-      combined: `${yyyy}-${mm}-${dd} ${hh}:${min}:00`,
-    }
-  }
 
   
 
