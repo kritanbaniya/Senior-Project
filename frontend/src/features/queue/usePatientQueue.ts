@@ -1,40 +1,30 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchOwnQueueRowsForClinic, joinQueue, leaveQueue } from './api'
+import { fetchOwnActiveQueueRows, joinQueue, leaveQueue } from './api'
 import { subscribeToClinicQueue } from './realtime'
 import type { QueueEntryRow } from './types'
 
 type ExitState = 'left' | 'removed_from_active' | null
 
 export function usePatientQueue(clinicId: string | null) {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentRow, setCurrentRow] = useState<QueueEntryRow | null>(null)
   const [exitState, setExitState] = useState<ExitState>(null)
 
   const loadSnapshot = useCallback(async () => {
-    if (!clinicId) {
-      setCurrentRow(null)
-      return
-    }
     setLoading(true)
     setError(null)
     try {
-      const ownRows = await fetchOwnQueueRowsForClinic(clinicId)
+      const ownRows = await fetchOwnActiveQueueRows()
       const latest = ownRows[0] ?? null
 
       if (!latest) {
         setCurrentRow(null)
-        setLoading(false)
         return
       }
 
       if (latest.status === 'left' || latest.status === 'cancelled' || latest.status === 'completed' || latest.status === 'no_show') {
         setExitState('left')
-        // allow patient to join again after a terminal visit status
-        setCurrentRow(null)
-      } else if (latest.status === 'in_progress') {
-        setExitState('removed_from_active')
-        // once visit started, patient is out of active queue and can rejoin later if needed
         setCurrentRow(null)
       } else {
         setExitState(null)
@@ -45,22 +35,30 @@ export function usePatientQueue(clinicId: string | null) {
     } finally {
       setLoading(false)
     }
-  }, [clinicId])
+  }, [])
 
   useEffect(() => {
     void loadSnapshot()
   }, [loadSnapshot])
 
   useEffect(() => {
-    if (!clinicId) return
-    const unsubscribe = subscribeToClinicQueue(clinicId, () => {
+    const subscriptionClinicId = currentRow?.clinic_id ?? clinicId
+    if (!subscriptionClinicId) return
+    const unsubscribe = subscribeToClinicQueue(subscriptionClinicId, () => {
       void loadSnapshot()
     })
     return unsubscribe
-  }, [clinicId, loadSnapshot])
+  }, [clinicId, currentRow?.clinic_id, loadSnapshot])
 
   const join = useCallback(async () => {
-    if (!clinicId) return
+    if (currentRow?.is_active) {
+      setError('you already have an active queue entry')
+      return
+    }
+    if (!clinicId) {
+      setError('select a clinic before joining queue')
+      return
+    }
     setError(null)
     try {
       await joinQueue(clinicId)
@@ -69,7 +67,7 @@ export function usePatientQueue(clinicId: string | null) {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'failed to join queue')
     }
-  }, [clinicId, loadSnapshot])
+  }, [clinicId, currentRow?.is_active, loadSnapshot])
 
   const leave = useCallback(async () => {
     if (!currentRow) return
