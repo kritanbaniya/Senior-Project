@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase.ts' 
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
 import type { AppointmentViewPrefs, Appointment, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
- 
+ import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
 
 import NurseSideBar from './NurseSideBar';  
 
@@ -180,6 +180,10 @@ export default function NurseAppointmentManager() {
 
 
   //// C: CREATE NEW APPOINTMENT
+  const handleCreateAppointment = async () => {
+    if (clinic){
+    createAppointment(clinic)}
+  }
   const createAppointment = async (clinicId: string) => {
     setCreateStatus('loading')
     setCreateMessage('')  
@@ -521,6 +525,31 @@ export default function NurseAppointmentManager() {
 
           {/* CREATION / EDITING FORM */}
           <div className="info-box-content"> 
+            {/* CREATION FORM */}
+            <AppointmentForm
+              showScheduleForm = {showScheduleForm} 
+              setShowScheduleForm = {setShowScheduleForm}
+              createStatus = {createStatus} 
+              setCreateStatus = {setCreateStatus}
+              createMessage = {createMessage} 
+              setCreateMessage = {setCreateMessage} 
+              handleNewAppointment = {handleNewAppointment} 
+              createAppointment = {handleCreateAppointment} 
+              nurse = {true}
+              patientName = {undefined}
+              patientList = {patientList} 
+              practicionerList = {practicionerList}
+              appointmentTypes = {appointmentTypes} 
+
+            />
+
+
+
+
+
+
+
+
             {/* STATUS MESSAGE */}
             {createStatus === 'idle' && (
               <p className="small-label">View, create, and modify appointments.</p>

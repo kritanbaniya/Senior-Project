@@ -11,9 +11,8 @@ import PatientSideBar from './PatientSideBar'
 
 
 export default function PatientAppointmentManager() {
+
     let debuglog : boolean = true
-
-
     const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
         mode: 'calendar',
         page: 1,
@@ -44,10 +43,9 @@ export default function PatientAppointmentManager() {
         })
     }
 
-
-
     //// HELPER FUNCTIONS:
-    // Retrieve clinic ID
+    // Retrieve clinic ID 
+    // // TBD : Check what this returns 
     const [clinic, setClinic] = useState<string>()
     const loadClinic = async () => {
         const { data: authData, error: authErr } = await supabase.auth.getUser()
@@ -71,13 +69,15 @@ export default function PatientAppointmentManager() {
         console.log(data)
         setClinic(data.clinic_id) 
     }
-
-
-
+    // temparory empty f 
     function emptyf(): void {
         return
     }
 
+
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    ///// C R U D !!! 
     // Retrieve Appointment Types 
     // const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
     const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
