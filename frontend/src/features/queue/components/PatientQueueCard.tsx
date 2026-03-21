@@ -75,24 +75,15 @@ export default function PatientQueueCard({
             <p className="pd-card-desc">You have an active queue entry.</p>
           )}
         </>
-      ) : exitState ? (
-        <>
-          <p className="pd-card-desc">
-            {exitState === 'left'
-              ? 'You have left the queue.'
-              : 'You were called and moved out of active queue.'}
-          </p>
-          <div className="pd-checkin-buttons">
-            <button type="button" className="pd-btn pd-btn-primary" onClick={onJoin}>
-              join queue again
-            </button>
-            <Link to="/dashboard/patient" className="pd-btn pd-btn-secondary">
-              back to dashboard
-            </Link>
-          </div>
-        </>
       ) : !clinicSelected ? (
         <>
+          {exitState && (
+            <p className="pd-card-desc">
+              {exitState === 'left'
+                ? 'You have left the queue.'
+                : 'You were called and moved out of active queue.'}
+            </p>
+          )}
           <p className="pd-card-desc">Choose a clinic first to join queue.</p>
           <Link to="/clinic-discovery" className="pd-btn pd-btn-secondary">
             browse clinics
@@ -100,10 +91,17 @@ export default function PatientQueueCard({
         </>
       ) : (
         <>
+          {exitState && (
+            <p className="pd-card-desc">
+              {exitState === 'left'
+                ? 'You have left the queue.'
+                : 'You were called and moved out of active queue.'}
+            </p>
+          )}
           <p className="pd-card-desc">Selected clinic: {selectedClinicName ?? 'Clinic selected'}</p>
           <div className="pd-checkin-buttons">
             <button type="button" className="pd-btn pd-btn-secondary" onClick={onClearClinic}>
-              change clinic
+              Remove Selected Clinic
             </button>
             <Link to="/clinic-discovery" className="pd-btn pd-btn-secondary">
               browse clinics
