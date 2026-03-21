@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom'
+//import { useState } from 'react'
 import { useClinicContext } from '../../../context/ClinicContext'
 import ActiveQueuePanel from '../../../features/queue/components/ActiveQueuePanel'
 import ClinicSelector from '../../../features/queue/components/ClinicSelector'
 import InProgressQueuePanel from '../../../features/queue/components/InProgressQueuePanel'
 import PendingQueuePanel from '../../../features/queue/components/PendingQueuePanel'
-import { useNurseQueue } from '../../../features/queue/useNurseQueue'
-import NurseAppointmentManager from './NurseAppointmentManager'
+import { useNurseQueue } from '../../../features/queue/useNurseQueue' 
+import NurseSideBar from './NurseSideBar';
+
 
 export default function NurseDashBoard() {
   const { selectedClinicId, setSelectedClinicId } = useClinicContext()
@@ -26,8 +28,11 @@ export default function NurseDashBoard() {
     markCompleted,
   } = useNurseQueue(selectedClinicId)
 
+
+
   return (
     <div className="nurse-dashboard">
+
       <h1 className="page-title">Nurse Dashboard</h1>
 
       <div className="info-box queue-section">
@@ -68,7 +73,28 @@ export default function NurseDashBoard() {
       {loading && <p className="no-queue">Loading queue...</p>}
       {error && <p className="no-queue">{error}</p>}
 
-      <NurseAppointmentManager />
+
+
+
+
+
+
+      <div className = "pd-layout">
+        
+              {/* Left sidebar */}
+              <NurseSideBar/> 
+        
+      </div>
+
+
+
+
+
+
+
+
+
+
 
       <div className="info-box quick-actions-box">
         <h2 className="info-box-title">Quick actions</h2>

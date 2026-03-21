@@ -5,13 +5,30 @@ import {
   Views,
   type View,
   type SlotInfo,
-} from "react-big-calendar";
-import { format, parse, startOfWeek, getDay } from "date-fns";
+} from "react-big-calendar"; 
+import {
+  format,
+  parse,
+  startOfWeek, 
+  getDay,
+  startOfDay, 
+} from "date-fns";
 import { enUS } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import type { Appointment  , ApptProps} from "./types.ts"; 
 
-import type { Appointment } from "./types.ts";
 
+
+
+
+
+type CalendarEvent = {
+  id: string
+  title: string
+  start: Date
+  end: Date
+  raw: Appointment
+} 
 const locales = {
   'en-US': enUS,
 }
@@ -23,26 +40,21 @@ const localizer = dateFnsLocalizer({
   locales,
 })
 
-type CalendarEvent = {
-  id: string
-  title: string
-  start: Date
-  end: Date
-  raw: Appointment
-}
-type Props = { // define the prop's types
-  appointments: Appointment[]
-  onSelectAppointment?: (apt: Appointment) => void
-  onSelectSlot?: (start: Date) => void
-}
+
 
 export default function AppointmentCalendar({
   appointments, // list of appointments to display 
   onSelectAppointment, // function passed in (can be nurse/patient)
+  // onDeleteAppointment,
   onSelectSlot,// 
-}: Props) {
+  // viewPrefs,
+  onUpdateViewPrefs,
+}: ApptProps) {
   const [currentView, setCurrentView] = useState<View>(Views.MONTH)
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
+  const today = startOfDay(new Date())
+
+
 
   //// TREATING DATA 
   // create list of events from list of appointments 
@@ -69,6 +81,9 @@ export default function AppointmentCalendar({
   // ^ dependency: which refreshes on the appointments state from parent
 
 
+
+  
+
   //// USE CALENDAR COMPONENT 
   return (
     <div style={{ height: '650px', margin: '20px 0' }}>
@@ -79,6 +94,26 @@ export default function AppointmentCalendar({
         view={currentView}
         onNavigate={(newDate: Date) => setCurrentDate(newDate)} // aware of today's date
         onView={(newView: View) => setCurrentView(newView)} // set view type
+        
+        onRangeChange={(range) => {
+          if (Array.isArray(range) && range.length > 0) {
+            const start = range[0]
+            const end = range[range.length - 1]
+
+            onUpdateViewPrefs({
+              mode: "calendar",
+              rangeStart: format(start, "yyyy-MM-dd"),
+              rangeEnd: format(end, "yyyy-MM-dd"),
+            })
+          } else if ("start" in range && "end" in range) {
+            onUpdateViewPrefs({
+              mode: "calendar",
+              rangeStart: format(range.start, "yyyy-MM-dd"),
+              rangeEnd: format(range.end, "yyyy-MM-dd"),
+            })
+          }
+        }}
+        
         startAccessor="start"
         endAccessor="end"
         views={[Views.MONTH, Views.WEEK, Views.DAY]}
@@ -87,6 +122,26 @@ export default function AppointmentCalendar({
         step={30}
         timeslots={2}
         defaultView={Views.MONTH}
+        dayPropGetter={(date: Date) => {
+          const cellDate = startOfDay(date)
+          if (cellDate < today) {
+            return {
+              style: {
+                backgroundColor: '#e4e3e3',
+                color: '#9ca3af',
+              },
+            }
+          }
+          if (cellDate.getTime() === today.getTime()) {
+            return {
+              style: {
+                backgroundColor: '#cfc8ee', // light blue
+                border: '2px solid #8374be', 
+              },
+            }
+          }
+          return {}
+        }}
         onSelectEvent={(event : CalendarEvent) => {
           onSelectAppointment?.(event.raw)
         }}

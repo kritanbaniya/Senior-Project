@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase'
 import { useClinicContext } from '../../../context/ClinicContext'
 import { usePatientQueue } from '../../../features/queue/usePatientQueue'
 import PatientQueueCard from '../../../features/queue/components/PatientQueueCard'
+import PatientSideBar from './PatientSideBar'
 
 type AppointmentStatus = 'scheduled' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled'
 type Appointment = {
@@ -113,8 +114,7 @@ export default function PatientDashboard() {
     type: MOCK_APPOINTMENT_TYPES[0],
     reason: '',
   })
-  const [profileOpen, setProfileOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false) 
   const [info, setInfo] = useState<PatientInfo | null>(null)
   const activeClinicId = selectedClinicId
   const {
@@ -202,7 +202,8 @@ export default function PatientDashboard() {
   return (
     <div className="pd-layout">
       {/* Left sidebar */}
-      <aside className={`pd-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+      <PatientSideBar/> 
+      {/* <aside className={`pd-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="pd-sidebar-header">
           <Link to="/" className="pd-sidebar-logo"><span>ClinicIQ</span></Link>
           <button type="button" className="pd-sidebar-toggle" onClick={() => setSidebarCollapsed((c) => !c)} aria-label="Toggle sidebar">
@@ -211,7 +212,7 @@ export default function PatientDashboard() {
         </div>
         <nav className="pd-nav">
           <a href="#overview" className="pd-nav-item active">Overview</a>
-          <a href="#appointments" className="pd-nav-item">Appointments</a>
+          <a href="/dashboard/patient/appointments" className="pd-nav-item">Appointments</a>
           <a href="#records" className="pd-nav-item">Records</a>
           <a href="#medications" className="pd-nav-item">Medications</a>
           <a href="#vitals" className="pd-nav-item">Vitals</a>
@@ -219,7 +220,7 @@ export default function PatientDashboard() {
           <Link to="/dashboard/patient/information" className="pd-nav-item">Your information</Link>
           <Link to="/clinic" className="pd-nav-item">Clinic info</Link>
         </nav>
-      </aside>
+      </aside> */}
 
       <div className="pd-right">
         {/* Top header */}
