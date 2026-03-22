@@ -8,6 +8,7 @@ import HeroSection from "@/components/homepage/Hero.tsx";
 import LoginPanel from "@/components/homepage/LoginPanel.tsx";
 import FeatureCard from "@/components/homepage/FeatureCard.tsx";
 import Footer from "@/components/homepage/Footer.tsx";
+import FindClinicsCTA from "@/components/homepage/FindClinicsCTA.tsx";
 
 type ActivePanel = "patient" | "provider";
 
@@ -30,7 +31,7 @@ export default function HomePage() {
     <main className="min-h-screen">
       <HeroSection />
 
-      <section className="px-6 pb-15">
+      <section className="px-6 pb-10">
         <div className="mx-auto flex max-w-[1325px] flex-col items-center gap-8">
           <div className="grid w-full grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start">
             <div
@@ -65,6 +66,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <FindClinicsCTA />
 
       <section className="px-6 pb-12">
         <div className="mx-auto flex max-w-[1325px] flex-col items-center gap-10">
