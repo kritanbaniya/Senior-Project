@@ -19,17 +19,44 @@ export default function AppointmentSwitch({
     return
   }, [appointments])
 
+
+   
+
   return (
     <>
-    {/* THE SWITCH */}
+    {/* THE SWITCH  */}
       <div className="form-actions">
-        <Button type="button" className={view === "calendar"? ("form-actions"):("form-actions bg-gray-700")} onClick={() => {setView("calendar"); onUpdateViewPrefs({mode: 'calendar'})}}>
+        <Button 
+        type="button" 
+        variant={view === "calendar" ? "default" : "outline"}
+        className={view === "calendar"? ("form-actions"):("form-actions bg-white")} 
+        onClick={() => {setView("calendar"); onUpdateViewPrefs({mode: 'calendar'})}}>
           Calendar
         </Button>
-        <Button type="button" className={view === "list"? ("form-actions"):("form-actions bg-gray-700")}onClick={() => {setView("list"); onUpdateViewPrefs({mode: 'list'})}}>
+        <Button 
+        type="button" 
+        variant={view === "list" ? "default" : "outline"}
+        className={view === "list"? ("form-actions"):("form-actions bg-white")}
+        onClick={() => {setView("list"); onUpdateViewPrefs({mode: 'list'})}}>
           List
         </Button>
       </div>
+      {/* <Button 
+        type = "button" 
+        variant={view === "calendar" ? "default" : "outline"}
+        onClick={() => handleViewChange("calendar")}
+        >
+          Calendar
+        </Button>
+        <Button
+          type="button"
+          variant={view === "list" ? "default" : "outline"}
+          onClick={() => handleViewChange("list")}
+        >
+          List
+        </Button>  */}
+
+
 
       {/* THE VIEWs */}
       {view === "calendar" ? (
@@ -49,6 +76,11 @@ export default function AppointmentSwitch({
           onUpdateViewPrefs={onUpdateViewPrefs}
         />
       )}
+
+
+
+      {/* The Creator */}
+      
     </>
   )
 }

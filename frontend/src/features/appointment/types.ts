@@ -1,5 +1,11 @@
 
-
+export type AppointmentFormType = {
+  patientId: string
+  date: string
+  time: string
+  doctorId: string
+  type: AppointmentType | ''
+}
 
 
 export type AppointmentType =

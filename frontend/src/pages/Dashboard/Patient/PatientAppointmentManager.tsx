@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase.ts' 
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx';
-import type { Appointment, AppointmentViewPrefs, AppointmentType } from '@/features/appointment/types.ts';
+import type { MemberList, Appointment, AppointmentViewPrefs, AppointmentType, AppointmentFormType } from '@/features/appointment/types.ts';
 import PatientSideBar from './PatientSideBar'
-
+import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
 
 
 
@@ -11,8 +11,25 @@ import PatientSideBar from './PatientSideBar'
 
 
 export default function PatientAppointmentManager() {
+    var debuglog : boolean = false
+    type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
-    let debuglog : boolean = true
+    // form management 
+    const [createStatus, setCreateStatus] = useState<AppointmentCreateStatus>('idle')
+    const [createMessage, setCreateMessage] = useState('')
+    const [showScheduleForm, setShowScheduleForm] = useState(false) 
+    const [scheduleForm, setScheduleForm] = useState<AppointmentFormType>({
+        patientId: '',
+        date: '',
+        time: '',
+        doctorId: '',
+        type: '',
+    })
+
+    var selectedClinic: string // this should come from a selection in the child 
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // VIEW PREFERENCES 
     const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
         mode: 'calendar',
         page: 1,
@@ -43,10 +60,10 @@ export default function PatientAppointmentManager() {
         })
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     //// HELPER FUNCTIONS:
-    // Retrieve clinic ID 
-    // // TBD : Check what this returns 
-    const [clinic, setClinic] = useState<string>()
+    // Retrieve clinic ID  
+    const [clinic, setClinic] = useState<string>() // CHANGE THIS TO FETCH A LIST 
     const loadClinic = async () => {
         const { data: authData, error: authErr } = await supabase.auth.getUser()
         if (authErr || !authData.user) {
@@ -66,7 +83,7 @@ export default function PatientAppointmentManager() {
             return  
         }
 
-        console.log(data)
+        if(debuglog == true) {console.log(data)} 
         setClinic(data.clinic_id) 
     }
     // temparory empty f 
@@ -74,12 +91,7 @@ export default function PatientAppointmentManager() {
         return
     }
 
-
-    
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    ///// C R U D !!! 
-    // Retrieve Appointment Types 
-    // const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
+    // Retrieve Appointment Types  
     const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
     const retrieveAppointmentTypes = async () => {
         const { data, error } = await supabase.rpc('get_appointment_types')
@@ -94,12 +106,76 @@ export default function PatientAppointmentManager() {
             (row: { value: string }) => row.value as AppointmentType
         )
         setAppointmentTypes(values)
-        if(debuglog == true){
+        if(debuglog === true){
             console.log(appointmentTypes)
         }
     }
 
+    // Keep track of patient's own data 
+    const [patientName, setPatientName] = useState<MemberList | undefined>(undefined)
+    const [patientId, setPatientId] = useState<string>()
+    const loadPatientInfo = async (userId: string) => {
+        //IN:  pass in userID 
+        //OUT: 
+        // - retrieve PROFILE user information 
+        // - member list 
+        
+        // supabase. 
+    }
+
+
+    // Retrieve the Practicianers of this Clinic 
+    const [practicionerList, setPracticionerList] = useState<MemberList[]>([])
+    const retrievePracticioners = async (clinicId: string) => {
+        const { data, error } = await supabase
+            .schema('public')
+            .from('membernamerole')
+            .select('*')
+            .eq('clinic_id', clinicId)
+            .eq('role', 'doctor')
+        if (error) {
+            console.log('DOCTORS ERROR:', error)
+            return
+        }
+        setPracticionerList(data ?? [])
+    }
     
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    ///// C R U D !!! 
+    //// C: CREATE APPT REQUEST 
+    // Handle form press 
+    const handleNewAppointment = (start: Date) => {
+        const now = new Date()
+        if (start < now) {
+            setCreateStatus('failed')
+            setCreateMessage('Cannot create an appointment for the past.')
+            return
+        }
+
+        const yyyy = start.getFullYear()
+        const mm = String(start.getMonth() + 1).padStart(2, '0')
+        const dd = String(start.getDate()).padStart(2, '0')
+        const hh = String(start.getHours()).padStart(2, '0')
+        const min = String(start.getMinutes()).padStart(2, '0')
+
+        setScheduleForm((f: AppointmentFormType) => ({
+            ...f,
+            date: `${yyyy}-${mm}-${dd}`,
+            time: `${hh}:${min}`,
+        }))
+
+        setCreateStatus('idle')
+        setCreateMessage('')
+        setShowScheduleForm(true)
+    }
+    const handleCreateAppointment = async () => {
+        if (selectedClinic){
+            createAppointment(selectedClinic)}
+    }
+    function createAppointment(clinicId: string){
+        return 
+    }
+
 
 
 
@@ -187,9 +263,6 @@ export default function PatientAppointmentManager() {
     }
 
 
-
-
-
     //// REACT HOOKS !
     useEffect(() => {
         loadClinic()
@@ -198,10 +271,16 @@ export default function PatientAppointmentManager() {
 
     useEffect(() => {
         if (!clinic) return
-        readAppointments(clinic, viewPrefs)
+        retrievePracticioners(clinic)
+        readAppointments(clinic, viewPrefs) 
+        // can i rewrite this so it only relies on one variable?, so it doesn't appear to double load 
     }, [clinic, viewPrefs])
 
-
+    useEffect(() => {
+        if (practicionerList.length > 0 && scheduleForm.doctorId === '') {
+            setScheduleForm((f) => ({ ...f, doctorId: practicionerList[0].user_id }))
+        }
+    }, [practicionerList])
 
 
 
@@ -210,32 +289,45 @@ export default function PatientAppointmentManager() {
 
         return(
             <>
+                <div className="pd-layout">
+                {/* Left sidebar */}
+                <PatientSideBar/> 
+                        
+                    <div className="pd-right">
+                        <div className="info-box appointments-section">
+                            <h2 className="info-box-title">Appointments</h2>
+                            {/* VIEWING APPOINTMENTS */}
+                            <AppointmentSwitch
+                                appointments={appointmentsList} // send a subset of appointments
+                                // functions to handle appointment CRUD actions 
+                                onSelectAppointment={emptyf} 
+                                onDeleteAppointment={emptyf}
+                                onSelectSlot={emptyf}
+                                // function to handle appointment view changes (changing query)
+                                viewPrefs={viewPrefs}
+                                onUpdateViewPrefs = {updateViewPrefs}
+                                />
 
-
-
-    <div className="pd-layout">
-      {/* Left sidebar */}
-      <PatientSideBar/> 
-
-
-
-
-            
-      <div className="pd-right">
-      <div className="info-box appointments-section">
-        <h2 className="info-box-title">Appointments</h2>
-                {/* VIEWING APPOINTMENTS */}
-                <AppointmentSwitch
-                appointments={appointmentsList} // send a subset of appointments
-                // functions to handle appointment CRUD actions 
-                onSelectAppointment={emptyf} 
-                onDeleteAppointment={emptyf}
-                onSelectSlot={emptyf}
-                // function to handle appointment view changes (changing query)
-                viewPrefs={viewPrefs}
-                onUpdateViewPrefs = {updateViewPrefs}
-                />
-</div></div></div>
+                            <AppointmentForm
+                                showScheduleForm={showScheduleForm}
+                                setShowScheduleForm={setShowScheduleForm}
+                                scheduleForm={scheduleForm}
+                                setScheduleForm={setScheduleForm}
+                                createStatus={createStatus}
+                                setCreateStatus={setCreateStatus}
+                                createMessage={createMessage}
+                                setCreateMessage={setCreateMessage}
+                                handleNewAppointment={handleNewAppointment}
+                                createAppointment={createAppointment} // createAppointment
+                                nurse={false}
+                                patientList={[]}
+                                patientName={patientName}
+                                practicionerList={practicionerList}
+                                appointmentTypes={appointmentTypes}
+                                />
+                        </div>
+                    </div>
+                </div>
             </>
         );
     } 

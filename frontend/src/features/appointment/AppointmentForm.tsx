@@ -3,21 +3,11 @@
 import { useEffect, useState } from 'react'
 // import { supabase } from '../../../lib/supabase.ts' 
 // import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
-import type { Appointment, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
+import type { AppointmentFormType, Appointment, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
  
 
 
 
-
-
-// FOR THE FORMS (need to be refacs)
-type AppointmentForm = {
-  patientId: string
-  date: string
-  time: string
-  doctorId: string
-  type: AppointmentType | ''
-}
 
 // type UpdateAppointmentForm = {
 //   appointmentId: string
@@ -32,9 +22,11 @@ type AppointmentForm = {
 type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
 type apptFormProp = {
-    showScheduleForm : Boolean, 
+    showScheduleForm : boolean, 
     setShowScheduleForm : (a : boolean) => void, 
 
+    scheduleForm : AppointmentFormType, 
+    setScheduleForm: React.Dispatch<React.SetStateAction<AppointmentFormType>>,  
 
     createStatus : AppointmentCreateStatus,
     setCreateStatus : (s: AppointmentCreateStatus) => void,
@@ -42,7 +34,7 @@ type apptFormProp = {
     setCreateMessage : (m : string) => void, 
 
     handleNewAppointment : (start: Date) => void, 
-    createAppointment : (apt: Appointment) => void, 
+    createAppointment : () => void, 
 
     nurse : boolean, 
     patientList : MemberList[], 
@@ -58,6 +50,9 @@ export default function AppointmentForm({
     showScheduleForm, 
     setShowScheduleForm, 
 
+    scheduleForm, 
+    setScheduleForm, 
+
     createStatus,
     setCreateStatus,
     createMessage ,
@@ -72,25 +67,14 @@ export default function AppointmentForm({
 
     practicionerList,
     appointmentTypes,
+    
 }:apptFormProp){
 
-    var patientNamet : string = "dave"
-    useEffect(()=>{
-        if (nurse == false) {
-            // patientName : MemberList 
-            // patientName = "dave"
-        }
-
-    }, []) 
+    var patientNamet : string = "Err Or"
+    
 
 
-    const [scheduleForm, setScheduleForm] = useState<AppointmentForm>({
-        patientId: '',
-        date: '',
-        time: '',
-        doctorId: '',
-        type: '',
-    })
+ 
 
 
 
@@ -120,7 +104,7 @@ export default function AppointmentForm({
               <button
                 type="button"
                 className="btn-primary"
-                onClick={() => handleNewAppointment}
+                onClick={() => handleNewAppointment(new Date())}
               >
                 Create appointment
               </button>
@@ -129,27 +113,30 @@ export default function AppointmentForm({
                 className="portal-form"
                 onSubmit={(e) => {
                   e.preventDefault()
-                  createAppointment
-                }}
-              >
+                  createAppointment()
+                }}>
+
+
                 <div className="form-row">
                   <label>Patient name</label>
-                  <select
-                    value={scheduleForm.patientId}
-                    onChange={(e) =>
-                      setScheduleForm((f) => ({ ...f, patientId: e.target.value }))
-                    }
-                  >
                     {nurse ? 
-                        (patientList.map((d) => (
-                        <option key={d.user_id} value={d.user_id}>
-                            {d.full_name}
-                        </option>
-                        ))):(
-                            <label>{patientNamet}</label> // .full_name
-                        )}
-                  </select>
+                    (<select
+                    
+                      value={scheduleForm.patientId}
+                      onChange={(e) =>
+                        setScheduleForm((f) => ({ ...f, patientId: e.target.value }))
+                      }>
+                      {(patientList.map((d) => (
+                      <option key={d.user_id} value={d.user_id}>
+                          {d.full_name}
+                      </option>
+                      )))}
+                    </select>) : 
+                    (
+                      <p>{patientName?.full_name || patientNamet}</p> // .full_name
+                    )}
                 </div>
+
 
                 <div className="form-row">
                   <label>Date</label>
@@ -221,96 +208,7 @@ export default function AppointmentForm({
                 </div>
               </form>
             )}
-            {/* {showAptUpdateForm ? (
-              <form
-                className="portal-form"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  updateAppointments()
-                }}
-              >
-                <div className="form-row">
-                  <label>Patient name</label>
-                  <select
-                    value={updateForm.patientId}
-                    onChange={(e) =>
-                      setUpdateForm((f) => ({ ...f, patientId: e.target.value }))
-                    }
-                  >
-                    {patientList.map((d) => (
-                      <option key={d.user_id} value={d.user_id}>
-                        {d.full_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-row">
-                  <label>Date</label>
-                  <input
-                    type="date"
-                    value={updateForm.date}
-                    onChange={(e) => setUpdateForm((f) => ({ ...f, date: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                <div className="form-row">
-                  <label>Time</label>
-                  <input
-                    type="time"
-                    value={updateForm.time}
-                    onChange={(e) => setUpdateForm((f) => ({ ...f, time: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                <div className="form-row">
-                  <label>Provider</label>
-                  <select
-                    value={updateForm.doctorId}
-                    onChange={(e) =>
-                      setUpdateForm((f) => ({ ...f, doctorId: e.target.value }))
-                    }
-                  >
-                    {practicionerList.map((d) => (
-                      <option key={d.user_id} value={d.user_id}>
-                        {d.full_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-row">
-                  <label>Visit type</label>
-                  <select
-                    value={updateForm.type}
-                    onChange={(e) => setUpdateForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
-                  >
-                    {appointmentTypes.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-actions">
-                  <button type="submit" className="btn-primary">
-                    Save changes
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setShowAptUpdateForm(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <></>
-            )} */}
+            
           </div>
         
         </>)

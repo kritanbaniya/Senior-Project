@@ -56,8 +56,10 @@ export default function AppointmentList({
 
   return (
     <div className="nurse-appointment-list">
-      <p className="small-label">Appointments (today & upcoming)</p>
-
+      <div className="flex">
+        <p className="small-label">Appointments (today & upcoming)</p>
+        {/* insert, date range adjuster here */}
+      </div>
       {/* THE LIST ITSELF */}
       <ul className="appointment-list">
         {/* header */}
