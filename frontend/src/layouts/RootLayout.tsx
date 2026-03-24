@@ -4,7 +4,7 @@
 // sits directly inside <AuthProvider> in the route tree so it can read auth state.
 
 import { Outlet } from 'react-router-dom'
-import Header from '../Header'
+import Header from '../components/Header'
 import LoginModal from '../components/LoginModal'
 import { useAuth } from '../context/AuthContext'
 
@@ -19,7 +19,7 @@ export default function RootLayout() {
       <Header />
       {!loading && profile && (
         <div className="welcome-banner">
-          welcome {profile.full_name ?? 'user'}
+          Welcome! {profile.full_name ?? 'user'}
         </div>
       )}
       <Outlet />

@@ -1,9 +1,7 @@
 import { supabase } from '../../lib/supabase'
-import type { ClinicListItem, QueueEntryRow, QueuePersonView, StaffPermissionRow } from './types'
+import type { ClinicListItem, QueueEntryRow, StaffPermissionRow } from './types'
 
 const ACTIVE_QUEUE_STATUSES = ['waiting', 'called'] as const
-
-const TODAY = () => new Date().toISOString().slice(0, 10)
 
 async function getCurrentUserId(): Promise<string> {
   const { data, error } = await supabase.auth.getUser()
@@ -34,13 +32,11 @@ export async function acceptPendingQueueEntry(entryId: string): Promise<void> {
 
 export async function reorderQueueEntry(
   clinicId: string,
-  queueDate: string,
   entryId: string,
   newOrder: number
 ): Promise<void> {
   const { error } = await supabase.rpc('reorder_queue_entry', {
     p_clinic_id: clinicId,
-    p_queue_date: queueDate,
     p_entry_id: entryId,
     p_new_order: newOrder,
   })
@@ -54,8 +50,21 @@ export async function fetchOwnQueueRowsForClinic(clinicId: string): Promise<Queu
     .select('*')
     .eq('clinic_id', clinicId)
     .eq('patient_id', userId)
-    .eq('queue_date', TODAY())
+    .eq('is_active', true)
     .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return (data ?? []) as QueueEntryRow[]
+}
+
+export async function fetchOwnActiveQueueRows(): Promise<QueueEntryRow[]> {
+  const userId = await getCurrentUserId()
+  const { data, error } = await supabase
+    .from('queue_entries')
+    .select('*')
+    .eq('patient_id', userId)
+    .eq('is_active', true)
+    .order('updated_at', { ascending: false })
 
   if (error) throw error
   return (data ?? []) as QueueEntryRow[]
@@ -66,7 +75,7 @@ export async function fetchActiveQueueForClinic(clinicId: string): Promise<Queue
     .from('queue_entries')
     .select('*')
     .eq('clinic_id', clinicId)
-    .eq('queue_date', TODAY())
+    .eq('is_active', true)
     .in('status', [...ACTIVE_QUEUE_STATUSES])
     .order('queue_order', { ascending: true })
 
@@ -79,7 +88,7 @@ export async function fetchPendingQueueForClinic(clinicId: string): Promise<Queu
     .from('queue_entries')
     .select('*')
     .eq('clinic_id', clinicId)
-    .eq('queue_date', TODAY())
+    .eq('is_active', true)
     .eq('status', 'pending')
     .order('created_at', { ascending: true })
 
@@ -92,7 +101,7 @@ export async function fetchInProgressQueueForClinic(clinicId: string): Promise<Q
     .from('queue_entries')
     .select('*')
     .eq('clinic_id', clinicId)
-    .eq('queue_date', TODAY())
+    .eq('is_active', true)
     .eq('status', 'in_progress')
     .order('started_at', { ascending: true })
 
@@ -138,55 +147,23 @@ export async function fetchNurseClinicPermissions(): Promise<Array<StaffPermissi
     .filter((row): row is StaffPermissionRow & ClinicListItem => Boolean(row))
 }
 
-async function fetchProfileNamesByIds(userIds: string[]): Promise<Map<string, string>> {
-  if (!userIds.length) return new Map()
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, full_name')
-    .in('id', userIds)
+export async function callPatient(entryId: string): Promise<void> {
+  const { error } = await supabase.rpc('call_patient', { p_entry_id: entryId })
   if (error) throw error
-  return new Map((data ?? []).map((row) => [row.id as string, (row.full_name as string | null) ?? 'patient']))
 }
 
-export async function toQueuePersonView(rows: QueueEntryRow[]): Promise<QueuePersonView[]> {
-  const names = await fetchProfileNamesByIds([...new Set(rows.map((row) => row.patient_id))])
-  return rows.map((row) => ({
-    ...row,
-    patient_name: names.get(row.patient_id) ?? 'patient',
-  }))
+export async function startVisit(entryId: string): Promise<void> {
+  const { error } = await supabase.rpc('start_visit', { p_entry_id: entryId })
+  if (error) throw error
 }
 
-export async function startVisit(entry: QueueEntryRow): Promise<void> {
-  // move selected patient to in_progress
-  const { error: markError } = await supabase
-    .from('queue_entries')
-    .update({ status: 'in_progress', started_at: new Date().toISOString() })
-    .eq('id', entry.id)
-  if (markError) throw markError
-
-  // compact only waiting/called queue positions behind removed patient
-  if (entry.queue_order == null) return
-  const { data: behindRows, error: behindError } = await supabase
-    .from('queue_entries')
-    .select('id, queue_order, queue_date')
-    .eq('clinic_id', entry.clinic_id)
-    .eq('queue_date', entry.queue_date)
-    .in('status', [...ACTIVE_QUEUE_STATUSES])
-    .gt('queue_order', entry.queue_order)
-    .order('queue_order', { ascending: true })
-
-  if (behindError) throw behindError
-
-  for (const row of behindRows ?? []) {
-    await reorderQueueEntry(entry.clinic_id, row.queue_date as string, row.id as string, (row.queue_order as number) - 1)
-  }
+export async function markNoShow(entryId: string): Promise<void> {
+  const { error } = await supabase.rpc('mark_no_show', { p_entry_id: entryId })
+  if (error) throw error
 }
 
 export async function completeVisit(entryId: string): Promise<void> {
-  const { error } = await supabase
-    .from('queue_entries')
-    .update({ status: 'completed', completed_at: new Date().toISOString() })
-    .eq('id', entryId)
+  const { error } = await supabase.rpc('complete_visit', { p_entry_id: entryId })
   if (error) throw error
 }
 

@@ -11,14 +11,14 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: hsl(199, 42%, 84%);
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  /*--background: oklch(1 0 0);*/
   --foreground: oklch(0.129 0.042 264.695);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
@@ -52,36 +52,27 @@
 }
 
 a {
-  font-weight: 500;
-  color: #646cff;
   text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
 }
 
 body {
+  background-image: url('components/Hospital\ Background.webp');
+  background-repeat: no-repeat;
+  background-position: center, bottom center;
+  background-size: auto 100%;
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-  color: #000000;
+h2 {
+  /*font-size: 1.2em;*/
+  line-height: 1.0;
+  /*color: #000000;*/
 }
 
-h2 {
-  font-size: 1.2em;
-  line-height: 1;
-  color: #000000;
-}
 #root {
-  max-width: none;
-  margin: 0 auto;
-  padding: 0 2rem 2rem;
-  text-align: center;
+  min-height: 50vh;
 }
 .left_title {
   font-size: 1.5rem;
@@ -93,76 +84,15 @@ h2 {
 h2.left_title {
   font-size: 1rem;
 }
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #C7C0F0;
-  margin: 0 -2rem 2rem -2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.header-inner {
-  width: 50%;
-  margin: 0 auto;
-  padding: 18px 24px;                /* bar height */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;    /* logo left, nav right */
-}
-
-.header-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-}
-
-.header-brand-text {
-  font-size: 28px;
-  font-weight: 700;
-  color: #3D3762;
-  transition: color 0.2s;
-}
-
-.header-logo {
-  height: 44px;
-  width: auto;
-  object-fit: contain;
-}
 
 .header-logo:hover {
   color: #ff9b29;
 }
 
 /* Navigation Group */
-.header-nav {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-}
-
-.header-link {
-  text-decoration: none;
-  font-weight: 700;
-  color: #3D3762;
-  font-size: px;
-  transition: color 0.2s;
-}
 
 .header-link:hover {
   opacity: 0.85;
-}
-
-.header-nav a {
-  color: rgba(0, 0, 0, 0.9);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-.header-nav a:hover {
-  color: #ff9b29;
 }
 
 .header-logout-button:hover {
@@ -207,15 +137,9 @@ h2.left_title {
 }
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
   font-weight: 900;
   font-family: inherit;
   font-weight: bold;
-  text-transform: uppercase;
-  background-color: #8D7BEE;
-  color: #ffffff;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -232,7 +156,7 @@ button:focus-visible {
 .clinic-info-page {
   text-align: left;
   max-width: 640px;
-  margin: 0 auto;
+  margin: 40px auto;
   padding: 1rem 0;
 }
 .page-title {
@@ -1464,10 +1388,13 @@ button:focus-visible {
 
 .welcome-banner {
   margin: 0 -2rem 1rem -2rem;
-  padding: 0.5rem 2rem;
+  padding: 0.5rem 0.5em;
   background-color: #0f0f79;
-  font-size: 0.95rem;
-  text-align: left;
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 500;
+  text-align: center;
+
 }
 
 @media (prefers-color-scheme: light) {
@@ -1559,6 +1486,20 @@ button:focus-visible {
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+}
+
+/*Applies a custom background and text color to inputs that are autofilled by the browser, ensuring they match the design of the patient dashboard*/
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #C7C0F0 inset !important;  /* Much larger to fully cover any edges */
+  box-shadow: 0 0 0 1000px #C7C0F0 inset !important;         /* Non-prefixed fallback */
+  -webkit-text-fill-color: #000 !important;                   /* Your text color – adjust if needed */
+  background-color: #C7C0F0 !important;
+  border: none !important;                                    /* Force-remove any inner border */
+  outline: none !important;                                   /* Kill any outline/glow */
+  transition: background-color 5000s ease-in-out 0s !important; /* Delays Chrome's flash/change */
 }
 
 @layer base {

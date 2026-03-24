@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../../../lib/supabase'
+import { useAuth } from '../../../../context/AuthContext'
+import { useClinicContext } from '../../../../context/ClinicContext'
 import type { ClinicRow } from '../../Clinic/ClinicADashBoard'
 
 const PAGE_SIZE = 5
 
 export default function ClinicDiscoveryPage() {
     const navigate = useNavigate()
+    const { profile } = useAuth()
+    const { setSelectedClinicId, setSelectedClinicName } = useClinicContext()
     const [clinics, setClinics] = useState<ClinicRow[]>([])
     const [loading, setLoading] = useState(true)
     const [currentPage, setCurrentPage] = useState(1)
@@ -76,6 +80,19 @@ export default function ClinicDiscoveryPage() {
                                     >
                                         Check
                                     </button>
+                                    {profile?.role === 'patient' && (
+                                        <button
+                                            type="button"
+                                            className="cd-btn"
+                                            onClick={() => {
+                                                setSelectedClinicId(clinic.clinic_id)
+                                                setSelectedClinicName(clinic.clinic_name ?? 'Clinic')
+                                                navigate('/dashboard/patient', { state: { clinicId: clinic.clinic_id } })
+                                            }}
+                                        >
+                                            Select clinic
+                                        </button>
+                                    )}
                                 </div>
                             </li>
                         ))}
