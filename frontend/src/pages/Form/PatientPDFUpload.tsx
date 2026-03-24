@@ -10,6 +10,25 @@ const PatientPDFUpload: React.FC = () => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [clinicPdfUrl, setClinicPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [clinics, setClinics] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    const fetchClinics = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user?.id) return;
+      const { data, error } = await supabase
+        .from('membernamerole')
+        .select('*')
+        .eq('user_id', userData.user.id)
+        .eq('role', 'patient');
+      if (error) {
+        console.error('Error fetching clinics:', error);
+        return;
+      }
+      setClinics(data || []);
+    };
+    fetchClinics();
+  }, []);
 
   React.useEffect(() => {
     const fetchPdfUrl = async () => {
@@ -100,10 +119,10 @@ const PatientPDFUpload: React.FC = () => {
     if (error) {
       alert('Upload failed: ' + error.message);
     } else {
-      const { publicUrl } = supabase.storage
+      const { data: newSignedUrlData, error: newSignedUrlError } = await supabase.storage
         .from('patient-forms')
-        .getPublicUrl(filePath).data;
-      setPdfUrl(publicUrl);
+        .createSignedUrl(filePath, 60 * 60);
+      if (!newSignedUrlError) setPdfUrl(newSignedUrlData.signedUrl);
     }
   };
 
@@ -125,17 +144,23 @@ const PatientPDFUpload: React.FC = () => {
           />
         </label>
       </div>
-      {/* Clinic ID */}
+      {/* Clinic Selection */}
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">Clinic ID:</label>
-        <input
-          type="text"
+        <label className="block text-sm font-medium mb-1">Select Clinic:</label>
+        <select
           value={selectedClinicId || ""}
           onChange={(e) =>
             setSelectedClinicId && setSelectedClinicId(e.target.value)
           }
           className="border rounded px-3 py-2 w-full focus:outline-none focus:ring focus:border-blue-500"
-        />
+        >
+          <option value="">Select a clinic</option>
+          {clinics.map((clinic) => (
+            <option key={clinic.clinic_id} value={clinic.clinic_name}>
+              {clinic.clinic_name}
+            </option>
+          ))}
+        </select>
       </div>
       {/* Upload Button */}
       <button
