@@ -8,7 +8,7 @@ import NurseSideBar from './NurseSideBar';
 
 
 // to make console log conditional 
-const debuglog: boolean = false
+const debuglog: boolean = true
  
 
 type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
@@ -34,10 +34,11 @@ type UpdateAppointmentForm = {
 
  
 export default function NurseAppointmentManager() {
+  const [totalPages, setTotalPage] = useState<number>(0)
   const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
     mode: 'calendar',
     page: 1,
-    totalpages: 1,
+    // totalpages: 1,
     rowsPerPage: 10, // user can edit the number of rows per page 
     sortRules: [ // by default, sort by date 
       { field: 'appointment_date', direction: 'asc' },
@@ -63,7 +64,7 @@ export default function NurseAppointmentManager() {
       return next
     })
   }
-
+  
 
 
 
@@ -93,8 +94,9 @@ export default function NurseAppointmentManager() {
   }
   
   // Retrieve clinic ID
+  const [clinicList, setClinicList] = useState<any[]>([])
   const [clinic, setClinic] = useState<string>()
-  const loadClinic = async () => {
+  const loadClinics = async () => {
     const { data: authData, error: authErr } = await supabase.auth.getUser()
     if (authErr || !authData.user) {
       console.log('AUTH ERROR:', authErr)
@@ -103,17 +105,20 @@ export default function NurseAppointmentManager() {
 
     const { data, error } = await supabase
       .schema('public')
-      .from('Memberships')
-      .select('clinic_id')
+      .from('membernamerole')
+      .select('*')
       .eq('user_id', authData.user.id)
-      .single()
 
     if (error || !data) {
       console.log('CLINIC ERROR:', error)
       return  
     }
+    if (debuglog == true){
+      console.log(data)
+    }
 
-    setClinic(data.clinic_id) 
+    setClinicList(data) 
+    setClinic(data[0].clinic_id) 
   }
 
   // Retrieve list of practicioner in this clinic
@@ -343,10 +348,12 @@ export default function NurseAppointmentManager() {
       return
     }
     setAppointmentsList(data ?? [])
-    setViewPrefs((prev) => ({
-      ...prev,
-      totalpages: count ? Math.ceil(count / prev.rowsPerPage) : 1,
-    }))
+    setTotalPage(count ? Math.ceil(count / viewPrefs.rowsPerPage) : 1)
+    // setViewPrefs((prev) => ({
+    //   ...prev,
+    //   totalpages: count ? Math.ceil(count / prev.rowsPerPage) : 1,
+    // }))
+    console.log("total pages", totalPages)
   }
 
   //// U: UPDATE APPOINTMENT
@@ -442,17 +449,19 @@ export default function NurseAppointmentManager() {
   ////////////////////////////////////////////////////////////////////////////////////////////////
   //// REACT HOOKS !
   useEffect(() => {
-    loadClinic()
-    retrieveAppointmentTypes()
+    loadClinics()
   }, [])
 
 
   // only load patient and doctor data when the clinic information is retrieved 
   useEffect(() => {
     if (!clinic) return 
-    retrievePracticioners(clinic)
-    retrievePatients(clinic)
+    retrieveAppointmentTypes()    // depend on clinics 
+    retrievePracticioners(clinic) // depend on clinics
+    retrievePatients(clinic)      // depend on clinics 
+    if(viewPrefs){setViewPrefs((prev) => ({...prev, page: 1}))}
   }, [clinic])
+
   // load the subset of appointments when we have the clinic 
   //    OR when the viewPreferences are updated 
   useEffect(() => {
@@ -499,7 +508,19 @@ export default function NurseAppointmentManager() {
 
       <div className="pd-right">
       <div className="info-box appointments-section">
-        <h2 className="info-box-title">Appointment scheduling</h2>
+        <h1 className="info-box-title">
+          <select 
+            className='m-2 p-2 font-bold border-2 border-solid rounded-lg' 
+            onChange={(e) =>
+              setClinic(() => (e.target.value))
+            }>
+            {clinicList.map((c) => (
+              <option key={c.clinic_id} value={c.clinic_id}>
+                    {c.clinic_name}
+              </option>))} 
+          </select>
+          Appointment Scheduling 
+        </h1>
         {(!clinic || !viewPrefs) ? (<p>Loading clinic...</p>) 
         : (<>
           {/* VIEWING APPOINTMENTS */}
@@ -513,6 +534,7 @@ export default function NurseAppointmentManager() {
             onSelectSlot={handleNewAppointment}
             // function to handle appointment view changes (changing query)
             viewPrefs={viewPrefs}
+            totalPages = {totalPages}
             onUpdateViewPrefs = {updateViewPrefs}
           />
       
@@ -536,7 +558,7 @@ export default function NurseAppointmentManager() {
               patientList = {patientList} 
               practicionerList = {practicionerList}
               appointmentTypes = {appointmentTypes} 
-
+            
             />
 
 

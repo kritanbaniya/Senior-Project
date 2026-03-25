@@ -61,7 +61,7 @@ export type AppointmentViewPrefs = {
   // list-only
   page: number
   rowsPerPage: number
-  totalpages: number 
+  // totalpages: number 
   // both 
   sortRules: SortRule[]
   dateMode: DateMode
@@ -75,6 +75,7 @@ export type ApptProps = {// define the prop's types
   onDeleteAppointment?: (apt: Appointment) => void
   onSelectSlot?: (start: Date) => void
   viewPrefs: AppointmentViewPrefs
+  totalPages: number
   onUpdateViewPrefs: (updates: Partial<AppointmentViewPrefs>) => void
 }
 

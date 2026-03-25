@@ -11,6 +11,7 @@ export default function AppointmentSwitch({
   onDeleteAppointment,
   onSelectSlot,
   viewPrefs,
+  totalPages, 
   onUpdateViewPrefs,
 }: ApptProps) {
   const [view, setView] = useState<"calendar" | "list">("calendar")
@@ -73,6 +74,7 @@ export default function AppointmentSwitch({
           onSelectAppointment={onSelectAppointment}
           onDeleteAppointment={onDeleteAppointment}
           viewPrefs={viewPrefs}
+          totalPages={totalPages} 
           onUpdateViewPrefs={onUpdateViewPrefs}
         />
       )}

@@ -64,27 +64,27 @@ export default function PatientAppointmentManager() {
     //// HELPER FUNCTIONS:
     // Retrieve clinic ID  
     const [clinic, setClinic] = useState<string>() // CHANGE THIS TO FETCH A LIST 
-    const loadClinic = async () => {
+    const [clinicList, setClinicList] = useState<any[]>([])
+    const loadClinics = async () => {
         const { data: authData, error: authErr } = await supabase.auth.getUser()
         if (authErr || !authData.user) {
             console.log('AUTH ERROR:', authErr)
             return null
         } 
-
         const { data, error } = await supabase
             .schema('public')
-            .from('Memberships')
-            .select('clinic_id')
-            .eq('user_id', authData.user.id)
-            .single()
+            .from('membernamerole')
+            .select('*')
+            .eq('user_id', authData.user.id) 
 
         if (error || !data) {
             console.log('CLINIC ERROR:', error)
             return  
         }
-
         if(debuglog == true) {console.log(data)} 
-        setClinic(data.clinic_id) 
+
+        setClinicList(data) 
+        setClinic(data[0].clinic_id)  
     }
     // temparory empty f 
     function emptyf(): void {
@@ -265,7 +265,7 @@ export default function PatientAppointmentManager() {
 
     //// REACT HOOKS !
     useEffect(() => {
-        loadClinic()
+        loadClinics()
         retrieveAppointmentTypes()
     }, [])
 
@@ -295,7 +295,19 @@ export default function PatientAppointmentManager() {
                         
                     <div className="pd-right">
                         <div className="info-box appointments-section">
-                            <h2 className="info-box-title">Appointments</h2>
+                            <h1 className="info-box-title">
+                                <select 
+                                    className='m-2 p-2 font-bold border-2 border-solid rounded-lg' 
+                                    onChange={(e) =>
+                                    setClinic(() => (e.target.value))
+                                    }>
+                                    {clinicList.map((c) => (
+                                    <option key={c.clinic_id} value={c.clinic_id}>
+                                            {c.clinic_name}
+                                    </option>))} 
+                                </select>
+                                Appointment Scheduling
+                            </h1>
                             {/* VIEWING APPOINTMENTS */}
                             <AppointmentSwitch
                                 appointments={appointmentsList} // send a subset of appointments
@@ -318,7 +330,7 @@ export default function PatientAppointmentManager() {
                                 createMessage={createMessage}
                                 setCreateMessage={setCreateMessage}
                                 handleNewAppointment={handleNewAppointment}
-                                createAppointment={createAppointment} // createAppointment
+                                createAppointment={emptyf} // createAppointment
                                 nurse={false}
                                 patientList={[]}
                                 patientName={patientName}

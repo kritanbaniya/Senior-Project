@@ -1,17 +1,12 @@
 import { useEffect,  useState } from "react";
 import type {  ApptProps} from "./types.ts"; 
+import { Button } from "@/components/ui/button.tsx";
 
 
 
-
-
-
-
-
-
-
-
-
+// NEXT THING TO DO: 
+// VIEW PAST APPOINTMENTS 
+// ADVANCED SEARCHES 
 
 
 export default function AppointmentList({
@@ -20,38 +15,53 @@ export default function AppointmentList({
   onDeleteAppointment,
   // onSelectSlot,
   viewPrefs,
+  totalPages,
   onUpdateViewPrefs,
 }: ApptProps) { 
   // pull info from view pref obj 
   let page = viewPrefs ? (viewPrefs.page) : (1)
-  let totalPages = viewPrefs ? (viewPrefs.totalpages) : (1)
- 
+  // let totalPages = viewPrefs ? (viewPrefs.totalpages) : (1)
+  console.log(totalPages)
 
 
 
   // Validate that the number in the input box is an integer, and follows the min and max 
-  const [rowsInput, setRowsInput] = useState(String(viewPrefs.rowsPerPage))
+  const [rowsInput, setRowsInput] = useState(Number(viewPrefs.rowsPerPage))
   const commitRowsPerPage = () => {
     const parsed = Number(rowsInput)
-    if (!Number.isInteger(parsed) || parsed > 5 || parsed < 150) {
+    if ((Number.isInteger(parsed)) && (parsed > 0) && (parsed < 201)) {
       onUpdateViewPrefs({ rowsPerPage: parsed })
       return
-    } 
+    } else { 
+      setRowsInput(viewPrefs.rowsPerPage)
+      console.log("ROW SETTING ERROR")
+    }
   }
 
 
-  const [pageNum, setPageNum] = useState(String(viewPrefs.page))
+  const [pageNum, setPageNum] = useState(Number(viewPrefs.page))
   const CommitPageNumber = () => {
-      const parsed = Number(pageNum)
-      if (!Number.isInteger(parsed) || parsed > 1 || parsed < totalPages) {
-        onUpdateViewPrefs({ page: parsed })
-        return
-      } 
+    const parsed = Number(pageNum)
+    if ((Number.isInteger(parsed)) && (parsed > 0) && (parsed <= totalPages)) {
+      onUpdateViewPrefs({ page: parsed })
+      return
+    } else { 
+      setPageNum(viewPrefs.page)
+      console.log("PAGE SETTING ERROR")
     }
+  }
+
+
   useEffect(()=>{
-    setPageNum(String(page))
+    setPageNum(Number(page))
   }, [page, rowsInput])
  
+  useEffect(()=>{
+    console.log(
+      "ROWs AND PAGE:", 
+      rowsInput, pageNum
+    )
+  }, [rowsInput, pageNum])
 
 
   return (
@@ -121,39 +131,60 @@ export default function AppointmentList({
           )
         })}
       </ul>
-
+      
+      <hr className="m-5 border-2 border-solid rad rounded-xl"></hr>
+      <br></br>
       {/* SET THE VIEW PREFERENCES */}
-      <div className="form-actions" style={{ marginTop: "12px" }}>
+      {/* UPDATE AMOUNT OF ROWS PERPAGE */}
+      <label className="flex items-center gap-2 justify-end" style={{ marginLeft: "12px" }}>
+        <span>Rows per page</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={rowsInput}
+          onChange={(e) => {
+            const value = e.target.value
+            if (/^\d*$/.test(value)) {
+              setRowsInput(Number(value))
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault()
+              commitRowsPerPage()
+            }}} onBlur={commitRowsPerPage}
+          className="w-10 rounded border px-2 py-1"
+        />
+      </label>
+      <div className="form-actions flex justify-between" style={{ marginTop: "12px" }}>
         {/* PREV PAGE BUTTON */}
-        <button
+        <Button
           type="button"
           className="btn-secondary"
           onClick={() => onUpdateViewPrefs({ page: viewPrefs.page - 1 })}
           disabled={page === 1}
         >
           Previous
-        </button>
+        </Button>
 
         <span style={{ alignSelf: "center" }}>
           Page 
-        <input
+        <input 
             type="text"
             inputMode="numeric"
             value={pageNum}
             onChange={(e) => {
               const value = e.target.value
               if (/^\d*$/.test(value)) {
-                setPageNum(value)
+                setPageNum(Number(value))
               }
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault()
                 CommitPageNumber() 
-              }
-            }}
-            onBlur={CommitPageNumber}
-            className="w-20 rounded border px-2 py-1"
+              }}} onBlur={CommitPageNumber}
+            className="m-2 w-15 rounded border px-2 py-1"
           />
           
           
@@ -161,38 +192,14 @@ export default function AppointmentList({
         </span>
 
         {/* NEXT PAGE BUTTON */}
-        <button
+        <Button
           type="button"
           className="btn-secondary"
           onClick={() => onUpdateViewPrefs({ page: viewPrefs.page + 1 })}
           disabled={page === totalPages}
         >
           Next
-        </button>
-
-        {/* UPDATE AMOUNT OF ROWS PERPAGE */}
-        <label className="flex items-center gap-2" style={{ marginLeft: "12px" }}>
-          <span>Rows per page</span>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={rowsInput}
-            onChange={(e) => {
-              const value = e.target.value
-              if (/^\d*$/.test(value)) {
-                setRowsInput(value)
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault()
-                commitRowsPerPage()
-              }
-            }}
-            onBlur={commitRowsPerPage}
-            className="w-20 rounded border px-2 py-1"
-          />
-        </label>
+        </Button>
       </div>
     </div>
   )
