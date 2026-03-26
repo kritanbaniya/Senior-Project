@@ -14,6 +14,8 @@ import NurseYourInformation from './pages/Dashboard/Nurse/Nurseinformation'
 import DoctorDashBoard from './pages/Dashboard/Doctor/DoctorDashBoard'
 import DoctorYourInformation from './pages/Dashboard/Doctor/DoctorInformation'
 import ClinicADashBoard from './pages/Dashboard/Clinic/ClinicADashBoard'
+import ClinicOverview from './pages/Dashboard/Clinic/ClinicOverview'
+import ClinicMyClinic from './pages/Dashboard/Clinic/ClinicMyClinic'
 import Support from './pages/Support'
 import HomeGate from './pages/HomeGate'
 
@@ -57,7 +59,10 @@ export default function App() {
                 <Route path="information" element={<DoctorYourInformation />} />
               </Route>
               <Route path="clinic" element={<RoleGuard allowedRole="clinic" />}>
-                <Route index element={<ClinicADashBoard />} />
+                <Route element={<ClinicADashBoard />}>
+                  <Route index element={<ClinicOverview />} />
+                  <Route path="my-clinic" element={<ClinicMyClinic />} />
+                </Route>
               </Route>
             </Route>
           </Route>

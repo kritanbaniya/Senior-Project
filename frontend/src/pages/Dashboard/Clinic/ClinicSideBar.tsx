@@ -1,11 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 
-type ClinicSideBarProps = {
-  clinicCreated: boolean
-}
-
-export default function ClinicSideBar({ clinicCreated }: ClinicSideBarProps) {
+export default function ClinicSideBar() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   return (
@@ -31,25 +27,19 @@ export default function ClinicSideBar({ clinicCreated }: ClinicSideBarProps) {
         >
           Overview
         </NavLink>
-        <span
-          className="pd-nav-item pd-nav-item-disabled"
-          style={{ opacity: clinicCreated ? 1 : 0.4 }}
-          aria-disabled="true"
+        <NavLink
+          to="/dashboard/clinic/my-clinic"
+          className={({ isActive }) => `pd-nav-item ${isActive ? 'active' : ''}`}
         >
+          My Clinic
+        </NavLink>
+        <span className="pd-nav-item pd-nav-item-disabled" style={{ opacity: 0.4 }} aria-disabled="true">
           Queue Management
         </span>
-        <span
-          className="pd-nav-item pd-nav-item-disabled"
-          style={{ opacity: clinicCreated ? 1 : 0.4 }}
-          aria-disabled="true"
-        >
+        <span className="pd-nav-item pd-nav-item-disabled" style={{ opacity: 0.4 }} aria-disabled="true">
           Staff
         </span>
-        <span
-          className="pd-nav-item pd-nav-item-disabled"
-          style={{ opacity: clinicCreated ? 1 : 0.4 }}
-          aria-disabled="true"
-        >
+        <span className="pd-nav-item pd-nav-item-disabled" style={{ opacity: 0.4 }} aria-disabled="true">
           Settings
         </span>
       </nav>
