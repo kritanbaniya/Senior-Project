@@ -57,7 +57,7 @@ export default function PatientAppointmentManager() {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// COMPONENT RENDER VARIABLES - decides if a part of the page gets mounted
     const [showScheduleForm, setShowScheduleForm] = useState(false) 
-    const [showAptUpdateForm, setShowAptUpdateForm] = useState(false)
+    // const [showAptUpdateForm, setShowAptUpdateForm] = useState(false)
     // creation status 
     const [createStatus, setCreateStatus] = useState<AppointmentCreateStatus>('idle')
     const [createMessage, setCreateMessage] = useState('')
