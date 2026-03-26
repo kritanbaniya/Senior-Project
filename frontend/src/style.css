@@ -694,6 +694,14 @@ button:focus-visible {
 }
 .pd-nav-item:hover { background: rgba(255, 255, 255, 0.4); color: #ff9b29; }
 .pd-nav-item.active { background: rgba(255, 255, 255, 0.5); color: rgb(0, 0, 0); }
+.pd-nav-item.pd-nav-item-disabled {
+  cursor: not-allowed;
+  color: rgba(0, 0, 0, 0.75);
+}
+.pd-nav-item.pd-nav-item-disabled:hover {
+  background: transparent;
+  color: rgba(0, 0, 0, 0.75);
+}
 
 .pd-right {
   flex: 1;

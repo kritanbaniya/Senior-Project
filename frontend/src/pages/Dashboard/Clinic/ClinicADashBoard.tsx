@@ -28,6 +28,7 @@ import { useAuth } from '../../../context/AuthContext'
 import ClinicAdminProfile from './ClinicAdminProfile'
 import ClinicCreation from './ClinicCreation'
 import ClinicManagement from './ClinicManagement'
+import ClinicSideBar from './ClinicSideBar'
 import type { AdminFormData } from './ClinicAdminProfile'
 import type { ClinicFormData } from './ClinicCreation'
 
@@ -101,7 +102,6 @@ export default function ClinicADashBoard() {
   const { profile } = useAuth()
   const displayName = profile?.full_name?.trim() || 'Admin'
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -323,20 +323,7 @@ export default function ClinicADashBoard() {
 
   return (
     <div className="pd-layout">
-      <aside className={`pd-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
-        <div className="pd-sidebar-header">
-          <Link to="/" className="pd-sidebar-logo"><span>ClinicIQ</span></Link>
-          <button type="button" className="pd-sidebar-toggle" onClick={() => setSidebarCollapsed((c) => !c)} aria-label="Toggle sidebar">
-            {sidebarCollapsed ? '->' : '<-'}
-          </button>
-        </div>
-        <nav className="pd-nav">
-          <Link to="/dashboard/clinic" className="pd-nav-item active">Overview</Link>
-          <span className="pd-nav-item" style={{ opacity: adminRow?.clinic_created ? 1 : 0.4 }}>Queue Management</span>
-          <span className="pd-nav-item" style={{ opacity: adminRow?.clinic_created ? 1 : 0.4 }}>Staff</span>
-          <span className="pd-nav-item" style={{ opacity: adminRow?.clinic_created ? 1 : 0.4 }}>Settings</span>
-        </nav>
-      </aside>
+      <ClinicSideBar clinicCreated={Boolean(adminRow?.clinic_created)} />
 
       <div className="pd-right">
         <header className="pd-header">
