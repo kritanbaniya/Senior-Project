@@ -3,7 +3,7 @@
 // import { useEffect, useState } from 'react'
 // import { supabase } from '../../../lib/supabase.ts' 
 // import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
-import type { AppointmentFormType, Appointment, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
+import type { AppointmentFormType, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
  
 
 
