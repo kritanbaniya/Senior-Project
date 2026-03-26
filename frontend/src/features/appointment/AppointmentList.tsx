@@ -20,10 +20,11 @@ export default function AppointmentList({
 }: ApptProps) { 
   // pull info from view pref obj 
   let page = viewPrefs ? (viewPrefs.page) : (1)
+  const safeTotalPages = totalPages ?? 1
   // let totalPages = viewPrefs ? (viewPrefs.totalpages) : (1)
   // console.log(totalPages)
 
-
+  
 
   // Validate that the number in the input box is an integer, and follows the min and max 
   const [rowsInput, setRowsInput] = useState(Number(viewPrefs.rowsPerPage))
@@ -42,7 +43,7 @@ export default function AppointmentList({
   const [pageNum, setPageNum] = useState(Number(viewPrefs.page))
   const CommitPageNumber = () => {
     const parsed = Number(pageNum)
-    if ((Number.isInteger(parsed)) && (parsed > 0) && (parsed <= totalPages)) {
+    if ((Number.isInteger(parsed)) && (parsed > 0) && (parsed <= safeTotalPages)) {
       onUpdateViewPrefs({ page: parsed })
       return
     } else { 
@@ -188,7 +189,7 @@ export default function AppointmentList({
           />
           
           
-           of {totalPages}
+           of {safeTotalPages}
         </span>
 
         {/* NEXT PAGE BUTTON */}
@@ -196,7 +197,7 @@ export default function AppointmentList({
           type="button"
           className="btn-secondary"
           onClick={() => onUpdateViewPrefs({ page: viewPrefs.page + 1 })}
-          disabled={page === totalPages}
+          disabled={page === safeTotalPages}
         >
           Next
         </Button>
