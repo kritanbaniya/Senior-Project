@@ -33,18 +33,12 @@ export default function ClinicSideBar() {
         >
           My Clinic
         </NavLink>
-        <span className="pd-nav-item pd-nav-item-disabled" style={{ opacity: 0.4 }} aria-disabled="true">
-          Queue Management
-        </span>
         <NavLink
           to="/dashboard/clinic/manage-staff"
           className={({ isActive }) => `pd-nav-item ${isActive ? 'active' : ''}`}
         >
           Manage Staff
         </NavLink>
-        <span className="pd-nav-item pd-nav-item-disabled" style={{ opacity: 0.4 }} aria-disabled="true">
-          Settings
-        </span>
       </nav>
     </aside>
   )
