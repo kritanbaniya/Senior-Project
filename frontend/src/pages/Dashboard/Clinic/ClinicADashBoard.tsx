@@ -1,38 +1,30 @@
-// clinic admin dashboard orchestrator.
+// clinic admin dashboard layout.
 //
-// this is the top-level page component for the /dashboard/clinic route.
-// it is rendered inside DashboardGuard + RoleGuard (allowedRole="clinic")
-// in App.tsx, so the user is guaranteed to be an authenticated clinic admin
-// by the time this mounts.
+// this is the layout route component for /dashboard/clinic. it wraps the
+// sidebar, header, and an <Outlet /> that renders the active tab component
+// (ClinicOverview or ClinicMyClinic).
 //
 // responsibilities:
 //   - fetches the user's clinic_admin row and clinics row from supabase on mount
 //   - owns all shared state (loading, saving, message, adminRow, clinicRow)
-//   - contains the two supabase mutation handlers (profile upsert, clinic insert)
-//   - renders the shared sidebar + header layout used across all states
-//   - determines which child component to render based on the three-state flow:
-//       state 1 (no admin profile)  -> ClinicAdminProfile
-//       state 2 (no clinic yet)     -> ClinicCreation
-//       state 3 (clinic exists)     -> ClinicManagement
+//   - contains all supabase mutation handlers (profile upsert/update, clinic insert/update)
+//   - passes state and handlers to child routes via outlet context
 //
-// child components never call supabase directly; they receive callbacks via props
-// so all database logic stays centralized here.
-//
-// exports shared types (ClinicAdminRow, ClinicRow) and constants (SPECIALTIES,
-// ADMIN_TITLES, US_STATES) that the child components import.
+// child components consume context via the exported useClinicDashboard() hook.
 
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Outlet, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
-import ClinicAdminProfile from './ClinicAdminProfile'
-import ClinicCreation from './ClinicCreation'
-import ClinicManagement from './ClinicManagement'
-import type { AdminFormData } from './ClinicAdminProfile'
+import ClinicSideBar from './ClinicSideBar'
 import type { ClinicFormData } from './ClinicCreation'
 
-// mirrors the public.clinic_admin table schema. the id column is the user's
-// auth.users uuid. clinic_created flips to true after the admin creates a clinic.
+export type AdminFormData = {
+  name: string
+  phone: string
+  title: string
+}
+
 export type ClinicAdminRow = {
   id: string
   name: string | null
@@ -41,10 +33,6 @@ export type ClinicAdminRow = {
   clinic_created: boolean
 }
 
-// mirrors the public.clinics table schema. clinic_id is the auto-generated uuid
-// primary key. admin_id references auth.users and has a unique constraint so each
-// admin can only own one clinic. approved defaults to false and is flipped by a
-// system admin (or manually in supabase for now).
 export type ClinicRow = {
   clinic_id: string
   admin_id: string
@@ -63,8 +51,6 @@ export type ClinicRow = {
   created_at: string
 }
 
-// dropdown options shared with child components via named exports.
-// ClinicCreation imports SPECIALTIES and US_STATES; ClinicAdminProfile imports ADMIN_TITLES.
 export const SPECIALTIES = [
   'General Practice',
   'Pediatrics',
@@ -94,27 +80,35 @@ export const US_STATES = [
   'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
 ]
 
-// main orchestrator component. mounted at /dashboard/clinic by App.tsx via
-// <RoleGuard allowedRole="clinic">. reads auth profile from AuthContext for
-// the display name, then manages all data loading, mutations, and state routing.
+export type ClinicDashboardContext = {
+  adminRow: ClinicAdminRow | null
+  clinicRow: ClinicRow | null
+  loading: boolean
+  saving: boolean
+  message: { type: 'success' | 'error'; text: string } | null
+  setMessage: (m: { type: 'success' | 'error'; text: string } | null) => void
+  handleAdminProfileSubmit: (form: AdminFormData) => Promise<void>
+  handleAdminProfileUpdate: (form: AdminFormData) => Promise<void>
+  handleClinicCreateSubmit: (form: ClinicFormData) => Promise<void>
+  handleClinicUpdate: (form: ClinicFormData) => Promise<void>
+}
+
+export function useClinicDashboard() {
+  return useOutletContext<ClinicDashboardContext>()
+}
+
 export default function ClinicADashBoard() {
   const { profile } = useAuth()
   const displayName = profile?.full_name?.trim() || 'Admin'
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  // core data rows fetched from supabase. null means the row doesn't exist yet.
-  // adminRow drives state 1 vs 2; clinicRow + approved drives state 3a vs 3b.
   const [adminRow, setAdminRow] = useState<ClinicAdminRow | null>(null)
   const [clinicRow, setClinicRow] = useState<ClinicRow | null>(null)
 
-  // runs once on mount. fires two parallel queries against supabase using the
-  // anon key (secured by rls so each user can only see their own rows).
-  // maybeSingle() returns null instead of erroring when no row exists.
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -148,10 +142,7 @@ export default function ClinicADashBoard() {
     void load()
   }, [])
 
-  // callback passed to ClinicAdminProfile as onSubmit. receives the admin's
-  // form data, validates it, and upserts a row into public.clinic_admin with
-  // clinic_created = false. on success it updates adminRow locally which causes
-  // renderContent to switch from state 1 (profile form) to state 2 (clinic form).
+  // creates a new clinic_admin row (first-time profile setup)
   const handleAdminProfileSubmit = async (form: AdminFormData) => {
     setMessage(null)
 
@@ -199,12 +190,53 @@ export default function ClinicADashBoard() {
     setMessage({ type: 'success', text: 'profile saved' })
   }
 
-  // callback passed to ClinicCreation as onSubmit. receives the clinic form data,
-  // validates required fields, then performs two sequential supabase calls:
-  //   1. insert into public.clinics -> returns the new row with clinic_id
-  //   2. update public.clinic_admin set clinic_created = true
-  // on success it updates both clinicRow and adminRow locally which causes
-  // renderContent to switch from state 2 (clinic form) to state 3 (management).
+  // updates an existing clinic_admin row
+  const handleAdminProfileUpdate = async (form: AdminFormData) => {
+    setMessage(null)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setMessage({ type: 'error', text: 'not logged in' })
+      return
+    }
+
+    if (!form.name.trim()) {
+      setMessage({ type: 'error', text: 'name is required' })
+      return
+    }
+
+    setSaving(true)
+
+    const { error } = await supabase
+      .from('clinic_admin')
+      .update({
+        name: form.name.trim() || null,
+        phone: form.phone.trim() || null,
+        title: form.title || null,
+      })
+      .eq('id', user.id)
+
+    setSaving(false)
+
+    if (error) {
+      setMessage({ type: 'error', text: error.message })
+      return
+    }
+
+    setAdminRow((prev) =>
+      prev
+        ? {
+            ...prev,
+            name: form.name.trim() || null,
+            phone: form.phone.trim() || null,
+            title: form.title || null,
+          }
+        : prev,
+    )
+    setMessage({ type: 'success', text: 'profile updated' })
+  }
+
+  // inserts a new clinics row and flips clinic_created on clinic_admin
   const handleClinicCreateSubmit = async (form: ClinicFormData) => {
     setMessage(null)
 
@@ -287,56 +319,69 @@ export default function ClinicADashBoard() {
     setMessage({ type: 'success', text: 'clinic created successfully' })
   }
 
-  // state router. checks adminRow and clinicRow to decide which child to render.
-  // the order of checks mirrors the three-state flow:
-  //   no adminRow          -> ClinicAdminProfile (state 1)
-  //   clinic_created=false -> ClinicCreation (state 2)
-  //   clinicRow exists     -> ClinicManagement (state 3, handles 3a/3b internally)
-  const renderContent = () => {
-    if (loading) {
-      return <p className="pd-empty">Loading...</p>
+  // updates an existing approved clinic's editable fields
+  const handleClinicUpdate = async (form: ClinicFormData) => {
+    setMessage(null)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setMessage({ type: 'error', text: 'not logged in' })
+      return
     }
-    if (!adminRow) {
-      return (
-        <ClinicAdminProfile
-          initialName={profile?.full_name?.trim() || ''}
-          saving={saving}
-          message={message}
-          onSubmit={handleAdminProfileSubmit}
-        />
-      )
+
+    if (!form.clinic_name.trim()) {
+      setMessage({ type: 'error', text: 'clinic name is required' })
+      return
     }
-    if (!adminRow.clinic_created) {
-      return (
-        <ClinicCreation
-          saving={saving}
-          message={message}
-          onSubmit={handleClinicCreateSubmit}
-        />
-      )
+
+    setSaving(true)
+
+    const { data: updatedClinic, error } = await supabase
+      .from('clinics')
+      .update({
+        clinic_name: form.clinic_name.trim(),
+        specialty: form.specialty || null,
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
+        address_line1: form.address_line1.trim() || null,
+        address_line2: form.address_line2.trim() || null,
+        city: form.city.trim() || null,
+        state: form.state || null,
+        zip_code: form.zip_code.trim() || null,
+        website: form.website.trim() || null,
+        description: form.description.trim() || null,
+      })
+      .eq('admin_id', user.id)
+      .select()
+      .single()
+
+    setSaving(false)
+
+    if (error) {
+      setMessage({ type: 'error', text: error.message })
+      return
     }
-    if (clinicRow) {
-      return <ClinicManagement clinicRow={clinicRow} />
-    }
-    return <p className="pd-empty">Loading clinic data...</p>
+
+    setClinicRow(updatedClinic as ClinicRow)
+    setMessage({ type: 'success', text: 'clinic updated' })
+  }
+
+  const ctx: ClinicDashboardContext = {
+    adminRow,
+    clinicRow,
+    loading,
+    saving,
+    message,
+    setMessage,
+    handleAdminProfileSubmit,
+    handleAdminProfileUpdate,
+    handleClinicCreateSubmit,
+    handleClinicUpdate,
   }
 
   return (
     <div className="pd-layout">
-      <aside className={`pd-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
-        <div className="pd-sidebar-header">
-          <Link to="/" className="pd-sidebar-logo"><span>ClinicIQ</span></Link>
-          <button type="button" className="pd-sidebar-toggle" onClick={() => setSidebarCollapsed((c) => !c)} aria-label="Toggle sidebar">
-            {sidebarCollapsed ? '->' : '<-'}
-          </button>
-        </div>
-        <nav className="pd-nav">
-          <Link to="/dashboard/clinic" className="pd-nav-item active">Overview</Link>
-          <span className="pd-nav-item" style={{ opacity: adminRow?.clinic_created ? 1 : 0.4 }}>Queue Management</span>
-          <span className="pd-nav-item" style={{ opacity: adminRow?.clinic_created ? 1 : 0.4 }}>Staff</span>
-          <span className="pd-nav-item" style={{ opacity: adminRow?.clinic_created ? 1 : 0.4 }}>Settings</span>
-        </nav>
-      </aside>
+      <ClinicSideBar />
 
       <div className="pd-right">
         <header className="pd-header">
@@ -364,7 +409,7 @@ export default function ClinicADashBoard() {
 
         <main className="pd-main">
           <div className="pd-grid">
-            {renderContent()}
+            <Outlet context={ctx} />
           </div>
         </main>
       </div>
