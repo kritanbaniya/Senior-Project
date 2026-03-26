@@ -2,7 +2,7 @@ import { useState , useEffect } from "react";
 import AppointmentCalendar from "./AppointmentCalendar.tsx";
 import AppointmentList from "./AppointmentList.tsx";
 import type { ApptProps } from "./types.ts"; 
-
+import { Button } from "@/components/ui/button.tsx";
 
 
 export default function AppointmentSwitch({
@@ -11,6 +11,7 @@ export default function AppointmentSwitch({
   onDeleteAppointment,
   onSelectSlot,
   viewPrefs,
+  totalPages, 
   onUpdateViewPrefs,
 }: ApptProps) {
   const [view, setView] = useState<"calendar" | "list">("calendar")
@@ -19,17 +20,46 @@ export default function AppointmentSwitch({
     return
   }, [appointments])
 
+
+   
+
   return (
     <>
+    {/* THE SWITCH  */}
       <div className="form-actions">
-        <button type="button" onClick={() => {setView("calendar"); onUpdateViewPrefs({mode: 'calendar'})}}>
+        <Button 
+        type="button" 
+        variant={view === "calendar" ? "default" : "outline"}
+        className={view === "calendar"? ("form-actions"):("form-actions bg-white")} 
+        onClick={() => {setView("calendar"); onUpdateViewPrefs({mode: 'calendar'})}}>
           Calendar
-        </button>
-        <button type="button" onClick={() => {setView("list"); onUpdateViewPrefs({mode: 'list'})}}>
+        </Button>
+        <Button 
+        type="button" 
+        variant={view === "list" ? "default" : "outline"}
+        className={view === "list"? ("form-actions"):("form-actions bg-white")}
+        onClick={() => {setView("list"); onUpdateViewPrefs({mode: 'list'})}}>
           List
-        </button>
+        </Button>
       </div>
+      {/* <Button 
+        type = "button" 
+        variant={view === "calendar" ? "default" : "outline"}
+        onClick={() => handleViewChange("calendar")}
+        >
+          Calendar
+        </Button>
+        <Button
+          type="button"
+          variant={view === "list" ? "default" : "outline"}
+          onClick={() => handleViewChange("list")}
+        >
+          List
+        </Button>  */}
 
+
+
+      {/* THE VIEWs */}
       {view === "calendar" ? (
         <AppointmentCalendar
           appointments={appointments}
@@ -44,9 +74,15 @@ export default function AppointmentSwitch({
           onSelectAppointment={onSelectAppointment}
           onDeleteAppointment={onDeleteAppointment}
           viewPrefs={viewPrefs}
+          totalPages={totalPages} 
           onUpdateViewPrefs={onUpdateViewPrefs}
         />
       )}
+
+
+
+      {/* The Creator */}
+      
     </>
   )
 }

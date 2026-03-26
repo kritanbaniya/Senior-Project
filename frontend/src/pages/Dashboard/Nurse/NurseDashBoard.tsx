@@ -35,7 +35,12 @@ export default function NurseDashBoard() {
 
       <h1 className="page-title">Nurse Dashboard</h1>
 
-      <div className="info-box queue-section">
+      <div className = "pd-layout">
+        
+              {/* Left sidebar */}
+              <NurseSideBar/> 
+
+        <div className="info-box queue-section">
         <h2 className="info-box-title">Clinic selection</h2>
         <div className="info-box-content">
           <ClinicSelector
@@ -73,27 +78,7 @@ export default function NurseDashBoard() {
       {loading && <p className="no-queue">Loading queue...</p>}
       {error && <p className="no-queue">{error}</p>}
 
-
-
-
-
-
-
-      <div className = "pd-layout">
-        
-              {/* Left sidebar */}
-              <NurseSideBar/> 
-        
       </div>
-
-
-
-
-
-
-
-
-
 
 
       <div className="info-box quick-actions-box">
