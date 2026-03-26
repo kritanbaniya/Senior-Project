@@ -16,6 +16,7 @@ import DoctorYourInformation from './pages/Dashboard/Doctor/DoctorInformation'
 import ClinicADashBoard from './pages/Dashboard/Clinic/ClinicADashBoard'
 import ClinicOverview from './pages/Dashboard/Clinic/ClinicOverview'
 import ClinicMyClinic from './pages/Dashboard/Clinic/ClinicMyClinic'
+import ClinicManageStaff from './pages/Dashboard/Clinic/ClinicManageStaff'
 import Support from './pages/Support'
 import HomeGate from './pages/HomeGate'
 
@@ -62,6 +63,7 @@ export default function App() {
                 <Route element={<ClinicADashBoard />}>
                   <Route index element={<ClinicOverview />} />
                   <Route path="my-clinic" element={<ClinicMyClinic />} />
+                  <Route path="manage-staff" element={<ClinicManageStaff />} />
                 </Route>
               </Route>
             </Route>
