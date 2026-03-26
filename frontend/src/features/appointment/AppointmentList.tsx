@@ -21,7 +21,7 @@ export default function AppointmentList({
   // pull info from view pref obj 
   let page = viewPrefs ? (viewPrefs.page) : (1)
   // let totalPages = viewPrefs ? (viewPrefs.totalpages) : (1)
-  console.log(totalPages)
+  // console.log(totalPages)
 
 
 
@@ -57,10 +57,10 @@ export default function AppointmentList({
   }, [page, rowsInput])
  
   useEffect(()=>{
-    console.log(
-      "ROWs AND PAGE:", 
-      rowsInput, pageNum
-    )
+    // console.log(
+    //   "ROWs AND PAGE:", 
+    //   rowsInput, pageNum
+    // )
   }, [rowsInput, pageNum])
 
 

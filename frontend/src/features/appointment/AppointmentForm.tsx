@@ -38,7 +38,7 @@ type apptFormProp = {
 
     nurse : boolean, 
     patientList : MemberList[], 
-    patientName : MemberList | undefined, 
+    patientName : string | undefined, 
 
     practicionerList : MemberList[], 
     appointmentTypes : AppointmentType[], 
@@ -69,8 +69,7 @@ export default function AppointmentForm({
     appointmentTypes,
     
 }:apptFormProp){
-
-    var patientNamet : string = "Err Or"
+ 
     
 
 
@@ -133,7 +132,7 @@ export default function AppointmentForm({
                       )))}
                     </select>) : 
                     (
-                      <p>{patientName?.full_name || patientNamet}</p> // .full_name
+                      <p>{patientName}</p>  
                     )}
                 </div>
 

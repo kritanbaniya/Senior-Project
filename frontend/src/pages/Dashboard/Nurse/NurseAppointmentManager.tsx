@@ -3,42 +3,31 @@ import { supabase } from '../../../lib/supabase.ts'
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
 import type { AppointmentFormType, AppointmentViewPrefs, Appointment, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
 import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
-
 import NurseSideBar from './NurseSideBar';  
 
-
-// to make console log conditional 
-const debuglog: boolean = true
+ 
  
 
-type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
-
-// FOR THE FORMS (need to be refacs)
-
-
-type UpdateAppointmentForm = {
-  appointmentId: string
-  patientId: string
-  date: string
-  time: string
-  doctorId: string
-  type: AppointmentType | ''
-}
-
-
-
-
-
-
-
- 
 export default function NurseAppointmentManager() {
+  var debuglog: boolean = false 
+  type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
+
+  type UpdateAppointmentForm = {
+    appointmentId: string
+    patientId: string
+    date: string
+    time: string
+    doctorId: string
+    type: AppointmentType | ''
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // VIEW PREFERENCES 
   const [totalPages, setTotalPage] = useState<number>(0)
   const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
     mode: 'calendar',
-    page: 1,
-    // totalpages: 1,
+    page: 1, 
     rowsPerPage: 10, // user can edit the number of rows per page 
     sortRules: [ // by default, sort by date 
       { field: 'appointment_date', direction: 'asc' },
@@ -64,15 +53,19 @@ export default function NurseAppointmentManager() {
       return next
     })
   }
-  
-
-
-
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   //// COMPONENT RENDER VARIABLES - decides if a part of the page gets mounted
   const [showScheduleForm, setShowScheduleForm] = useState(false)
   const [showAptUpdateForm, setShowAptUpdateForm] = useState(false)
+  // creation status 
+  const [createStatus, setCreateStatus] = useState<AppointmentCreateStatus>('idle')
+  const [createMessage, setCreateMessage] = useState('')
+  // stop showing appointments while new query is loading new appt list - MAY NEED BETTER PERFORMANCE
+  const [appointmentsLoading, setAppointmentsLoading] = useState(false)
+
+
+
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   //// HELPER FUNCTIONS:
@@ -80,17 +73,18 @@ export default function NurseAppointmentManager() {
   const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
   const retrieveAppointmentTypes = async () => {
     const { data, error } = await supabase.rpc('get_appointment_types')
-
     if (error) {
       console.log('APPOINTMENT TYPES ERROR:', error)
       setAppointmentTypes([])
       return
     }
-
     const values = (data ?? []).map(
       (row: { value: string }) => row.value as AppointmentType
     )
     setAppointmentTypes(values)
+      if(debuglog === true){
+        console.log(appointmentTypes)
+      }
   }
   
   // Retrieve clinic ID
@@ -172,17 +166,8 @@ export default function NurseAppointmentManager() {
     doctorId: '',
     type: '',
   })
-
-  // check for when supabase recieves information 
-  const [createStatus, setCreateStatus] = useState<AppointmentCreateStatus>('idle')
-  const [createMessage, setCreateMessage] = useState('')
-
-
+ 
   //// C: CREATE NEW APPOINTMENT
-  const handleCreateAppointment = async () => {
-    if (clinic){
-    createAppointment(clinic)}
-  }
   const createAppointment = async (clinicId: string) => {
     setCreateStatus('loading')
     setCreateMessage('')  
@@ -248,7 +233,13 @@ export default function NurseAppointmentManager() {
 
     await readAppointments(clinicId, viewPrefs)
   }
-  // function passed to appointment components 
+  /// pass these to children 
+  // create am appointment 
+  const handleCreateAppointment = async () => {
+    if (clinic){
+    createAppointment(clinic)}
+  }
+  // get ready to create an appointment 
   const handleNewAppointment = (start: Date) => {
     const now = new Date()
     if (start < now) {
@@ -275,12 +266,16 @@ export default function NurseAppointmentManager() {
     setShowScheduleForm(true)
   }
 
+
+
+
   //// R: READ APPOINTMENT
   const [appointmentsList, setAppointmentsList] = useState<Appointment[]>([])
   const readAppointments = async (
     clinicId: string,            // retrieve this clinic ID 
     prefs: AppointmentViewPrefs  // query based on these preferences 
   ) => {
+    setAppointmentsLoading(true)
 
     //   CREATE initial QUERY & ADD RULES 
     let query = supabase
@@ -311,9 +306,11 @@ export default function NurseAppointmentManager() {
       if (error) {
         console.log('APPOINTMENT READ ERROR:', error)
         setAppointmentsList([])
+        setAppointmentsLoading(false)
         return
       }
       setAppointmentsList(data ?? [])
+      setAppointmentsLoading(false)
       return
     }
 
@@ -345,15 +342,14 @@ export default function NurseAppointmentManager() {
     if (error) {
       console.log('APPOINTMENT READ ERROR:', error)
       setAppointmentsList([])
+      setAppointmentsLoading(false)
       return
     }
     setAppointmentsList(data ?? [])
-    setTotalPage(count ? Math.ceil(count / viewPrefs.rowsPerPage) : 1)
-    // setViewPrefs((prev) => ({
-    //   ...prev,
-    //   totalpages: count ? Math.ceil(count / prev.rowsPerPage) : 1,
-    // }))
-    console.log("total pages", totalPages)
+    setAppointmentsLoading(false)
+    setTotalPage(count ? Math.ceil(count / viewPrefs.rowsPerPage) : 1) 
+    
+    if(debuglog == true) {console.log("total pages", totalPages)} 
   }
 
   //// U: UPDATE APPOINTMENT
@@ -456,7 +452,7 @@ export default function NurseAppointmentManager() {
   // only load patient and doctor data when the clinic information is retrieved 
   useEffect(() => {
     if (!clinic) return 
-    retrieveAppointmentTypes()    // depend on clinics 
+    retrieveAppointmentTypes()    // may depend on clinics in the future 
     retrievePracticioners(clinic) // depend on clinics
     retrievePatients(clinic)      // depend on clinics 
     if(viewPrefs){setViewPrefs((prev) => ({...prev, page: 1}))}
@@ -524,8 +520,8 @@ export default function NurseAppointmentManager() {
         {(!clinic || !viewPrefs) ? (<p>Loading clinic...</p>) 
         : (<>
           {/* VIEWING APPOINTMENTS */}
-          <AppointmentSwitch
-            appointments={appointmentsList} // send a subset of appointments
+          <AppointmentSwitch 
+            appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
             // functions to handle appointment CRUD actions 
             onSelectAppointment={handleEditAppointment} 
             onDeleteAppointment={(apt) =>
