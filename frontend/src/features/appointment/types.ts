@@ -75,7 +75,7 @@ export type ApptProps = {// define the prop's types
   onDeleteAppointment?: (apt: Appointment) => void
   onSelectSlot?: (start: Date) => void
   viewPrefs: AppointmentViewPrefs
-  totalPages: number
+  totalPages?: number
   onUpdateViewPrefs: (updates: Partial<AppointmentViewPrefs>) => void
 }
 
