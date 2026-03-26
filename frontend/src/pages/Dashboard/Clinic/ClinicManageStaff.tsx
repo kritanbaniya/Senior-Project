@@ -16,6 +16,11 @@ type StaffMember = {
   email: string | null
 }
 
+type PendingAction = {
+  message: string
+  onConfirm: () => void
+}
+
 export default function ClinicManageStaff() {
   const { clinicRow, loading } = useClinicDashboard()
 
@@ -24,6 +29,7 @@ export default function ClinicManageStaff() {
   const [addEmail, setAddEmail] = useState('')
   const [addLoading, setAddLoading] = useState(false)
   const [staffMessage, setStaffMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
 
   const clinicId = clinicRow?.clinic_id
 
@@ -83,15 +89,7 @@ export default function ClinicManageStaff() {
     }
   }, [clinicId, fetchStaff])
 
-  const handleAddStaff = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setStaffMessage(null)
-
-    const email = addEmail.trim().toLowerCase()
-    if (!email) {
-      setStaffMessage({ type: 'error', text: 'please enter an email address' })
-      return
-    }
+  const doAddStaff = async (email: string) => {
     if (!clinicId) return
 
     setAddLoading(true)
@@ -148,9 +146,34 @@ export default function ClinicManageStaff() {
     setStaffMessage({ type: 'success', text: 'nurse added to staff' })
   }
 
-  const handleToggleQueue = async (member: StaffMember) => {
-    const newValue = !member.manage_queue
+  const handleAddStaff = (e: React.FormEvent) => {
+    e.preventDefault()
+    setStaffMessage(null)
 
+    const email = addEmail.trim().toLowerCase()
+    if (!email) {
+      setStaffMessage({ type: 'error', text: 'please enter an email address' })
+      return
+    }
+
+    setPendingAction({
+      message: `Add nurse with email "${email}" to your staff?`,
+      onConfirm: () => void doAddStaff(email),
+    })
+  }
+
+  const handleToggleQueue = (member: StaffMember) => {
+    const newValue = !member.manage_queue
+    const label = member.full_name ?? member.email ?? 'this nurse'
+    const action = newValue ? 'Grant' : 'Revoke'
+
+    setPendingAction({
+      message: `${action} queue access for ${label}?`,
+      onConfirm: () => void doToggleQueue(member, newValue),
+    })
+  }
+
+  const doToggleQueue = async (member: StaffMember, newValue: boolean) => {
     setStaffList((prev) =>
       prev.map((s) => (s.id === member.id ? { ...s, manage_queue: newValue } : s)),
     )
@@ -168,8 +191,18 @@ export default function ClinicManageStaff() {
     }
   }
 
-  const handleRemoveStaff = async (member: StaffMember) => {
+  const handleRemoveStaff = (member: StaffMember) => {
+    const label = member.full_name ?? member.email ?? 'this nurse'
+
+    setPendingAction({
+      message: `Remove ${label} from your staff? This cannot be undone.`,
+      onConfirm: () => void doRemoveStaff(member),
+    })
+  }
+
+  const doRemoveStaff = async (member: StaffMember) => {
     setStaffMessage(null)
+    const label = member.full_name ?? member.email ?? 'this nurse'
 
     const { error } = await supabase
       .from('staff_permissions')
@@ -182,7 +215,7 @@ export default function ClinicManageStaff() {
     }
 
     setStaffList((prev) => prev.filter((s) => s.id !== member.id))
-    setStaffMessage({ type: 'success', text: `${member.full_name ?? member.email ?? 'nurse'} removed` })
+    setStaffMessage({ type: 'success', text: `${label} removed` })
   }
 
   if (loading) {
@@ -201,100 +234,156 @@ export default function ClinicManageStaff() {
   }
 
   return (
-    <section className="pd-card">
-      <h2 className="pd-card-title">Manage Staff</h2>
-      <p className="pd-card-desc">Add nurses to your clinic and manage their permissions.</p>
-
-      {/* add staff form */}
-      <form
-        className="pd-form"
-        onSubmit={handleAddStaff}
-        style={{ marginBottom: '1.5rem' }}
-      >
-        <div className="pd-form-row" style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-          <div style={{ flex: 1 }}>
-            <label htmlFor="add-email">Add nurse by email</label>
-            <input
-              id="add-email"
-              type="email"
-              value={addEmail}
-              onChange={(e) => setAddEmail(e.target.value)}
-              placeholder="nurse@example.com"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="pd-btn pd-btn-primary"
-            disabled={addLoading}
-            style={{ whiteSpace: 'nowrap' }}
-          >
-            {addLoading ? 'Adding...' : 'Add'}
-          </button>
-        </div>
-      </form>
-
-      {staffMessage && (
-        <p
-          className={staffMessage.type === 'error' ? 'pd-alert pd-alert-warning' : 'pd-card-desc'}
-          style={{ marginBottom: '1rem' }}
+    <>
+      {/* confirmation modal */}
+      {pendingAction && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0, 0, 0, 0.4)',
+          }}
+          onClick={() => setPendingAction(null)}
         >
-          {staffMessage.text}
-        </p>
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: '12px',
+              padding: '1.5rem 2rem',
+              maxWidth: '420px',
+              width: '90%',
+              boxShadow: '0 8px 30px rgba(0, 0, 0, 0.15)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 0.75rem', fontSize: '1.05rem', fontWeight: 600, color: '#0f172a' }}>
+              Confirm action
+            </h3>
+            <p style={{ margin: '0 0 1.25rem', fontSize: '0.95rem', color: '#475569', lineHeight: 1.5 }}>
+              {pendingAction.message}
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              <button
+                type="button"
+                className="pd-btn"
+                onClick={() => setPendingAction(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="pd-btn pd-btn-primary"
+                onClick={() => {
+                  pendingAction.onConfirm()
+                  setPendingAction(null)
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* staff list */}
-      {staffLoading ? (
-        <p className="pd-empty">Loading staff...</p>
-      ) : staffList.length === 0 ? (
-        <p className="pd-empty">No staff added yet.</p>
-      ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border, #e2e8f0)' }}>
-              <th style={{ padding: '0.5rem 0.75rem' }}>Name</th>
-              <th style={{ padding: '0.5rem 0.75rem' }}>Email</th>
-              <th style={{ padding: '0.5rem 0.75rem' }}>Queue Access</th>
-              <th style={{ padding: '0.5rem 0.75rem' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {staffList.map((member) => (
-              <tr
-                key={member.id}
-                style={{ borderBottom: '1px solid var(--border, #e2e8f0)' }}
-              >
-                <td style={{ padding: '0.5rem 0.75rem' }}>
-                  {member.full_name ?? '-'}
-                </td>
-                <td style={{ padding: '0.5rem 0.75rem' }}>
-                  {member.email ?? '-'}
-                </td>
-                <td style={{ padding: '0.5rem 0.75rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={member.manage_queue}
-                      onChange={() => handleToggleQueue(member)}
-                    />
-                    {member.manage_queue ? 'Yes' : 'No'}
-                  </label>
-                </td>
-                <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
-                  <button
-                    type="button"
-                    className="pd-btn"
-                    style={{ color: 'var(--danger, #e53e3e)' }}
-                    onClick={() => handleRemoveStaff(member)}
+      <section className="pd-card" style={{ gridColumn: '1 / -1' }}>
+        <h2 className="pd-card-title">Manage Staff</h2>
+        <p className="pd-card-desc">Add nurses to your clinic and manage their permissions.</p>
+
+        <form
+          className="pd-form"
+          onSubmit={handleAddStaff}
+          style={{ marginBottom: '1.5rem' }}
+        >
+          <div className="pd-form-row" style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+            <div style={{ flex: 1 }}>
+              <label htmlFor="add-email">Add nurse by email</label>
+              <input
+                id="add-email"
+                type="email"
+                value={addEmail}
+                onChange={(e) => setAddEmail(e.target.value)}
+                placeholder="nurse@example.com"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="pd-btn pd-btn-primary"
+              disabled={addLoading}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              {addLoading ? 'Adding...' : 'Add'}
+            </button>
+          </div>
+        </form>
+
+        {staffMessage && (
+          <p
+            className={staffMessage.type === 'error' ? 'pd-alert pd-alert-warning' : 'pd-card-desc'}
+            style={{ marginBottom: '1rem' }}
+          >
+            {staffMessage.text}
+          </p>
+        )}
+
+        {staffLoading ? (
+          <p className="pd-empty">Loading staff...</p>
+        ) : staffList.length === 0 ? (
+          <p className="pd-empty">No staff added yet.</p>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '500px' }}>
+              <thead>
+                <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border, #e2e8f0)' }}>
+                  <th style={{ padding: '0.5rem 0.75rem' }}>Name</th>
+                  <th style={{ padding: '0.5rem 0.75rem' }}>Email</th>
+                  <th style={{ padding: '0.5rem 0.75rem' }}>Queue Access</th>
+                  <th style={{ padding: '0.5rem 0.75rem' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {staffList.map((member) => (
+                  <tr
+                    key={member.id}
+                    style={{ borderBottom: '1px solid var(--border, #e2e8f0)' }}
                   >
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </section>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      {member.full_name ?? '-'}
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      {member.email ?? '-'}
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={member.manage_queue}
+                          onChange={() => handleToggleQueue(member)}
+                        />
+                        {member.manage_queue ? 'Yes' : 'No'}
+                      </label>
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
+                      <button
+                        type="button"
+                        className="pd-btn"
+                        style={{ color: 'var(--danger, #e53e3e)' }}
+                        onClick={() => handleRemoveStaff(member)}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </>
   )
 }
