@@ -35,6 +35,7 @@ export default function PatientAppointmentManager() {
         dateMode: 'upcoming',
         rangeStart: '',
         rangeEnd: '',
+        showReqs: false, 
     }) // viewPref CANNOT be undefined 
     // call back function; update viewpreferences from child components 
     const updateViewPrefs = (updates: Partial<AppointmentViewPrefs>) => {
@@ -365,7 +366,88 @@ export default function PatientAppointmentManager() {
 
         if(debuglog == true) {console.log("total pages", totalPages)} 
     }
+    const [reqAppointmentsList, setReqAppointmentsList] = useState<Appointment[]>([])
+    const readRequestedAppointments = async (
+        clinicId: string,            // retrieve this clinic ID 
+        prefs: AppointmentViewPrefs  // query based on these preferences 
+    ) => {
+        setAppointmentsLoading(true)
+        
+        //   CREATE initial QUERY & ADD RULES 
+        let query = supabase
+            .schema('public')
+            .from('appointmentlist_display2')
+            .select('*', { count: prefs.mode === 'list' ? 'exact' : undefined })
+            .eq('clinic_id', clinicId)
+    
+         
+        // IF CALENDAR MODE 
+        if (prefs.mode === 'calendar') {
+        // from 
+            if (prefs.rangeStart) {
+                query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
+            }
+            if (prefs.rangeEnd) {
+                query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
+            }
+        
+            for (const rule of prefs.sortRules) {
+                query = query.order(rule.field, {
+                ascending: rule.direction === 'asc',
+                })
+            }
+     
+            // USE THE QUERY TO OBTAIN RETURN DATA 
+            const { data, error } = await query
+            if (error) {
+                console.log('APPOINTMENT READ ERROR:', error)
+                setAppointmentsList([])
+                setAppointmentsLoading(false)
+                return
+            }
+            setReqAppointmentsList(data ?? [])
+            setAppointmentsLoading(false)
+            
+            return
+        }
+     
+        // list mode
+        const from = (prefs.page - 1) * prefs.rowsPerPage // first row on page 
+        const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
+    
+        if (prefs.dateMode === 'upcoming') {
+        query = query.gte('appointment_date', new Date().toISOString())
+        } else if (prefs.dateMode === 'past') {
+        query = query.lt('appointment_date', new Date().toISOString())
+        } else if (
+        prefs.dateMode === 'range' &&
+        prefs.rangeStart &&
+        prefs.rangeEnd
+        ) {
+        query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
+        query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
+        }
+    
+        for (const rule of prefs.sortRules) {
+        query = query.order(rule.field, {
+            ascending: rule.direction === 'asc',
+        })
+        }
+    
+        // USE THE QUERY TO OBTAIN RETURN DATA 
+        const { data, error, count } = await query.range(from, to)
+        if (error) {
+        console.log('APPOINTMENT READ ERROR:', error)
+        setAppointmentsList([])
+        setAppointmentsLoading(false)
+        return
+        }
+        setAppointmentsList(data ?? [])
+        setAppointmentsLoading(false) 
+        setTotalPage(count ? Math.ceil(count / viewPrefs.rowsPerPage) : 1) 
 
+        if(debuglog == true) {console.log("total pages", totalPages)} 
+    }
 
 
 

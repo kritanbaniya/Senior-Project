@@ -67,6 +67,7 @@ export type AppointmentViewPrefs = {
   dateMode: DateMode
   rangeStart: string
   rangeEnd: string
+  showReqs: boolean 
 }
 
 export type ApptProps = {// define the prop's types
