@@ -10,7 +10,7 @@ import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
 
 
 export default function PatientAppointmentManager() {
-    var debuglog : boolean = false
+    var debuglog : boolean = true
     type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
     // form management 
@@ -108,7 +108,7 @@ export default function PatientAppointmentManager() {
             return  
         }
         if(debuglog == true) {console.log(data)} 
-
+        data.unshift({clinic_id: 'all', clinic_name: 'All', created_at: null, role: 'patient'})
         setClinicList(data) 
         setClinic(data[0].clinic_id)  
     }
@@ -123,18 +123,22 @@ export default function PatientAppointmentManager() {
     // Retrieve the Practicianers of selected clinic 
     const [practicionerList, setPracticionerList] = useState<MemberList[]>([])
     const retrievePracticioners = async (clinicId: string) => {
-        const { data, error } = await supabase
-            .schema('public')
-            .from('membernamerole')
-            .select('*')
-            .eq('clinic_id', clinicId)
-            .eq('role', 'doctor')
-        if (error) {
-            console.log('DOCTORS ERROR:', error)
-            return
+        if(clinic == 'all'){
+            setPracticionerList([])
+        }else{
+            const { data, error } = await supabase
+                .schema('public')
+                .from('membernamerole')
+                .select('*')
+                .eq('clinic_id', clinicId)
+                .eq('role', 'doctor')
+            if (error) {
+                console.log('DOCTORS ERROR:', error)
+                return
+            }
+            console.log("doctor list:", data)
+            setPracticionerList(data ?? [])
         }
-        console.log("doctor list:", data)
-        setPracticionerList(data ?? [])
     }
 
     // Keep track of patient's own data 
@@ -292,12 +296,19 @@ export default function PatientAppointmentManager() {
         setAppointmentsLoading(true)
         
         //   CREATE initial QUERY & ADD RULES 
-        let query = supabase
-            .schema('public')
-            .from('appointmentlist_display2')
-            .select('*', { count: prefs.mode === 'list' ? 'exact' : undefined })
-            .eq('clinic_id', clinicId)
-    
+        let query 
+        if (clinicId === 'all'){
+            query = supabase
+                .schema('public')
+                .from('appointmentlist_display2')
+                .select('*', { count: prefs.mode === 'list' ? 'exact' : undefined }) 
+        } else {
+            query = supabase
+                .schema('public')
+                .from('appointmentlist_display2')
+                .select('*', { count: prefs.mode === 'list' ? 'exact' : undefined })
+                .eq('clinic_id', clinicId)
+        }
          
         // IF CALENDAR MODE 
         if (prefs.mode === 'calendar') {
@@ -314,7 +325,7 @@ export default function PatientAppointmentManager() {
                 ascending: rule.direction === 'asc',
                 })
             }
-     
+    
             // USE THE QUERY TO OBTAIN RETURN DATA 
             const { data, error } = await query
             if (error) {
@@ -328,37 +339,37 @@ export default function PatientAppointmentManager() {
             
             return
         }
-     
+    
         // list mode
         const from = (prefs.page - 1) * prefs.rowsPerPage // first row on page 
         const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
     
         if (prefs.dateMode === 'upcoming') {
-        query = query.gte('appointment_date', new Date().toISOString())
+            query = query.gte('appointment_date', new Date().toISOString())
         } else if (prefs.dateMode === 'past') {
-        query = query.lt('appointment_date', new Date().toISOString())
+            query = query.lt('appointment_date', new Date().toISOString())
         } else if (
-        prefs.dateMode === 'range' &&
-        prefs.rangeStart &&
-        prefs.rangeEnd
+            prefs.dateMode === 'range' &&
+            prefs.rangeStart &&
+            prefs.rangeEnd
         ) {
-        query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
-        query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
+            query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
+            query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
         }
     
         for (const rule of prefs.sortRules) {
-        query = query.order(rule.field, {
-            ascending: rule.direction === 'asc',
-        })
+            query = query.order(rule.field, {
+                ascending: rule.direction === 'asc',
+            })
         }
     
         // USE THE QUERY TO OBTAIN RETURN DATA 
         const { data, error, count } = await query.range(from, to)
         if (error) {
-        console.log('APPOINTMENT READ ERROR:', error)
-        setAppointmentsList([])
-        setAppointmentsLoading(false)
-        return
+            console.log('APPOINTMENT READ ERROR:', error)
+            setAppointmentsList([])
+            setAppointmentsLoading(false)
+            return
         }
         setAppointmentsList(data ?? [])
         setAppointmentsLoading(false) 
