@@ -457,7 +457,6 @@ button:focus-visible {
 .nurse-dashboard .btn-remove { background: #dc2626; color: #fff; border-color: #b91c1c; }
 .nurse-dashboard .btn-remove:hover { background: #b91c1c; }
 .nurse-dashboard .btn-small:disabled { opacity: 0.5; cursor: not-allowed; }
-
 .nurse-intro { font-size: 0.9rem; color: #555; margin-bottom: 1rem; }
 .nurse-dashboard .no-queue { color: #666; margin: 0 0 1rem 0; }
 
@@ -567,12 +566,46 @@ button:focus-visible {
   background: #ff9b29;
   color: #fff;
 }
+
+.nurse-overview-header-actions {
+  width: min(640px, 100%);
+  justify-content: flex-end;
+}
+
+.nurse-overview-clinic-box {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+}
+
+.nurse-overview-clinic-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nurse-overview-main {
+  padding: 1.5rem;
+}
+
+.nurse-overview-main .quick-actions-box {
+  margin-bottom: 1rem;
+}
+
 @media (max-width: 640px) {
   .patient-dashboard .appointment-item {
     grid-template-columns: 1fr 1fr;
   }
   .patient-dashboard .apt-type,
   .patient-dashboard .apt-status { grid-column: span 2; }
+
+  .nurse-overview-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 /* ========== Patient Dashboard – Modern Medical UI ========== */
@@ -661,6 +694,14 @@ button:focus-visible {
 }
 .pd-nav-item:hover { background: rgba(255, 255, 255, 0.4); color: #ff9b29; }
 .pd-nav-item.active { background: rgba(255, 255, 255, 0.5); color: rgb(0, 0, 0); }
+.pd-nav-item.pd-nav-item-disabled {
+  cursor: not-allowed;
+  color: rgba(0, 0, 0, 0.75);
+}
+.pd-nav-item.pd-nav-item-disabled:hover {
+  background: transparent;
+  color: rgba(0, 0, 0, 0.75);
+}
 
 .pd-right {
   flex: 1;
