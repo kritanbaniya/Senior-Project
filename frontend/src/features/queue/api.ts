@@ -57,6 +57,19 @@ export async function fetchOwnQueueRowsForClinic(clinicId: string): Promise<Queu
   return (data ?? []) as QueueEntryRow[]
 }
 
+export async function fetchOwnActiveQueueRows(): Promise<QueueEntryRow[]> {
+  const userId = await getCurrentUserId()
+  const { data, error } = await supabase
+    .from('queue_entries')
+    .select('*')
+    .eq('patient_id', userId)
+    .eq('is_active', true)
+    .order('updated_at', { ascending: false })
+
+  if (error) throw error
+  return (data ?? []) as QueueEntryRow[]
+}
+
 export async function fetchActiveQueueForClinic(clinicId: string): Promise<QueueEntryRow[]> {
   const { data, error } = await supabase
     .from('queue_entries')

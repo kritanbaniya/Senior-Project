@@ -83,11 +83,14 @@ export function useNurseQueue(selectedClinicId: string | null) {
 
   const approvePending = useCallback(
     async (entryId: string) => {
+      setLoading(true)
       try {
         await acceptPendingQueueEntry(entryId)
         await refreshQueue()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'failed to approve patient')
+      } finally {
+        setLoading(false)
       }
     },
     [refreshQueue]
@@ -98,11 +101,14 @@ export function useNurseQueue(selectedClinicId: string | null) {
       if (!selectedClinicId || entry.queue_order == null) return
       const newOrder = direction === 'up' ? entry.queue_order - 1 : entry.queue_order + 1
       if (newOrder < 1) return
+      setLoading(true)
       try {
         await reorderQueueEntry(selectedClinicId, entry.id, newOrder)
         await refreshQueue()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'failed to reorder queue')
+      } finally {
+        setLoading(false)
       }
     },
     [refreshQueue, selectedClinicId]
@@ -111,21 +117,27 @@ export function useNurseQueue(selectedClinicId: string | null) {
   const callNextPatient = useCallback(async () => {
     const firstWaiting = activeRows.find((row) => row.status === 'waiting')
     if (!firstWaiting) return
+    setLoading(true)
     try {
       await callPatient(firstWaiting.id)
       await refreshQueue()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'failed to call patient')
+    } finally {
+      setLoading(false)
     }
   }, [activeRows, refreshQueue])
 
   const callSinglePatient = useCallback(
     async (entryId: string) => {
+      setLoading(true)
       try {
         await callPatient(entryId)
         await refreshQueue()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'failed to call patient')
+      } finally {
+        setLoading(false)
       }
     },
     [refreshQueue]
@@ -133,11 +145,14 @@ export function useNurseQueue(selectedClinicId: string | null) {
 
   const beginVisit = useCallback(
     async (entryId: string) => {
+      setLoading(true)
       try {
         await startVisit(entryId)
         await refreshQueue()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'failed to start visit')
+      } finally {
+        setLoading(false)
       }
     },
     [refreshQueue]
@@ -145,11 +160,14 @@ export function useNurseQueue(selectedClinicId: string | null) {
 
   const noShow = useCallback(
     async (entryId: string) => {
+      setLoading(true)
       try {
         await markNoShow(entryId)
         await refreshQueue()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'failed to mark no-show')
+      } finally {
+        setLoading(false)
       }
     },
     [refreshQueue]
@@ -157,11 +175,14 @@ export function useNurseQueue(selectedClinicId: string | null) {
 
   const markCompleted = useCallback(
     async (entryId: string) => {
+      setLoading(true)
       try {
         await completeVisit(entryId)
         await refreshQueue()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'failed to complete visit')
+      } finally {
+        setLoading(false)
       }
     },
     [refreshQueue]
