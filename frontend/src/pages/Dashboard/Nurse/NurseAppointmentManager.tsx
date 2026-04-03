@@ -10,7 +10,7 @@ import NurseSideBar from './NurseSideBar';
 
 
 export default function NurseAppointmentManager() {
-  var debuglog: boolean = false 
+  var debuglog: boolean = true
   type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
   type UpdateAppointmentForm = {
@@ -36,6 +36,7 @@ export default function NurseAppointmentManager() {
     rangeStart: '',
     rangeEnd: '',
     showReqs: false, 
+    showPast: false 
   }) // viewPref CANNOT be undefined 
   // call back function; update viewpreferences from child components 
   const updateViewPrefs = (updates: Partial<AppointmentViewPrefs>) => {
@@ -44,12 +45,15 @@ export default function NurseAppointmentManager() {
       ...prev,    // copy what remains the same 
       ...updates, // overwrite with what changes 
       }
-
       if (
         updates.rowsPerPage !== undefined &&
         updates.rowsPerPage !== prev.rowsPerPage
       ) {
         next.page = 1
+      }
+
+      if(debuglog === true){
+        console.log("PREFERENCES:", viewPrefs)
       }
       return next
     })
@@ -319,15 +323,15 @@ export default function NurseAppointmentManager() {
     const from = (prefs.page - 1) * prefs.rowsPerPage // first row on page 
     const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
 
-    if (prefs.dateMode === 'upcoming') {
-      query = query.gte('appointment_date', new Date().toISOString())
-    } else if (prefs.dateMode === 'past') {
-      query = query.lt('appointment_date', new Date().toISOString())
+    if (prefs.showPast === false){ // prefs.dateMode === 'upcoming') {
+        query = query.gte('appointment_date', new Date().toISOString())
+    } else if (prefs.showPast === true) { // prefs.dateMode === 'past' || 
+        //query = query.lt('appointment_date', new Date().toISOString())
     } else if (
-      prefs.dateMode === 'range' &&
-      prefs.rangeStart &&
-      prefs.rangeEnd
-    ) {
+        prefs.dateMode === 'range' &&
+        prefs.rangeStart &&
+        prefs.rangeEnd
+      ) {
       query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
       query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
     }

@@ -1,6 +1,7 @@
 import { useEffect,  useState } from "react";
 import type {  ApptProps} from "./types.ts"; 
 import { Button } from "@/components/ui/button.tsx";
+import { Switch } from "radix-ui";
 
 
 
@@ -24,7 +25,8 @@ export default function AppointmentList({
   // let totalPages = viewPrefs ? (viewPrefs.totalpages) : (1)
   // console.log(totalPages)
 
-  
+  const [ searchType , setSearchType ] = useState<string>('')
+  const [ search , setSearch ] = useState<string>('') 
 
   // Validate that the number in the input box is an integer, and follows the min and max 
   const [rowsInput, setRowsInput] = useState(Number(viewPrefs.rowsPerPage))
@@ -66,141 +68,184 @@ export default function AppointmentList({
 
 
   return (
-    <div className="nurse-appointment-list">
-      <div className="flex">
-        <p className="small-label">Appointments (today & upcoming)</p>
-        {/* insert, date range adjuster here */}
-      </div>
-      {/* THE LIST ITSELF */}
-      <ul className="appointment-list">
-        {/* header */}
-        <div className="grid grid-cols-[120px_100px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm font-semibold text-slate-500">
-          <span>Date</span>
-          <span>Time</span>
-          <span>Provider</span>
-          <span>Type</span>
-          <span>Patient</span>
-          <span>Actions</span>
-        </div>
-        {/* rows */}
-        {appointments.map((apt) => {
-          // Convert timestamp from SQL to human readable local time  
-          const dt = new Date(apt.appointment_date)
-          const dateText = Number.isNaN(dt.getTime())
-            ? apt.appointment_date
-            : dt.toLocaleDateString()
-          const timeText = Number.isNaN(dt.getTime())
-            ? ''
-            : dt.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })
-          return (
-            <li
-              key={apt.Appointment_id}
-              className="grid grid-cols-[120px_100px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm text-slate-700"
-            >
-              {/* columns! Design the colors better */}
-              <span>{dateText}</span>
-              <span>{timeText}</span>
-              <span>{apt.clinician_name}</span>
-              <span>{apt.visit_type}</span>
-              <span>{apt.patient_name}</span>
-              {/* ACTIONS TO EACH APPOINTMENT ROW */}
-              <span className="flex gap-2">
-                {onSelectAppointment && (
-                  <button
-                    type="button"
-                    className="btn-small"
-                    onClick={() => onSelectAppointment(apt)}
-                  >
-                    Edit
-                  </button>
-                )}
-                {onDeleteAppointment && (
-                  <button
-                    type="button"
-                    className="btn-small"
-                    onClick={() => onDeleteAppointment(apt)}
-                  >
-                    Delete
-                  </button>
-                )}
-
-              </span>
-            </li>
-          )
-        })}
-      </ul>
+    <div className="nurse-appointment-list border border-[var(--border)] p-2 rounded-lg">
       
-      <hr className="m-5 border-2 border-solid rad rounded-xl"></hr>
-      <br></br>
-      {/* SET THE VIEW PREFERENCES */}
-      {/* UPDATE AMOUNT OF ROWS PERPAGE */}
-      <label className="flex items-center gap-2 justify-end" style={{ marginLeft: "12px" }}>
-        <span>Rows per page</span>
+      <p className="small-label">Appointments</p>
+      {/* SEARCHBAR */}
+      <div className="flex">
         <input
+          className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg"
+          id="search"
           type="text"
-          inputMode="numeric"
-          value={rowsInput}
-          onChange={(e) => {
-            const value = e.target.value
-            if (/^\d*$/.test(value)) {
-              setRowsInput(Number(value))
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault()
-              commitRowsPerPage()
-            }}} onBlur={commitRowsPerPage}
-          className="w-10 rounded border px-2 py-1"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="search by ..." 
         />
-      </label>
-      <div className="form-actions flex justify-between" style={{ marginTop: "12px" }}>
-        {/* PREV PAGE BUTTON */}
-        <Button
-          type="button"
-          className="btn-secondary"
-          onClick={() => onUpdateViewPrefs({ page: viewPrefs.page - 1 })}
-          disabled={page === 1}
-        >
-          Previous
-        </Button>
+        
+        <select
+          onChange={(e) => setSearchType(() => (e.target.value))}
+          className = "p-2 m-3 w-1/3 bg-[#F5F3EE] rounded-lg">
+            <option value="">select an option</option>
+            <option value ="date">Date</option>
+            <option value ="provider">Provider</option>
+            <option value ="type">Type</option>
+            <option value ="patient">Patient</option>
+        </select>
+        <div></div>
+      </div>
 
-        <span style={{ alignSelf: "center" }}>
-          Page 
-        <input 
-            type="text"
-            inputMode="numeric"
-            value={pageNum}
-            onChange={(e) => {
-              const value = e.target.value
-              if (/^\d*$/.test(value)) {
-                setPageNum(Number(value))
+      {/* THE LIST ITSELF */}
+      <div className="overflow-x-auto rounded-md m-3">
+        <ul className="appointment-list min-w-[760px]">
+          {/* header */}
+          <div className="bg-[#90a1b9] grid grid-cols-[100px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm font-semibold text-slate-500">
+            <span className = "text-black">Date</span>
+            <span className = "text-black">Time</span>
+            <span className = "text-black">Provider</span>
+            <span className = "text-black">Type</span>
+            <span className = "text-black">Patient</span>
+            <span className = "text-black">Actions</span>
+          </div>
+          {/* rows */}
+          {appointments.map((apt) => {
+            // Convert timestamp from SQL to human readable local time  
+            const dt = new Date(apt.appointment_date)
+            const dateText = Number.isNaN(dt.getTime())
+              ? apt.appointment_date
+              : dt.toLocaleDateString()
+            const timeText = Number.isNaN(dt.getTime())
+              ? ''
+              : dt.toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+            return (
+              <li
+                key={apt.Appointment_id}
+                className="bg-[#F5F3EE] grid grid-cols-[100px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm text-slate-700"
+              >
+                {/* columns! Design the colors better */}
+                <span className = "font-bold">{dateText}</span>
+                <span>{timeText}</span>
+                <span>{apt.clinician_name}</span>
+                <span>{apt.visit_type}</span>
+                <span>{apt.patient_name}</span>
+                {/* ACTIONS TO EACH APPOINTMENT ROW */}
+                <span className="flex gap-2">
+                  {onSelectAppointment && (
+                    <button
+                      type="button"
+                      className="btn-small"
+                      onClick={() => onSelectAppointment(apt)}
+                    >
+                      Edit
+                    </button>
+                  )}
+                  {onDeleteAppointment && (
+                    <button
+                      type="button"
+                      className="btn-small"
+                      onClick={() => onDeleteAppointment(apt)}
+                    >
+                      Delete
+                    </button>
+                  )}
+
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+
+
+      <hr className="m-5 border-2 border-solid rad rounded-xl"></hr>
+      {/* SET THE VIEW PREFERENCES */}
+      <div>
+        <label className="flex items-center gap-2 justify-between">
+          {/* Display Past Switch */}
+          <div  className="flex items-center">  
+            <Switch.Root 
+              checked={viewPrefs.showPast}
+              onCheckedChange={(checked) =>
+                onUpdateViewPrefs({ showPast: checked })
               }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault()
-                CommitPageNumber() 
-              }}} onBlur={CommitPageNumber}
-            className="m-2 w-15 rounded border px-2 py-1"
-          />
-          
-          
-           of {safeTotalPages}
-        </span>
+              className="w-10 h-6 bg-gray-300 rounded-full data-[state=checked]:bg-[#7c86ff]"
+              >
+              <Switch.Thumb className="block w-4 h-4 bg-white rounded-full translate-x-1 data-[state=checked]:translate-x-5 transition" />
+            </Switch.Root>
+            <span className = "m-2">show past appointments</span>
+          </div>
+          {/* Rows per page */}
+          <div>
+            <span className = "m-2">Rows per page</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={rowsInput}
+              onChange={(e) => {
+                const value = e.target.value
+                if (/^\d*$/.test(value)) {
+                  setRowsInput(Number(value))
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  commitRowsPerPage()
+                }}} onBlur={commitRowsPerPage}
+              className="w-15 rounded-md border px-2 py-1"
+            />
+          </div>
+        </label>
 
-        {/* NEXT PAGE BUTTON */}
-        <Button
-          type="button"
-          className="btn-secondary"
-          onClick={() => onUpdateViewPrefs({ page: viewPrefs.page + 1 })}
-          disabled={page === safeTotalPages}
-        >
-          Next
-        </Button>
+
+
+        <div className="form-actions flex justify-between" style={{ marginTop: "5px" }}>
+          {/* PREV PAGE BUTTON */}
+          <Button
+            type="button"
+            className="btn-secondary"
+            onClick={() => onUpdateViewPrefs({ page: viewPrefs.page - 1 })}
+            disabled={page === 1}
+          >
+            Previous
+          </Button>
+
+          <span style={{ alignSelf: "center" }}>
+            Page 
+          <input 
+              type="text"
+              inputMode="numeric"
+              value={pageNum}
+              onChange={(e) => {
+                const value = e.target.value
+                if (/^\d*$/.test(value)) {
+                  setPageNum(Number(value))
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  CommitPageNumber() 
+                }}} onBlur={CommitPageNumber}
+              className="m-2 w-15 rounded border px-2 py-1"
+            />
+            
+            
+            of {safeTotalPages}
+          </span>
+
+          {/* NEXT PAGE BUTTON */}
+          <Button
+            type="button"
+            className="btn-secondary"
+            onClick={() => onUpdateViewPrefs({ page: viewPrefs.page + 1 })}
+            disabled={page === safeTotalPages}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   )
