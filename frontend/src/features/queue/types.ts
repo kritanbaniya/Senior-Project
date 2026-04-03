@@ -34,9 +34,13 @@ export type ClinicListItem = {
   state: string | null
 }
 
+export type InvitationStatus = 'pending' | 'accepted' | 'rejected'
+
 export type StaffPermissionRow = {
+  id: string
   clinic_id: string
   user_id: string
   manage_queue: boolean
+  invitation_status: InvitationStatus
 }
 
