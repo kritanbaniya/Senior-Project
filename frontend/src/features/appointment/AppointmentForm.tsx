@@ -1,10 +1,10 @@
 
 
-// import { useEffect, useState } from 'react'
+ import {  useState } from 'react'
 // import { supabase } from '../../../lib/supabase.ts' 
 // import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
-import type { AppointmentFormType, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
- 
+import type { clinicListInfoType, AppointmentFormType, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
+import { Button } from '@/components/ui/button';
 
 
 
@@ -22,6 +22,11 @@ import type { AppointmentFormType, MemberList ,AppointmentType } from "@/feature
 type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
 type apptFormProp = {
+    showClinicSelector : boolean,
+    clinicList : clinicListInfoType[], 
+    selectedClinic : string,
+    setSelectedClinic : (s:string) => void, 
+
     showScheduleForm : boolean, 
     setShowScheduleForm : (a : boolean) => void, 
 
@@ -47,6 +52,11 @@ type apptFormProp = {
 
 
 export default function AppointmentForm({
+    showClinicSelector,
+    clinicList, 
+    selectedClinic, 
+    setSelectedClinic, 
+
     showScheduleForm, 
     setShowScheduleForm, 
 
@@ -71,10 +81,9 @@ export default function AppointmentForm({
 }:apptFormProp){
  
     
-
-
+  const [ clinicDropDown, setClinicDropDown ]  = useState<clinicListInfoType[]>(clinicList) 
  
-
+  
 
 
 
@@ -83,129 +92,155 @@ export default function AppointmentForm({
         
         
           {/* CREATION / EDITING FORM */}
-          <div className="info-box-content"> 
-            {/* STATUS MESSAGE */}
-            {createStatus === 'idle' && (
-              <p className="small-label">View, create, and modify appointments.</p>
-            )}
-            {createStatus === 'loading' && (
-              <p className="small-label">Creating appointment...</p>
-            )}
-            {createStatus === 'success' && (
-              <p className="success-message" style={{color: 'green' }}>{createMessage}</p>
-            )}
-            {createStatus === 'failed' && (
-              <p className="error-message" style={{color: 'red' }}>{createMessage}</p>
-            )}
-
-            {/* FORMS */}
-            {!showScheduleForm ? (
-              <button
-                type="button"
-                className="btn-primary"
+          <div className="info-box-content">  
+            <p className="small-label ">View, create, and modify appointments.</p>
+            <Button
+                type="button" 
                 onClick={() => handleNewAppointment(new Date())}
               >
                 Create appointment
-              </button>
+              </Button>
+
+            {/* FORMS */}
+            {!showScheduleForm ? (
+              <></>
             ) : (
-              <form
-                className="portal-form"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  createAppointment()
-                }}>
+              <div className="form-overlay">
+                <div className="form-modal"> 
+                  {/* STATUS MESSAGE */}
+                  {createStatus === 'idle' && (
+                    <p className="small-label">Appointment Details</p>
+                  )}
+                  {createStatus === 'loading' && (
+                    <p className="small-label">Creating appointment...</p>
+                  )}
+                  {createStatus === 'success' && (
+                    <p className="success-message" style={{color: 'green' }}>{createMessage}</p>
+                  )}
+                  {createStatus === 'failed' && (
+                    <p className="error-message" style={{color: 'red' }}>{createMessage}</p>
+                  )}
+                  
+                  
+                  {/* THE FORM */}
+                  <form
+                    className="portal-form"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      createAppointment()
+                    }}> 
+                    <div className="form-row">
+                      <label>Patient name</label>
+                        {nurse ? 
+                        (<select
+                        
+                          value={scheduleForm.patientId}
+                          onChange={(e) =>
+                            setScheduleForm((f) => ({ ...f, patientId: e.target.value }))
+                          }>
+                          {(patientList.map((d) => (
+                          <option key={d.user_id} value={d.user_id}>
+                              {d.full_name}
+                          </option>
+                          )))}
+                        </select>) : 
+                        (
+                          <p>{patientName}</p>  
+                        )}
+                    </div>
 
 
-                <div className="form-row">
-                  <label>Patient name</label>
-                    {nurse ? 
-                    (<select
+                    <div className="form-row">
+                      <label>Date</label>
+                      <input
+                        type="date"
+                        value={scheduleForm.date}
+                        //min={getNowForDateTimeInput().date} redundant, and mismatching style. but may still be useful
+                        onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-row">
+                      <label>Time</label>
+                      <input
+                        type="time"
+                        value={scheduleForm.time}
+                        onChange={(e) => setScheduleForm((f) => ({ ...f, time: e.target.value }))}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-row">
+                      <label>Provider</label>
+                      <select
+                        value={scheduleForm.doctorId}
+                        onChange={(e) =>
+                          setScheduleForm((f) => ({ ...f, doctorId: e.target.value }))
+                        }
+                      >
+                        {practicionerList.map((d) => (
+                          <option key={d.user_id} value={d.user_id}>
+                            {d.full_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-row">
+                      <label>Visit type</label>
+                      <select
+                        name="type"
+                        value={scheduleForm.type}
+                        onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
+                      >
+                        {appointmentTypes.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                      
                     
-                      value={scheduleForm.patientId}
-                      onChange={(e) =>
-                        setScheduleForm((f) => ({ ...f, patientId: e.target.value }))
-                      }>
-                      {(patientList.map((d) => (
-                      <option key={d.user_id} value={d.user_id}>
-                          {d.full_name}
-                      </option>
-                      )))}
-                    </select>) : 
-                    (
-                      <p>{patientName}</p>  
-                    )}
-                </div>
+                    { showClinicSelector ? (
+                    <div className="form-row">
+                      <label>Clinic</label> 
+                      <select 
+                        value={selectedClinic}
+                        onChange={(e) =>{
+                          setSelectedClinic( e.target.value ) }
+                        }
+                      >
+                        {clinicList.map((d) => (
+                          <option key={d.clinic_id} value={d.clinic_id}>
+                            {d.clinic_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    ) : (<>poop</>)}
 
 
-                <div className="form-row">
-                  <label>Date</label>
-                  <input
-                    type="date"
-                    value={scheduleForm.date}
-                    //min={getNowForDateTimeInput().date} redundant, and mismatching style. but may still be useful
-                    onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))}
-                    required
-                  />
+                    <div className="form-actions">
+                      <button type="submit" className="btn-primary">
+                        Create
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => {
+                          setShowScheduleForm(false)
+                          setCreateStatus('idle')
+                          setCreateMessage('')
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
                 </div>
-
-                <div className="form-row">
-                  <label>Time</label>
-                  <input
-                    type="time"
-                    value={scheduleForm.time}
-                    onChange={(e) => setScheduleForm((f) => ({ ...f, time: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                <div className="form-row">
-                  <label>Provider</label>
-                  <select
-                    value={scheduleForm.doctorId}
-                    onChange={(e) =>
-                      setScheduleForm((f) => ({ ...f, doctorId: e.target.value }))
-                    }
-                  >
-                    {practicionerList.map((d) => (
-                      <option key={d.user_id} value={d.user_id}>
-                        {d.full_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-row">
-                  <label>Visit type</label>
-                  <select
-                    name="type"
-                    value={scheduleForm.type}
-                    onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
-                  >
-                    {appointmentTypes.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-actions">
-                  <button type="submit" className="btn-primary">
-                    Create
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => {
-                      setShowScheduleForm(false)
-                      setCreateStatus('idle')
-                      setCreateMessage('')
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+              </div>
             )}
             
           </div>

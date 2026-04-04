@@ -85,3 +85,12 @@ export type ApptProps = {// define the prop's types
 
 
 
+
+export type clinicListInfoType = {
+  clinic_id : string , 
+  clinic_name : string, 
+  full_name : string , 
+  role : string , 
+  user_id : string, 
+}
+
