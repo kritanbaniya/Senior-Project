@@ -1,10 +1,11 @@
 
 
- import {  useState } from 'react'
+import {  useEffect, useState } from 'react'
 // import { supabase } from '../../../lib/supabase.ts' 
 // import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
 import type { clinicListInfoType, AppointmentFormType, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
 import { Button } from '@/components/ui/button';
+// import ClinicSelector from "../queue/components/ClinicSelector";
 
 
 
@@ -80,12 +81,23 @@ export default function AppointmentForm({
     
 }:apptFormProp){
  
-    
-  const [ clinicDropDown, setClinicDropDown ]  = useState<clinicListInfoType[]>(clinicList) 
- 
+
+  
+  const [ clinicNameById , setClinicNameById ] = useState<string>('')
+  useEffect(() => {
+    for(var i = 0; i < clinicList.length ; i ++ ){
+      if (clinicList[i].clinic_id == selectedClinic){
+        setClinicNameById(clinicList[i].clinic_name)
+        break
+      }
+    }
+  }, [selectedClinic])
   
 
 
+  const handleClose = () => {
+      setShowScheduleForm(false)
+  }
 
 
     return(<>
@@ -103,10 +115,11 @@ export default function AppointmentForm({
 
             {/* FORMS */}
             {!showScheduleForm ? (
-              <></>
+              <>
+              </>
             ) : (
-              <div className="form-overlay">
-                <div className="form-modal"> 
+              <div className="form-overlay" onClick={handleClose}>
+                <div className="form-modal" onClick={e => e.stopPropagation()}> 
                   {/* STATUS MESSAGE */}
                   {createStatus === 'idle' && (
                     <p className="small-label">Appointment Details</p>
@@ -219,7 +232,11 @@ export default function AppointmentForm({
                         ))}
                       </select>
                     </div>
-                    ) : (<>poop</>)}
+                    ) : (<>
+                      <label>Clinic</label> 
+                      {clinicNameById}
+                      {}
+                    </>)}
 
 
                     <div className="form-actions">

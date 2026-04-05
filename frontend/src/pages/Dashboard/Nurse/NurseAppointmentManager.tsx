@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase.ts' 
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
-import type { AppointmentFormType, AppointmentViewPrefs, Appointment, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
+import type { 
+  AppointmentFormType, 
+  AppointmentViewPrefs, 
+  Appointment, 
+  MemberList ,
+  AppointmentType , 
+  clinicListInfoType 
+} from "@/features/appointment/types.ts"; 
 import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
 import NurseSideBar from './NurseSideBar';  
 
@@ -93,7 +100,8 @@ export default function NurseAppointmentManager() {
   }
   
   // Retrieve clinic ID
-  const [clinicList, setClinicList] = useState<any[]>([])
+  const [ showClinicSelector, setShowClinicSelector ] = useState<boolean>(false) // will not change.
+  const [clinicList, setClinicList] = useState<clinicListInfoType[]>([])
   const [clinic, setClinic] = useState<string>()
   const loadClinics = async () => {
     const { data: authData, error: authErr } = await supabase.auth.getUser()
@@ -112,9 +120,7 @@ export default function NurseAppointmentManager() {
       console.log('CLINIC ERROR:', error)
       return  
     }
-    if (debuglog == true){
-      console.log(data)
-    }
+    if (debuglog == true){ console.log(data) }
 
     setClinicList(data) 
     setClinic(data[0].clinic_id) 
@@ -632,6 +638,11 @@ export default function NurseAppointmentManager() {
           <div className="info-box-content"> 
             {/* CREATION FORM */}
             <AppointmentForm
+              showClinicSelector={showClinicSelector}
+              clinicList={clinicList} 
+              selectedClinic = { clinic }
+              setSelectedClinic={ setClinic } // should not be used 
+              
               showScheduleForm = {showScheduleForm} 
               setShowScheduleForm = {setShowScheduleForm}
               scheduleForm={scheduleForm}

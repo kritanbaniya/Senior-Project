@@ -6,17 +6,27 @@ import PatientSideBar from './PatientSideBar'
 import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
 
 
-
+// clinicView is for adjusting what appointments can be seen 
+// clinic
 
 
 export default function PatientAppointmentManager() {
     var debuglog : boolean = false
+
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //// COMPONENT RENDER VARIABLES - decides if a part of the page gets mounted
+    const [showScheduleForm, setShowScheduleForm] = useState(false) 
+    // creation status 
     type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
+    const [createStatus, setCreateStatus] = useState<AppointmentCreateStatus>('idle')
+    const [createMessage, setCreateMessage] = useState('')
+    // stop showing appointments while new query is loading new appt list - MAY NEED BETTER PERFORMANCE
+    const [appointmentsLoading, setAppointmentsLoading] = useState(false)
 
     
-
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // VIEW PREFERENCES 
     const [totalPages, setTotalPage] = useState<number>(0)
@@ -50,17 +60,6 @@ export default function PatientAppointmentManager() {
         })
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //// COMPONENT RENDER VARIABLES - decides if a part of the page gets mounted
-    const [showScheduleForm, setShowScheduleForm] = useState(false) 
-    // creation status 
-    const [createStatus, setCreateStatus] = useState<AppointmentCreateStatus>('idle')
-    const [createMessage, setCreateMessage] = useState('')
-    // stop showing appointments while new query is loading new appt list - MAY NEED BETTER PERFORMANCE
-    const [appointmentsLoading, setAppointmentsLoading] = useState(false)
-
-
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// HELPER FUNCTIONS: 
@@ -82,9 +81,12 @@ export default function PatientAppointmentManager() {
         }
     }
     
-    // Retrieve clinic ID  
+    // The Clinic Selected for creation  
+    const [ showClinicSelector, setShowClinicSelector ] = useState<boolean>(true) // decides if form needs to show clinic selector UI 
+    const [ clinicReq, setClinicReq ] = useState<string>() // for the Form 
+    const [clinicView, setClinicView] = useState<string>() // for the View 
     const [clinicList, setClinicList] = useState<clinicListInfoType[]>([])
-    const [clinicView, setClinic] = useState<string>() 
+    // Retrieve clinic ID  
     const loadClinics = async () => {
         const { data: authData, error: authErr } = await supabase.auth.getUser()
         if (authErr || !authData.user) {
@@ -102,9 +104,10 @@ export default function PatientAppointmentManager() {
             return  
         }
         if(debuglog == true) {console.log(data)} 
+        // 
         data.unshift({clinic_id: 'all', clinic_name: 'All', created_at: null, role: 'patient'})
         setClinicList(data) 
-        setClinic(data[0].clinic_id)  
+        setClinicView(data[0].clinic_id)  
     }
 
     // Retrieve the Practicianers of selected clinic 
@@ -189,9 +192,6 @@ export default function PatientAppointmentManager() {
         doctorId: '',
         type: '',
     })
-    // The Clinic Selected for creation  
-    const [ showClinicSelector, setShowClinicSelector ] = useState<boolean>(true) // decides if form needs to show clinic selector UI 
-    const [ clinicReq, setClinicReq ] = useState<string>() // use this for the form 
     // open the form modal * 
     const handleNewAppointment = (start: Date) => {
         // get current time 
@@ -480,27 +480,26 @@ export default function PatientAppointmentManager() {
         loadPatientInfo()
     }, [])
 
-    useEffect(() => {
+    useEffect(() => { // Show Clinic Selector 
         if (!clinicView)  return 
-        if (clinicView === 'all') {setShowClinicSelector(true)  
-            return}
-        setShowClinicSelector(false)
-        retrieveAppointmentTypes()    // may depend on clinics in the future 
-        retrievePracticioners(clinicView) 
+        if (clinicView === 'all') {
+            setShowClinicSelector(true)  
+            return }
+        setShowClinicSelector(false) 
+        setClinicReq(clinicView)
     }, [clinicView])
 
-    useEffect(() => {
+    useEffect(() => { // Load Practicianers depending on clinicReq 
+        if (!clinicReq)  return 
+        retrieveAppointmentTypes()
+        retrievePracticioners(clinicReq) 
+    }, [clinicReq])
+
+    // RE-QUERY FETCH APPTs WHEN VIEW SETTINGS CHANGE 
+    useEffect(() => { 
         if (!clinicView) return
         readAppointments(clinicView, viewPrefs)
     }, [clinicView, viewPrefs])
-
-    useEffect(() => {
-        // if(debuglog === true ) console.log("Is it to be? or not to be?", showClinicSelector)
-        console.log("Is it to be? or not to be?", showClinicSelector)
-        console.log("WIZZARDDDD", clinicView)    
-        console.log("eetris", clinicList) 
-        
-    }, [ showClinicSelector ])
 
     // Rerender components when these values are retrieved/updated 
     useEffect(() => {
@@ -508,84 +507,92 @@ export default function PatientAppointmentManager() {
             setScheduleForm((f) => ({ ...f, doctorId: practicionerList[0].user_id }))
         }
     }, [practicionerList])
+
     useEffect(() => {
         if (appointmentTypes.length > 0) {
             setScheduleForm((f) => ({
                 ...f,
                 type: f.type || appointmentTypes[0],
             }))
- 
         }
     }, [appointmentTypes])
 
- 
+    
+    if (debuglog != false){
+        useEffect(() => {
+            // if(debuglog === true ) console.log("Is it to be? or not to be?", showClinicSelector)
+            console.log("Is it to be? or not to be?", showClinicSelector)
+            console.log("WIZZARDDDD", clinicView)    
+            console.log("eetris", clinicList) 
+            
+        }, [ showClinicSelector ])
+    } 
 
+    return(
+        <>
+            <div className="pd-layout">
+            {/* Left sidebar */}
+            <PatientSideBar/> 
+                    
+                <div className="pd-right">
+                    <div className="info-box appointments-section">
+                        <h1 className="info-box-title">
+                            <select 
+                                className='m-2 p-2 font-bold border-2 border-solid rounded-lg' 
+                                onChange={(e) =>
+                                setClinicView(() => (e.target.value))
+                                }>
+                                {clinicList.map((c) => (
+                                <option key={c.clinic_id} value={c.clinic_id}>
+                                        {c.clinic_name}
+                                </option>))} 
+                            </select>
+                            Appointment Scheduling
+                        </h1>
+                        {(!clinicView || !viewPrefs) ? (<p>Loading clinic...</p>) 
+                        : (<>
+                        {/* VIEWING APPOINTMENTS */}
+                        <AppointmentSwitch
+                            appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
+                            // functions to handle appointment CRUD actions 
+                            onSelectAppointment={emptyf} 
+                            onDeleteAppointment={emptyf}
+                            onSelectSlot={handleNewAppointment}
+                            // function to handle appointment view changes (changing query)
+                            viewPrefs={viewPrefs}
+                            totalPages = {totalPages}
+                            onUpdateViewPrefs = {updateViewPrefs}
+                            />
 
-        return(
-            <>
-                <div className="pd-layout">
-                {/* Left sidebar */}
-                <PatientSideBar/> 
-                        
-                    <div className="pd-right">
-                        <div className="info-box appointments-section">
-                            <h1 className="info-box-title">
-                                <select 
-                                    className='m-2 p-2 font-bold border-2 border-solid rounded-lg' 
-                                    onChange={(e) =>
-                                    setClinic(() => (e.target.value))
-                                    }>
-                                    {clinicList.map((c) => (
-                                    <option key={c.clinic_id} value={c.clinic_id}>
-                                            {c.clinic_name}
-                                    </option>))} 
-                                </select>
-                                Appointment Scheduling
-                            </h1>
-                            {(!clinicView || !viewPrefs) ? (<p>Loading clinic...</p>) 
-                            : (<>
-                            {/* VIEWING APPOINTMENTS */}
-                            <AppointmentSwitch
-                                appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
-                                // functions to handle appointment CRUD actions 
-                                onSelectAppointment={emptyf} 
-                                onDeleteAppointment={emptyf}
-                                onSelectSlot={handleNewAppointment}
-                                // function to handle appointment view changes (changing query)
-                                viewPrefs={viewPrefs}
-                                totalPages = {totalPages}
-                                onUpdateViewPrefs = {updateViewPrefs}
-                                />
+                        <AppointmentForm
+                            showClinicSelector={showClinicSelector}
+                            clinicList={clinicList} 
+                            selectedClinic = {clinicReq || ''}
+                            setSelectedClinic={setClinicReq}
 
-                            <AppointmentForm
-                                showClinicSelector={showClinicSelector}
-                                clinicList={clinicList} 
-                                selectedClinic = {clinicReq || ''}
-                                setSelectedClinic={setClinicReq}
-
-                                showScheduleForm={showScheduleForm}
-                                setShowScheduleForm={setShowScheduleForm}
-                                scheduleForm={scheduleForm}
-                                setScheduleForm={setScheduleForm}
-                                createStatus={createStatus}
-                                setCreateStatus={setCreateStatus}
-                                createMessage={createMessage}
-                                setCreateMessage={setCreateMessage}
-                                handleNewAppointment={handleNewAppointment}
-                                createAppointment={handleCreateAppointment} // createAppointment
-                                nurse={false}
-                                patientList={[]}
-                                patientName={patientInfo?.full_name || 'Err Or'}
-                                practicionerList={practicionerList}
-                                appointmentTypes={appointmentTypes}
-                                />
-                                </>)}
-                        </div>
+                            showScheduleForm={showScheduleForm}
+                            setShowScheduleForm={setShowScheduleForm}
+                            scheduleForm={scheduleForm}
+                            setScheduleForm={setScheduleForm}
+                            createStatus={createStatus}
+                            setCreateStatus={setCreateStatus}
+                            createMessage={createMessage}
+                            setCreateMessage={setCreateMessage}
+                            handleNewAppointment={handleNewAppointment}
+                            createAppointment={handleCreateAppointment} // createAppointment
+                            nurse={false}
+                            patientList={[]}
+                            patientName={patientInfo?.full_name || 'Err Or'}
+                            practicionerList={practicionerList}
+                            appointmentTypes={appointmentTypes}
+                            />
+                            </>)}
                     </div>
                 </div>
-            </>
-        );
-    } 
+            </div>
+        </>
+    );
+} 
 
 
 
