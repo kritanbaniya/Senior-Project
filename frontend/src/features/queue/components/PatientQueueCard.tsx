@@ -3,6 +3,7 @@ import type { QueueEntryRow } from '../types'
 
 type PatientQueueCardProps = {
   clinicSelected: boolean
+  clinicid: string | null
   selectedClinicName: string | null
   loading: boolean
   row: QueueEntryRow | null
@@ -16,6 +17,7 @@ type PatientQueueCardProps = {
 
 export default function PatientQueueCard({
   clinicSelected,
+  clinicid,
   selectedClinicName,
   loading,
   row,
@@ -111,6 +113,9 @@ export default function PatientQueueCard({
           <button type="button" className="pd-btn pd-btn-primary" onClick={onJoin}>
             join queue
           </button>
+          <Link to="/dashboard/patient/pdf-upload" state={{ clinicId: clinicid }} className="pd-btn pd-btn-primary">
+            upload form
+          </Link>
         </>
       )}
     </section>

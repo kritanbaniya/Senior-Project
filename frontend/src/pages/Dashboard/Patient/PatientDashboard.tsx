@@ -302,6 +302,7 @@ export default function PatientDashboard() {
 
             <PatientQueueCard
               clinicSelected={Boolean(activeClinicId)}
+              clinicid={ activeClinicId}
               selectedClinicName={selectedClinicName}
               loading={queueLoading}
               row={queueRow}
