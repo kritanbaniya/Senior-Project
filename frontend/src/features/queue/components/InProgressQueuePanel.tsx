@@ -18,7 +18,11 @@ export default function InProgressQueuePanel({ rows, onComplete }: InProgressQue
               <li key={row.id} className="appointment-item nurse-apt-item">
                 <span className="apt-patient">{row.patient_name ?? 'patient'}</span>
                 <span className="apt-type">{row.status}</span>
-                <button type="button" className="btn-small" onClick={() => onComplete(row.id)}>
+                <button
+                  type="button"
+                  className="btn-small"
+                  onClick={() => onComplete(row.id)}
+                >
                   mark completed
                 </button>
               </li>

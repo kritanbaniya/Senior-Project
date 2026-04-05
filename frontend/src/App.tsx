@@ -17,11 +17,15 @@ import DoctorYourInformation from './pages/Dashboard/Doctor/DoctorInformation'
 import ClinicADashBoard from './pages/Dashboard/Clinic/ClinicADashBoard'
 import ClinicPDFUpload from './pages/Form/ClinicPDFUpload'
 import './style.css'
+import ClinicOverview from './pages/Dashboard/Clinic/ClinicOverview'
+import ClinicMyClinic from './pages/Dashboard/Clinic/ClinicMyClinic'
+import ClinicManageStaff from './pages/Dashboard/Clinic/ClinicManageStaff'
 import Support from './pages/Support'
 import HomeGate from './pages/HomeGate'
 
 import PatientAppointmentManager from './pages/Dashboard/Patient/PatientAppointmentManager'
 import NurseAppointmentManager from './pages/Dashboard/Nurse/NurseAppointmentManager'
+import NurseQueueManagement from './pages/Dashboard/Nurse/NurseQueueManagement'
 /**
  * This file defines the main App component, which sets up the routing for the application.
  * It uses React Router to define routes for the homepage, clinic nearby, clinic discovery, clinic info, reset password, and dashboard pages.
@@ -52,6 +56,7 @@ export default function App() {
               <Route path="nurse" element={<RoleGuard allowedRole="nurse" />}>
                 <Route index element={<NurseDashBoard />} />
                 <Route path="appointments" element={<NurseAppointmentManager />} />
+                <Route path="queue" element={<NurseQueueManagement />} />
                 <Route path="information" element={<NurseYourInformation />} />
                 <Route path="pdf-upload" element={<ClinicPDFUpload />} />
               </Route>
@@ -60,7 +65,11 @@ export default function App() {
                 <Route path="information" element={<DoctorYourInformation />} />
               </Route>
               <Route path="clinic" element={<RoleGuard allowedRole="clinic" />}>
-                <Route index element={<ClinicADashBoard />} />
+                <Route element={<ClinicADashBoard />}>
+                  <Route index element={<ClinicOverview />} />
+                  <Route path="my-clinic" element={<ClinicMyClinic />} />
+                  <Route path="manage-staff" element={<ClinicManageStaff />} />
+                </Route>
               </Route>
             </Route>
           </Route>
