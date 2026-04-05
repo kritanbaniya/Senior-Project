@@ -12,6 +12,7 @@ import { Switch } from "radix-ui";
 
 export default function AppointmentList({
   appointments,
+  reqAppointments, 
   onSelectAppointment,
   onDeleteAppointment,
   // onSelectSlot,

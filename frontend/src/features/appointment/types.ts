@@ -71,8 +71,28 @@ export type AppointmentViewPrefs = {
   showPast: boolean 
 }
 
+
+
+export type reqAppointmentType = {
+  id: string 
+  appointment_date: string 
+  patient_email: string 
+  patient_name: string 
+  clinician_name: string 
+  clinic_name: string 
+  visit_type: string 
+  patient_note: string 
+  nurse_note: string 
+  request_status: string 
+  patient_id: string 
+  clinician_id: string 
+  clinic_id: string 
+}
+
+
 export type ApptProps = {// define the prop's types
   appointments: Appointment[]
+  reqAppointments: reqAppointmentType[] 
   onSelectAppointment?: (apt: Appointment) => void
   onDeleteAppointment?: (apt: Appointment) => void
   onSelectSlot?: (start: Date) => void
@@ -80,7 +100,6 @@ export type ApptProps = {// define the prop's types
   totalPages?: number
   onUpdateViewPrefs: (updates: Partial<AppointmentViewPrefs>) => void
 }
-
 
 
 

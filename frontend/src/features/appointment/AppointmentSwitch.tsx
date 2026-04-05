@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button.tsx";
 
 export default function AppointmentSwitch({
   appointments,
+  reqAppointments, 
   onSelectAppointment,
   onDeleteAppointment,
   onSelectSlot,
@@ -63,6 +64,7 @@ export default function AppointmentSwitch({
       {view === "calendar" ? (
         <AppointmentCalendar
           appointments={appointments}
+          reqAppointments = {reqAppointments}
           onSelectAppointment={onSelectAppointment}
           onSelectSlot={onSelectSlot}
           viewPrefs={viewPrefs}
@@ -71,6 +73,7 @@ export default function AppointmentSwitch({
       ) : (
         <AppointmentList
           appointments={appointments}
+          reqAppointments = {reqAppointments}
           onSelectAppointment={onSelectAppointment}
           onDeleteAppointment={onDeleteAppointment}
           viewPrefs={viewPrefs}

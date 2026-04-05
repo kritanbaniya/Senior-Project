@@ -11,7 +11,7 @@ import type {
 } from "@/features/appointment/types.ts"; 
 import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
 import NurseSideBar from './NurseSideBar';  
-
+import { Switch } from "radix-ui";
  
  
 
@@ -100,7 +100,7 @@ export default function NurseAppointmentManager() {
   }
   
   // Retrieve clinic ID
-  const [ showClinicSelector, setShowClinicSelector ] = useState<boolean>(false) // will not change.
+  const [ showClinicSelector ] = useState<boolean>(false) // will not change.
   const [clinicList, setClinicList] = useState<clinicListInfoType[]>([])
   const [clinic, setClinic] = useState<string>()
   const loadClinics = async () => {
@@ -362,6 +362,9 @@ export default function NurseAppointmentManager() {
     
     if(debuglog == true) {console.log("total pages", totalPages)} 
   } 
+
+
+  // const [ viewAptReq , setViewAptReq ] = useState<boolean>(false)
   const [reqAppointmentsList, setReqAppointmentsList] = useState<Appointment[]>([])
   const readRequestedAppointments = async (
       clinicId: string,            // retrieve this clinic ID 
@@ -561,7 +564,7 @@ export default function NurseAppointmentManager() {
     if (viewPrefs.showReqs == true){
       readRequestedAppointments(clinic, viewPrefs)
     }
-  }, [clinic, viewPrefs])
+  }, [clinic, viewPrefs, viewPrefs.showReqs])
 
 
   // Rerender components when these values are retrieved/updated 
@@ -590,6 +593,20 @@ export default function NurseAppointmentManager() {
   }, [appointmentTypes])
   
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   return (
     <>
 
@@ -597,29 +614,43 @@ export default function NurseAppointmentManager() {
       {/* Left sidebar */}
       <NurseSideBar/> 
 
-
-
-
       <div className="pd-right">
       <div className="info-box appointments-section">
-        <h1 className="info-box-title">
-          <select 
-            className='m-2 p-2 font-bold border-2 border-solid rounded-lg' 
-            onChange={(e) =>
-              setClinic(() => (e.target.value))
-            }>
-            {clinicList.map((c) => (
-              <option key={c.clinic_id} value={c.clinic_id}>
-                    {c.clinic_name}
-              </option>))} 
-          </select>
-          Appointment Scheduling 
-        </h1>
+        <div className='flex justify-between'>
+          <h1 className="info-box-title">
+            <select 
+              className='m-2 p-2 font-bold border-2 border-solid rounded-lg' 
+              onChange={(e) =>
+                setClinic(() => (e.target.value))
+              }>
+              {clinicList.map((c) => (
+                <option key={c.clinic_id} value={c.clinic_id}>
+                      {c.clinic_name}
+                </option>))} 
+            </select>
+            Appointment Scheduling 
+          </h1>
+
+          <div  className="flex items-center">  
+            <span className = "m-2">{viewPrefs.showReqs ? ('Appointment Requests'):('Appointment Requests')}</span>
+            <Switch.Root 
+              checked={viewPrefs.showReqs }
+              onCheckedChange={(checked) => {
+                updateViewPrefs( {showReqs : checked})
+              }}
+              className="w-10 h-6 bg-gray-300 rounded-full data-[state=checked]:bg-[#7c86ff]"
+              >
+              <Switch.Thumb className="block w-4 h-4 bg-white rounded-full translate-x-1 data-[state=checked]:translate-x-5 transition" />
+            </Switch.Root>
+          </div>
+        </div> 
+
         {(!clinic || !viewPrefs) ? (<p>Loading clinic...</p>) 
         : (<>
           {/* VIEWING APPOINTMENTS */}
           <AppointmentSwitch 
             appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
+            reqAppointments={[]}
             // reqAppointmentsList={reqAppointmentsList? reqAppointmentsList : []}
             // functions to handle appointment CRUD actions 
             onSelectAppointment={handleEditAppointment} 
@@ -638,15 +669,15 @@ export default function NurseAppointmentManager() {
           <div className="info-box-content"> 
             {/* CREATION FORM */}
             <AppointmentForm
-              showClinicSelector={showClinicSelector}
-              clinicList={clinicList} 
+              showClinicSelector = {showClinicSelector}
+              clinicList = {clinicList} 
               selectedClinic = { clinic }
               setSelectedClinic={ setClinic } // should not be used 
               
               showScheduleForm = {showScheduleForm} 
               setShowScheduleForm = {setShowScheduleForm}
-              scheduleForm={scheduleForm}
-              setScheduleForm={setScheduleForm}
+              scheduleForm = {scheduleForm}
+              setScheduleForm = {setScheduleForm}
               createStatus = {createStatus} 
               setCreateStatus = {setCreateStatus}
               createMessage = {createMessage} 
