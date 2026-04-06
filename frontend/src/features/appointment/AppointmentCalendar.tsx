@@ -44,10 +44,11 @@ const localizer = dateFnsLocalizer({
 
 export default function AppointmentCalendar({
   appointments, // list of appointments to display 
+  reqAppointments, 
   onSelectAppointment, // function passed in (can be nurse/patient)
   // onDeleteAppointment,
   onSelectSlot,// 
-  // viewPrefs,
+  viewPrefs,
   onUpdateViewPrefs,
 }: ApptProps) {
   const [currentView, setCurrentView] = useState<View>(Views.MONTH)
@@ -80,8 +81,40 @@ export default function AppointmentCalendar({
   }, [appointments])
   // ^ dependency: which refreshes on the appointments state from parent
 
+  const eventsReq: CalendarEvent[] = useMemo(() => {
+    return reqAppointments
+      .filter((apt) => {
+        const d = new Date(apt.appointment_date)
+        const year = d.getFullYear()
+        return !Number.isNaN(d.getTime()) && year >= 2020 && year <= 2100
+      })
+      .map((apt) => {
+        const start = new Date(apt.appointment_date)
+        const end = new Date(start.getTime() + 30 * 60 * 1000)
 
+        return {
+          id: apt.Appointment_id,
+          title: `${apt.patient_name} • ${apt.visit_type}`,
+          start,
+          end,
+          raw: apt,
+        }
+      })
+  }, [reqAppointments])
+  // ^ dependency: which refreshes on the appointments state from parent
 
+  const totalEvents: CalendarEvent[] = useMemo(() => {
+    
+    if (viewPrefs.showReqs === 'Both'){ 
+    const merged = [...eventsReq, ...events]; 
+      return merged}
+    else if (viewPrefs.showReqs === 'Requests'){ 
+      return eventsReq}
+    else if (viewPrefs.showReqs === 'Hide'){ 
+      return events}
+    
+    return []
+  }, [events, eventsReq])
   
 
   //// USE CALENDAR COMPONENT 
@@ -89,7 +122,7 @@ export default function AppointmentCalendar({
     <div style={{ height: '650px', margin: '20px 0' }}>
       <Calendar
         localizer={localizer}
-        events={events}
+        events={totalEvents}
         date={currentDate}
         view={currentView}
         onNavigate={(newDate: Date) => setCurrentDate(newDate)} // aware of today's date

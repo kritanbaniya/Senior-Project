@@ -44,7 +44,7 @@ export default function NurseAppointmentManager() {
     dateMode: 'upcoming',
     rangeStart: '',
     rangeEnd: '',
-    showReqs: false, 
+    showReqs: 'Both', 
     showPast: false 
   }) // viewPref CANNOT be undefined 
   // call back function; update viewpreferences from child components 
@@ -377,7 +377,7 @@ export default function NurseAppointmentManager() {
       //   CREATE initial QUERY & ADD RULES 
       let query = supabase
           .schema('public')
-          .from('appointmentlist_display2')
+          .from('appointmentreq_display')
           .select('*', { count: prefs.mode === 'list' ? 'exact' : undefined })
           .eq('clinic_id', clinicId)
   
@@ -411,7 +411,7 @@ export default function NurseAppointmentManager() {
           
           return
       }
-    
+      
       // list mode
       const from = (prefs.page - 1) * prefs.rowsPerPage // first row on page 
       const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
@@ -562,10 +562,19 @@ export default function NurseAppointmentManager() {
   //    OR when the viewPreferences are updated 
   useEffect(() => {
     if (!clinic) return
-    readAppointments(clinic, viewPrefs)
-    if (viewPrefs.showReqs == true){
-      readRequestedAppointments(clinic, viewPrefs)
-    }
+    // readAppointments(clinic, viewPrefs)
+    // readRequestedAppointments(clinic, viewPrefs)
+    if (debuglog === true) console.log("SHOW REQ", viewPrefs.showReqs)
+    if (viewPrefs.showReqs === 'Both'){
+      if (debuglog === true) console.log("BOTH")
+      readAppointments(clinic, viewPrefs)
+      readRequestedAppointments(clinic, viewPrefs)}
+    else if (viewPrefs.showReqs === 'Requests'){
+      if (debuglog === true) console.log("Requests")
+      readRequestedAppointments(clinic, viewPrefs)}
+    else if (viewPrefs.showReqs === 'Hide'){
+      if (debuglog === true) console.log("Hide")
+      readAppointments(clinic, viewPrefs)}
   }, [clinic, viewPrefs, viewPrefs.showReqs])
 
 
@@ -594,7 +603,11 @@ export default function NurseAppointmentManager() {
     }
   }, [appointmentTypes])
   
-
+  useEffect (() => {
+    if (debuglog === true) {
+      console.log("REQJUESTS", reqAppointmentsList)
+    }
+  }, [reqAppointmentsList, clinic])
 
 
 

@@ -35,7 +35,7 @@ export type Appointment = {
 
 
 export type reqAppointmentTypes = {
-  id: string 
+  Appointment_id: string 
   appointment_date: string 
   patient_email: string 
   patient_name: string 

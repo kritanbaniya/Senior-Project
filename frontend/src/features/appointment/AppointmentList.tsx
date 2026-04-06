@@ -1,5 +1,5 @@
-import { useEffect,  useState } from "react";
-import type {  ApptProps} from "./types.ts"; 
+import { useMemo, useEffect,  useState } from "react";
+import type {  Appointment, ApptProps} from "./types.ts"; 
 import { Button } from "@/components/ui/button.tsx";
 import { Switch } from "radix-ui";
 
@@ -67,6 +67,19 @@ export default function AppointmentList({
     // )
   }, [rowsInput, pageNum])
 
+  const Totalappointments: Appointment[] = useMemo(() => {
+    
+    if (viewPrefs.showReqs === 'Both'){ 
+      const merged = [...appointments, ...reqAppointments]; 
+      return merged}
+    else if (viewPrefs.showReqs === 'Requests'){ 
+      return reqAppointments}
+    else if (viewPrefs.showReqs === 'Hide'){ 
+      return appointments}
+    
+    return []
+  }, [reqAppointments, appointments, viewPrefs.showReqs])
+
 
   return (
     <div className="nurse-appointment-list border border-[var(--border)] p-2 rounded-lg">
@@ -108,7 +121,7 @@ export default function AppointmentList({
             <span className = "text-black">Actions</span>
           </div>
           {/* rows */}
-          {appointments.map((apt) => {
+          {Totalappointments.map((apt) => {
             // Convert timestamp from SQL to human readable local time  
             const dt = new Date(apt.appointment_date)
             const dateText = Number.isNaN(dt.getTime())
