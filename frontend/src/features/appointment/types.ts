@@ -19,13 +19,36 @@ export type AppointmentType =
 export type Appointment = {
   Appointment_id: string
   appointment_date: string
+  patient_email?: string
   patient_name: string
   clinician_name: string
-  visit_type: string
   clinic_name?: string
-  patient_email?: string
+  visit_type: string
+  // diff 
   checkin_at?: string | null
   seen_at?: string | null
+  patient_id: string 
+  clinician_id: string 
+  clinic_id: string 
+}
+
+
+
+export type reqAppointmentTypes = {
+  id: string 
+  appointment_date: string 
+  patient_email: string 
+  patient_name: string 
+  clinician_name: string 
+  clinic_name: string 
+  visit_type: string 
+  // diff  
+  patient_note: string 
+  nurse_note: string 
+  request_status: string 
+  patient_id: string 
+  clinician_id: string 
+  clinic_id: string 
 }
 
 
@@ -52,10 +75,17 @@ type SortField = 'appointment_date' | 'clinician_name' | 'patient_name' | 'visit
 // asc/desc a column 
 type SortDirection = 'asc' | 'desc'
 
+
 type SortRule = {
   field: SortField
   direction: SortDirection
 }
+
+
+export type viewRequestTypes = 'Both' | 'Requests' | 'Hide' 
+
+
+
 export type AppointmentViewPrefs = {
   mode: 'list' | 'calendar'
   // list-only
@@ -67,32 +97,15 @@ export type AppointmentViewPrefs = {
   dateMode: DateMode
   rangeStart: string
   rangeEnd: string
-  showReqs: boolean 
+  showReqs: viewRequestTypes
   showPast: boolean 
 }
 
 
 
-export type reqAppointmentType = {
-  id: string 
-  appointment_date: string 
-  patient_email: string 
-  patient_name: string 
-  clinician_name: string 
-  clinic_name: string 
-  visit_type: string 
-  patient_note: string 
-  nurse_note: string 
-  request_status: string 
-  patient_id: string 
-  clinician_id: string 
-  clinic_id: string 
-}
-
-
 export type ApptProps = {// define the prop's types
   appointments: Appointment[]
-  reqAppointments: reqAppointmentType[] 
+  reqAppointments: reqAppointmentTypes[] 
   onSelectAppointment?: (apt: Appointment) => void
   onDeleteAppointment?: (apt: Appointment) => void
   onSelectSlot?: (start: Date) => void

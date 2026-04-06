@@ -132,7 +132,7 @@ export default function AppointmentList({
                 <span>{apt.visit_type}</span>
                 <span>{apt.patient_name}</span>
                 {/* ACTIONS TO EACH APPOINTMENT ROW */}
-                <span className="flex gap-2">
+                <span className="flex gap-2 justify-between">
                   {onSelectAppointment && (
                     <button
                       type="button"

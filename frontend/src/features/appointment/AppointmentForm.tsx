@@ -104,8 +104,7 @@ export default function AppointmentForm({
         
         
           {/* CREATION / EDITING FORM */}
-          <div className="info-box-content">  
-            <p className="small-label ">View, create, and modify appointments.</p>
+          <div className="info-box-content">   
             <Button
                 type="button" 
                 onClick={() => handleNewAppointment(new Date())}

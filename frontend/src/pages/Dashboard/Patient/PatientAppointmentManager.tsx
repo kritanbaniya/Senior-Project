@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase.ts' 
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx';
-import type { clinicListInfoType, MemberList, Appointment, AppointmentViewPrefs, AppointmentType, AppointmentFormType } from '@/features/appointment/types.ts';
+import type { reqAppointmentTypes, clinicListInfoType, MemberList, Appointment, AppointmentViewPrefs, AppointmentType, AppointmentFormType } from '@/features/appointment/types.ts';
 import PatientSideBar from './PatientSideBar'
 import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
 
@@ -40,7 +40,7 @@ export default function PatientAppointmentManager() {
         dateMode: 'upcoming',
         rangeStart: '',
         rangeEnd: '',
-        showReqs: false, 
+        showReqs: 'Hide', 
         showPast: true, 
     }) 
     const updateViewPrefs = (updates: Partial<AppointmentViewPrefs>) => {
@@ -384,7 +384,7 @@ export default function PatientAppointmentManager() {
 
         if(debuglog == true) {console.log("total pages", totalPages)} 
     }
-    const [reqAppointmentsList, setReqAppointmentsList] = useState<Appointment[]>([])
+    const [reqAppointmentsList, setReqAppointmentsList] = useState<reqAppointmentTypes[]>([])
     const readRequestedAppointments = async (
         clinicId: string,            // retrieve this clinic ID 
         prefs: AppointmentViewPrefs  // query based on these preferences 
@@ -498,7 +498,17 @@ export default function PatientAppointmentManager() {
     // RE-QUERY FETCH APPTs WHEN VIEW SETTINGS CHANGE 
     useEffect(() => { 
         if (!clinicView) return
+        if(viewPrefs.showReqs === 'Hide'){
         readAppointments(clinicView, viewPrefs)
+        }
+        if(viewPrefs.showReqs === 'Requests'){
+        readRequestedAppointments(clinicView, viewPrefs)
+        }
+        if(viewPrefs.showReqs === 'Both'){
+        readAppointments(clinicView, viewPrefs)
+        readRequestedAppointments(clinicView, viewPrefs)
+        }
+
     }, [clinicView, viewPrefs])
 
     // Rerender components when these values are retrieved/updated 
@@ -554,6 +564,7 @@ export default function PatientAppointmentManager() {
                         {/* VIEWING APPOINTMENTS */}
                         <AppointmentSwitch
                             appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
+                            reqAppointments = {appointmentsLoading ? [] : reqAppointmentsList} 
                             // functions to handle appointment CRUD actions 
                             onSelectAppointment={emptyf} 
                             onDeleteAppointment={emptyf}
