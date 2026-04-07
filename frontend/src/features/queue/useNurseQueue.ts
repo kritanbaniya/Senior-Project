@@ -12,9 +12,9 @@ import {
   startVisit,
 } from './api'
 import { subscribeToClinicQueue } from './realtime'
-import type { ClinicListItem, QueueEntryRow } from './types'
+import type { ClinicListItem, QueueEntryRow, StaffPermissionRow } from './types'
 
-type NurseClinicPermission = ClinicListItem & { manage_queue: boolean; user_id: string }
+type NurseClinicPermission = StaffPermissionRow & ClinicListItem
 
 export function useNurseQueue(selectedClinicId: string | null) {
   const [loading, setLoading] = useState(false)
@@ -33,7 +33,7 @@ export function useNurseQueue(selectedClinicId: string | null) {
   const refreshClinics = useCallback(async () => {
     try {
       const data = await fetchNurseClinicPermissions()
-      setClinics(data)
+      setClinics(data.filter((row) => row.invitation_status === 'accepted'))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'failed to load clinic permissions')
     }
