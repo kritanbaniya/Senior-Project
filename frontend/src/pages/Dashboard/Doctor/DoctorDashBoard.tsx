@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'  
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { supabase } from '@/lib/supabase'  
+import { useAuth } from '@/context/AuthContext'  
+import { saveMedicalHistory, fetchMedicalHistory, type MedicalHistoryRecord } from '@/features/medical/medicalHistoryApi'  
 
 type DoctorStage = 'waiting' | 'consultation' | 'completed'
 
@@ -154,6 +157,8 @@ export default function DoctorDashBoard() {
   ])
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
+  const [fetchedHistory, setFetchedHistory] = useState<MedicalHistoryRecord[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
   const [clinicalNote, setClinicalNote] = useState<ClinicalNote>(INITIAL_CLINICAL_NOTE)
   const [activeTab, setActiveTab] = useState<'intake' | 'history' | 'tests'>('intake')
   const [showTestForm, setShowTestForm] = useState(false)
@@ -162,6 +167,26 @@ export default function DoctorDashBoard() {
   const [flagFormsFeedback, setFlagFormsFeedback] = useState<string | null>(null)
 
   const selectedPatient = patients.find((p) => p.id === selectedPatientId)
+  const { profile } = useAuth() 
+
+  // Fetch medical history when patient is selected
+  useEffect(() => {
+    if (selectedPatient) {
+      const loadHistory = async () => {
+        setLoadingHistory(true)
+        const { data, error } = await fetchMedicalHistory(selectedPatient.id)
+        if (!error && data) {
+          setFetchedHistory(data)
+        } else {
+          setFetchedHistory([])
+        }
+        setLoadingHistory(false)
+      }
+      void loadHistory()
+    } else {
+      setFetchedHistory([])
+    }
+  }, [selectedPatient])
 
   const updateClinicalNote = (field: keyof ClinicalNote, value: string | boolean) => {
     setClinicalNote((prev) => ({ ...prev, [field]: value }))
@@ -171,22 +196,47 @@ export default function DoctorDashBoard() {
     setPatients((prev) => prev.map((p) => (p.id === id ? { ...p, stage } : p)))
   }
 
-  const saveVisitNotes = () => {
-    if (!selectedPatient) return
-    if (!clinicalNote.assessment.trim()) {
-      alert('Please enter an assessment before saving.')
-      return
-    }
-
-    console.log('Saving visit notes:', {
-      patientId: selectedPatient.id,
-      notes: clinicalNote,
-      timestamp: new Date().toISOString(),
-    })
-
-    setSaveNoteFeedback('Visit notes saved successfully')
-    setTimeout(() => setSaveNoteFeedback(null), 3000)
+  const saveVisitNotes = async () => {
+  if (!selectedPatient) return
+  if (!clinicalNote.assessment.trim()) {
+    alert('Please enter an assessment before saving.')
+    return
   }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    alert('You must be logged in to save notes.')
+    return
+  }
+
+  const { error } = await saveMedicalHistory({
+    patientId: selectedPatient.id,
+    doctorId: user.id,
+    doctorName: profile?.full_name || 'Doctor',
+    diagnosis: clinicalNote.assessment,
+    symptoms: clinicalNote.symptoms || undefined,
+    observations: clinicalNote.observations || undefined,
+    treatmentPlan: clinicalNote.treatmentPlan || undefined,
+    prescriptions: clinicalNote.prescriptions || undefined,
+    followUpRecommended: clinicalNote.followUpRecommended,
+    followUpNotes: clinicalNote.followUpNotes || undefined,
+  })
+
+  if (error) {
+    console.error('Error saving notes:', error)
+    alert('Failed to save notes: ' + error.message)
+    return
+  }
+
+  // Refresh history to show new entry
+  const { data } = await fetchMedicalHistory(selectedPatient.id)
+  if (data) {
+    setFetchedHistory(data)
+  }
+
+  setSaveNoteFeedback('Visit notes saved successfully')
+  setTimeout(() => setSaveNoteFeedback(null), 3000)
+}
 
   const completeVisit = () => {
     if (!selectedPatient) return
@@ -383,10 +433,44 @@ export default function DoctorDashBoard() {
                 {/* History Tab */}
                 {activeTab === 'history' && (
                   <>
-                    {selectedPatient.medicalHistory && selectedPatient.medicalHistory.length > 0 ? (
+                    {loadingHistory ? (
+                      <p className="text-sm text-gray-500">Loading history...</p>
+                    ) : fetchedHistory.length > 0 || (selectedPatient.medicalHistory && selectedPatient.medicalHistory.length > 0) ? (
                       <div className="space-y-4">
-                        {selectedPatient.medicalHistory.map((record, index) => (
-                          <div key={index} className="pb-4 border-b border-gray-200 last:border-b-0 last:pb-0">
+                        {/* Show fetched history from database first */}
+                        {fetchedHistory.map((record) => (
+                          <div key={record.id} className="pb-4 border-b border-gray-200 last:border-b-0 last:pb-0">
+                            <div className="flex items-baseline gap-3 mb-2">
+                              <span className="text-sm font-semibold text-blue-600">{record.visit_date}</span>
+                              <span className="text-sm font-bold text-gray-900">{record.diagnosis}</span>
+                            </div>
+                            
+                            {/* Only show fields that have content */}
+                            <div className="space-y-1 text-sm text-gray-700">
+                              {record.symptoms && (
+                                <p><strong>Symptoms:</strong> {record.symptoms}</p>
+                              )}
+                              {record.observations && (
+                                <p><strong>Examination:</strong> {record.observations}</p>
+                              )}
+                              {record.treatment_plan && (
+                                <p><strong>Treatment:</strong> {record.treatment_plan}</p>
+                              )}
+                              {record.prescriptions && (
+                                <p><strong>Prescriptions:</strong> {record.prescriptions}</p>
+                              )}
+                              {record.follow_up_recommended && record.follow_up_notes && (
+                                <p><strong>Follow-up:</strong> {record.follow_up_notes}</p>
+                              )}
+                            </div>
+                            
+                            <p className="text-xs text-gray-500 mt-2">{record.doctor_name}</p>
+                          </div>
+                        ))}
+                        
+                        {/* Show mock history after real history */}
+                        {selectedPatient.medicalHistory?.map((record, index) => (
+                          <div key={`mock-${index}`} className="pb-4 border-b border-gray-200 last:border-b-0 last:pb-0">
                             <div className="flex items-baseline gap-3 mb-1">
                               <span className="text-sm font-semibold text-blue-600">{record.date}</span>
                               <span className="text-sm font-medium text-gray-900">{record.diagnosis}</span>
