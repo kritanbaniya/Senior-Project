@@ -52,7 +52,7 @@ const mainItems: SidebarItem[] = [
 const healthItems: SidebarItem[] = [
   {
     title: "Appointments",
-    url: "/dashboard/patient",
+    url: "/dashboard/patient/appointments",
     icon: CalendarClock,
   },
   {
