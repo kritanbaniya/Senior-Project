@@ -22,7 +22,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
+  SidebarTrigger
 } from "@/components/ui/sidebar"
 
 type SidebarItem = {
@@ -115,15 +115,16 @@ export default function PatientSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-slate-200 bg-[#d8eef7] text-slate-900"
+      className="top-[60px] h-[calc(100vh-60px)] border-r border-slate-200 bg-[#d8eef7] text-slate-900"
     >
       <SidebarHeader className="border-b border-slate-300/70 bg-[#d8eef7] px-3 py-4">
-        <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
-            <HeartPulse className="h-5 w-5 text-sky-700" />
+        <div className="flex items-start justify-between gap-3 group-data-[collapsible=icon]:justify-center">
+          <div className="flex min-w-0 items-center gap-3 group-data-[collapsible=icon]:hidden">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
+              <HeartPulse className="h-5 w-5 text-sky-700" />
           </div>
 
-          <div className="min-w-0 group-data-[collapsible=icon]:hidden">
+          <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-slate-900">
               ClinicIQ
             </p>
@@ -131,8 +132,19 @@ export default function PatientSidebar() {
               Patient Portal
             </p>
           </div>
+      </div>
+
+      <div className="flex items-center justify-center group-data-[collapsible=icon]:w-full">
+        <SidebarTrigger className="h-9 w-9 shrink-0 rounded-md border border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-100" />
+      </div>
+    </div>
+
+      <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
+          <HeartPulse className="h-5 w-5 text-sky-700" />
         </div>
-      </SidebarHeader>
+      </div>
+    </SidebarHeader>
 
       <SidebarContent className="bg-[#d8eef7]">
         <SidebarGroup>
@@ -190,7 +202,6 @@ export default function PatientSidebar() {
         </div>
       </SidebarFooter>
 
-      <SidebarRail />
     </Sidebar>
   )
 }
