@@ -78,27 +78,33 @@ export default function PatientYourInformation() {
 
   // validates age input then upserts the form data into public.patient_info
   // using the user's auth uid as the primary key (onConflict: 'id').
+  // also updates public.profiles.full_name so the header/app profile name stays in sync.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setMessage(null)
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       setMessage({ type: 'error', text: 'not logged in' })
       return
     }
-    setSaving(true)
+
+    const trimmedName = form.name.trim()
     const ageNum = form.age.trim() === '' ? null : parseInt(form.age, 10)
+
     if (form.age.trim() !== '' && (ageNum === null || Number.isNaN(ageNum) || ageNum < 0 || ageNum > 150)) {
       setMessage({ type: 'error', text: 'age must be a number between 0 and 150' })
-      setSaving(false)
       return
     }
-    const { error } = await supabase
+
+    setSaving(true)
+
+    const { error: patientInfoError } = await supabase
       .from('patient_info')
       .upsert(
         {
           id: user.id,
-          name: form.name.trim() || null,
+          name: trimmedName || null,
           birthday: form.birthday || null,
           gender: form.gender.trim() || null,
           age: ageNum,
@@ -107,17 +113,39 @@ export default function PatientYourInformation() {
         { onConflict: 'id' }
       )
 
-    setSaving(false)
-    if (error) {
-      setMessage({ type: 'error', text: error.message })
+    if (patientInfoError) {
+      setSaving(false)
+      setMessage({ type: 'error', text: patientInfoError.message })
       return
     }
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        full_name: trimmedName || null,
+      })
+      .eq('id', user.id)
+
+    setSaving(false)
+
+    if (profileError) {
+      setMessage({
+        type: 'error',
+        text: `patient_info saved, but profiles update failed: ${profileError.message}`,
+      })
+      return
+    }
+
     setMessage({ type: 'success', text: 'saved' })
+
+    setTimeout(() => {
+      window.location.reload()
+    }, 500)
   }
 
   return (
     <div className="pd-layout">
-      <PatientSideBar/> 
+      <PatientSideBar/>
       <div className="pd-right">
         <header className="pd-header">
           <div className="pd-header-left">
