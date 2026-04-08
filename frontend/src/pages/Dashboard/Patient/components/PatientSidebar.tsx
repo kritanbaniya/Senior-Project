@@ -129,8 +129,9 @@ export default function PatientSidebar() {
 
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-slate-900">
-              ClinicIQ
+            {displayName}
             </p>
+
             <p className="truncate text-xs font-semibold text-slate-600">
               Patient Portal
             </p>
@@ -179,17 +180,13 @@ export default function PatientSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-slate-300/70 bg-[#d8eef7] p-3">
+      <SidebarFooter className="border-t border-slate-300/70 bg-[#d8eef7] p-3 pb-4">
         <div className="rounded-xl bg-white/80 p-3 group-data-[collapsible=icon]:hidden">
-          <p className="truncate text-sm font-semibold text-slate-900">
-            {displayName}
-          </p>
-          <p className="text-xs text-slate-600">Patient account</p>
 
           <button
             type="button"
             onClick={() => void logout()}
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-600"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-600"
           >
             <LogOut className="h-4 w-4" />
             Log Out
@@ -204,7 +201,7 @@ export default function PatientSidebar() {
             aria-label="Log out"
             title="Log out"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-8" />
           </button>
         </div>
       </SidebarFooter>

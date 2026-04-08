@@ -642,11 +642,9 @@ button:focus-visible {
 }
 
 .pd-right {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  background: #f1f5f9;
+  flex: 1;
 }
 
 .pd-header {
