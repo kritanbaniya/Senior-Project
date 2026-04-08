@@ -9,7 +9,6 @@ import {
   Activity,
   MessageSquare,
   Pill,
-  HeartPulse,
   LogOut,
 } from "lucide-react"
 import {
@@ -122,9 +121,9 @@ export default function PatientSidebar() {
           <div className="flex min-w-0 items-center gap-3 group-data-[collapsible=icon]:hidden">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
               <img
-              src="/assets/ClinicIQ Logo.png"
-              alt="ClinicIQ"
-              className="h-12 w-14 object-contain"
+              src="/assets/default_profile_picture.png"
+              alt="Profile Picture"
+              className="h-12 w-10 rounded-full object-cover"
             />
           </div>
 
@@ -146,9 +145,9 @@ export default function PatientSidebar() {
       <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
           <img
-            src="/assets/ClinicIQ Logo.png"
-            alt="ClinicIQ"
-            className="h-8 w-8 object-contain"
+            src="/assets/default_profile_picture.png"
+            alt="Profile Picture"
+            className="h-10 w-8 rounded-full object-cover"
           />
         </div>
       </div>

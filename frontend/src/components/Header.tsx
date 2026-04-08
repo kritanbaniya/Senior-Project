@@ -22,7 +22,7 @@ function Header() {
     <header className="sticky top-0 z-50 w-full bg-violet-200">
       <div className="mx-auto flex h-15 items-center justify-between pr-2 md:pr-4 lg:pr-4">
         <div className="flex items-center gap-2">
-          <Link to={homePath} className="flex items-center gap-4">
+          <Link to={homePath} className="flex items-center gap-2">
             <img
               src="/assets/ClinicIQ Logo.png"
               alt="ClinicIQ"
