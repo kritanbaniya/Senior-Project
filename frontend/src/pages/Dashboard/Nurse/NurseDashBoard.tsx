@@ -5,6 +5,7 @@ import ClinicSelector from '../../../features/queue/components/ClinicSelector'
 import { fetchNurseClinicPermissions, updateNurseInvitationStatus } from '../../../features/queue/api'
 import type { ClinicListItem, StaffPermissionRow } from '../../../features/queue/types'
 import NurseSideBar from './NurseSideBar'
+import { SidebarProvider } from "@/components/ui/sidebar"
 
 type NurseClinicPermission = ClinicListItem & StaffPermissionRow
 
@@ -90,7 +91,7 @@ export default function NurseDashBoard() {
   }
 
   return (
-    <div className="pd-layout">
+    <SidebarProvider>
       <NurseSideBar />
 
       <div className="pd-right">
@@ -184,10 +185,6 @@ export default function NurseDashBoard() {
               </Link>
             </div>
           </div>
-
-          <Link to="/" className="back-link">
-            ← Back to Home
-          </Link>
         </main>
       </div>
 
@@ -243,6 +240,6 @@ export default function NurseDashBoard() {
           </div>
         </div>
       )}
-    </div>
+      </SidebarProvider>
   )
 }

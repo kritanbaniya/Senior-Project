@@ -4,6 +4,7 @@ import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
 import type { AppointmentFormType, AppointmentViewPrefs, Appointment, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
 import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
 import NurseSideBar from './NurseSideBar';  
+import { SidebarProvider } from '@/components/ui/sidebar.tsx';
 
  
  
@@ -492,171 +493,182 @@ export default function NurseAppointmentManager() {
   }, [appointmentTypes])
   
 
-  return (
-    <>
-
-    <div className="pd-layout">
+return (
+  <>
+    <SidebarProvider>
       {/* Left sidebar */}
-      <NurseSideBar/> 
-
-
-
+      <NurseSideBar />
 
       <div className="pd-right">
-      <div className="info-box appointments-section">
-        <h1 className="info-box-title">
-          <select 
-            className='m-2 p-2 font-bold border-2 border-solid rounded-lg' 
-            onChange={(e) =>
-              setClinic(() => (e.target.value))
-            }>
-            {clinicList.map((c) => (
-              <option key={c.clinic_id} value={c.clinic_id}>
-                    {c.clinic_name}
-              </option>))} 
-          </select>
-          Appointment Scheduling 
-        </h1>
-        {(!clinic || !viewPrefs) ? (<p>Loading clinic...</p>) 
-        : (<>
-          {/* VIEWING APPOINTMENTS */}
-          <AppointmentSwitch 
-            appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
-            // functions to handle appointment CRUD actions 
-            onSelectAppointment={handleEditAppointment} 
-            onDeleteAppointment={(apt) =>
-              deleteAppointments(apt.Appointment_id, clinic)
-            }
-            onSelectSlot={handleNewAppointment}
-            // function to handle appointment view changes (changing query)
-            viewPrefs={viewPrefs}
-            totalPages = {totalPages}
-            onUpdateViewPrefs = {updateViewPrefs}
-          />
-      
+        <div className="info-box appointments-section">
+          <h1 className="info-box-title">
+            <select
+              className="m-2 rounded-lg border-2 border-solid p-2 font-bold"
+              onChange={(e) => setClinic(e.target.value)}
+            >
+              {clinicList.map((c) => (
+                <option key={c.clinic_id} value={c.clinic_id}>
+                  {c.clinic_name}
+                </option>
+              ))}
+            </select>
+            Appointment Scheduling
+          </h1>
 
-          {/* CREATION / EDITING FORM */}
-          <div className="info-box-content"> 
-            {/* CREATION FORM */}
-            <AppointmentForm
-              showScheduleForm = {showScheduleForm} 
-              setShowScheduleForm = {setShowScheduleForm}
-              scheduleForm={scheduleForm}
-              setScheduleForm={setScheduleForm}
-              createStatus = {createStatus} 
-              setCreateStatus = {setCreateStatus}
-              createMessage = {createMessage} 
-              setCreateMessage = {setCreateMessage} 
-              handleNewAppointment = {handleNewAppointment} 
-              createAppointment = {handleCreateAppointment} 
-              nurse = {true}
-              patientName = {undefined}
-              patientList = {patientList} 
-              practicionerList = {practicionerList}
-              appointmentTypes = {appointmentTypes} 
-            
-            />
+          {!clinic ? (
+            <p>Loading clinic...</p>
+          ) : (
+            <>
+              {/* VIEWING APPOINTMENTS */}
+              <AppointmentSwitch
+                appointments={appointmentsLoading ? [] : appointmentsList}
+                onSelectAppointment={handleEditAppointment}
+                onDeleteAppointment={(apt) =>
+                  deleteAppointments(apt.Appointment_id, clinic)
+                }
+                onSelectSlot={handleNewAppointment}
+                viewPrefs={viewPrefs}
+                totalPages={totalPages}
+                onUpdateViewPrefs={updateViewPrefs}
+              />
 
+              {/* CREATION / EDITING FORM */}
+              <div className="info-box-content">
+                {/* CREATION FORM */}
+                <AppointmentForm
+                  showScheduleForm={showScheduleForm}
+                  setShowScheduleForm={setShowScheduleForm}
+                  scheduleForm={scheduleForm}
+                  setScheduleForm={setScheduleForm}
+                  createStatus={createStatus}
+                  setCreateStatus={setCreateStatus}
+                  createMessage={createMessage}
+                  setCreateMessage={setCreateMessage}
+                  handleNewAppointment={handleNewAppointment}
+                  createAppointment={handleCreateAppointment}
+                  nurse={true}
+                  patientName={undefined}
+                  patientList={patientList}
+                  practicionerList={practicionerList}
+                  appointmentTypes={appointmentTypes}
+                />
 
-
-
-
-            {/* EDIT FORM : STILL NEEDS TO BE REFACTORED */}
-            {showAptUpdateForm ? (
-              <form
-                className="portal-form"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  updateAppointments()
-                }}
-              >
-                <div className="form-row">
-                  <label>Patient name</label>
-                  <select
-                    value={updateForm.patientId}
-                    onChange={(e) =>
-                      setUpdateForm((f) => ({ ...f, patientId: e.target.value }))
-                    }
+                {/* EDIT FORM : STILL NEEDS TO BE REFACTORED */}
+                {showAptUpdateForm ? (
+                  <form
+                    className="portal-form"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      updateAppointments()
+                    }}
                   >
-                    {patientList.map((d) => (
-                      <option key={d.user_id} value={d.user_id}>
-                        {d.full_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    <div className="form-row">
+                      <label>Patient name</label>
+                      <select
+                        value={updateForm.patientId}
+                        onChange={(e) =>
+                          setUpdateForm((f) => ({
+                            ...f,
+                            patientId: e.target.value,
+                          }))
+                        }
+                      >
+                        {patientList.map((d) => (
+                          <option key={d.user_id} value={d.user_id}>
+                            {d.full_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                <div className="form-row">
-                  <label>Date</label>
-                  <input
-                    type="date"
-                    value={updateForm.date}
-                    onChange={(e) => setUpdateForm((f) => ({ ...f, date: e.target.value }))}
-                    required
-                  />
-                </div>
+                    <div className="form-row">
+                      <label>Date</label>
+                      <input
+                        type="date"
+                        value={updateForm.date}
+                        onChange={(e) =>
+                          setUpdateForm((f) => ({
+                            ...f,
+                            date: e.target.value,
+                          }))
+                        }
+                        required
+                      />
+                    </div>
 
-                <div className="form-row">
-                  <label>Time</label>
-                  <input
-                    type="time"
-                    value={updateForm.time}
-                    onChange={(e) => setUpdateForm((f) => ({ ...f, time: e.target.value }))}
-                    required
-                  />
-                </div>
+                    <div className="form-row">
+                      <label>Time</label>
+                      <input
+                        type="time"
+                        value={updateForm.time}
+                        onChange={(e) =>
+                          setUpdateForm((f) => ({
+                            ...f,
+                            time: e.target.value,
+                          }))
+                        }
+                        required
+                      />
+                    </div>
 
-                <div className="form-row">
-                  <label>Provider</label>
-                  <select
-                    value={updateForm.doctorId}
-                    onChange={(e) =>
-                      setUpdateForm((f) => ({ ...f, doctorId: e.target.value }))
-                    }
-                  >
-                    {practicionerList.map((d) => (
-                      <option key={d.user_id} value={d.user_id}>
-                        {d.full_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    <div className="form-row">
+                      <label>Provider</label>
+                      <select
+                        value={updateForm.doctorId}
+                        onChange={(e) =>
+                          setUpdateForm((f) => ({
+                            ...f,
+                            doctorId: e.target.value,
+                          }))
+                        }
+                      >
+                        {practicionerList.map((d) => (
+                          <option key={d.user_id} value={d.user_id}>
+                            {d.full_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                <div className="form-row">
-                  <label>Visit type</label>
-                  <select
-                    value={updateForm.type}
-                    onChange={(e) => setUpdateForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
-                  >
-                    {appointmentTypes.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    <div className="form-row">
+                      <label>Visit type</label>
+                      <select
+                        value={updateForm.type}
+                        onChange={(e) =>
+                          setUpdateForm((f) => ({
+                            ...f,
+                            type: e.target.value as AppointmentType,
+                          }))
+                        }
+                      >
+                        {appointmentTypes.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                <div className="form-actions">
-                  <button type="submit" className="btn-primary">
-                    Save changes
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => setShowAptUpdateForm(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <></>
-            )}
-          </div>
-        </>)}
-
-
-      </div></div></div>
-    </>
-  )
+                    <div className="form-actions">
+                      <button type="submit" className="btn-primary">
+                        Save changes
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => setShowAptUpdateForm(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </SidebarProvider>
+  </>
+)
 }
