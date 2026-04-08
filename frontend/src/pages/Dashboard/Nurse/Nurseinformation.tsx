@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
 import NurseSideBar from './NurseSideBar';
+import { SidebarProvider } from "@/components/ui/sidebar"
 
 type NurseInfoRow = {
   id: string
@@ -119,8 +120,8 @@ export default function NurseInformation() {
     setMessage({ type: 'success', text: 'saved' })
   }
 
-  return (
-    <div className="pd-layout">
+return (
+  <SidebarProvider>
       
       {/* Left sidebar */}
       <NurseSideBar/> 
@@ -228,7 +229,7 @@ export default function NurseInformation() {
           </div>
         </main>
       </div>
-    </div>
-  )
+  </SidebarProvider>
+)
 }
 
