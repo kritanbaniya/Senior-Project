@@ -7,7 +7,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
-import PatientSideBar from './PatientSideBar'
+import PatientSidebar from './components/PatientSidebar'
+import { SidebarProvider } from '@/components/ui/sidebar'
 
 type PatientInfoRow = {
   id: string
@@ -78,27 +79,33 @@ export default function PatientYourInformation() {
 
   // validates age input then upserts the form data into public.patient_info
   // using the user's auth uid as the primary key (onConflict: 'id').
+  // also updates public.profiles.full_name so the header/app profile name stays in sync.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setMessage(null)
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       setMessage({ type: 'error', text: 'not logged in' })
       return
     }
-    setSaving(true)
+
+    const trimmedName = form.name.trim()
     const ageNum = form.age.trim() === '' ? null : parseInt(form.age, 10)
+
     if (form.age.trim() !== '' && (ageNum === null || Number.isNaN(ageNum) || ageNum < 0 || ageNum > 150)) {
       setMessage({ type: 'error', text: 'age must be a number between 0 and 150' })
-      setSaving(false)
       return
     }
-    const { error } = await supabase
+
+    setSaving(true)
+
+    const { error: patientInfoError } = await supabase
       .from('patient_info')
       .upsert(
         {
           id: user.id,
-          name: form.name.trim() || null,
+          name: trimmedName || null,
           birthday: form.birthday || null,
           gender: form.gender.trim() || null,
           age: ageNum,
@@ -107,35 +114,73 @@ export default function PatientYourInformation() {
         { onConflict: 'id' }
       )
 
-    setSaving(false)
-    if (error) {
-      setMessage({ type: 'error', text: error.message })
+    if (patientInfoError) {
+      setSaving(false)
+      setMessage({ type: 'error', text: patientInfoError.message })
       return
     }
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        full_name: trimmedName || null,
+      })
+      .eq('id', user.id)
+
+    setSaving(false)
+
+    if (profileError) {
+      setMessage({
+        type: 'error',
+        text: `patient_info saved, but profiles update failed: ${profileError.message}`,
+      })
+      return
+    }
+
     setMessage({ type: 'success', text: 'saved' })
+
+    setTimeout(() => {
+      window.location.reload()
+    }, 500)
   }
 
-  return (
-    <div className="pd-layout">
-      <PatientSideBar/> 
-      <div className="pd-right">
+ return (
+  <SidebarProvider defaultOpen>
+    <div className="flex min-h-[calc(100vh-96px)]">
+      <PatientSidebar />
+
+      <div className="flex-1 min-w-0">
         <header className="pd-header">
           <div className="pd-header-left">
             <h1 className="pd-header-title">Your information</h1>
             <span className="pd-header-patient">{displayName}</span>
           </div>
+
           <div className="pd-header-actions">
             <div className="pd-profile-wrap">
-              <button type="button" className="pd-profile-btn" onClick={() => setProfileOpen((o) => !o)} aria-expanded={profileOpen} aria-haspopup="true">
+              <button
+                type="button"
+                className="pd-profile-btn"
+                onClick={() => setProfileOpen((o) => !o)}
+                aria-expanded={profileOpen}
+                aria-haspopup="true"
+              >
                 <span className="pd-avatar">{displayName.slice(0, 2).toUpperCase()}</span>
                 <span className="pd-profile-name">{displayName}</span>
                 <span className="pd-chevron">v</span>
               </button>
+
               {profileOpen && (
                 <div className="pd-dropdown" role="menu">
                   <Link to="/" className="pd-dropdown-item">Home</Link>
                   <Link to="/dashboard/patient" className="pd-dropdown-item">Dashboard</Link>
-                  <button type="button" className="pd-dropdown-item" onClick={() => setProfileOpen(false)}>Sign out</button>
+                  <button
+                    type="button"
+                    className="pd-dropdown-item"
+                    onClick={() => setProfileOpen(false)}
+                  >
+                    Sign out
+                  </button>
                 </div>
               )}
             </div>
@@ -146,7 +191,10 @@ export default function PatientYourInformation() {
           <div className="pd-grid">
             <section className="pd-card">
               <h2 className="pd-card-title">Personal details</h2>
-              <p className="pd-card-desc">View and update your information. Only you can see and edit this.</p>
+              <p className="pd-card-desc">
+                View and update your information. Only you can see and edit this.
+              </p>
+
               {loading ? (
                 <p className="pd-empty">Loading...</p>
               ) : (
@@ -161,6 +209,7 @@ export default function PatientYourInformation() {
                       placeholder="Full name"
                     />
                   </div>
+
                   <div className="pd-form-row">
                     <label htmlFor="pi-birthday">Birthday</label>
                     <input
@@ -170,6 +219,7 @@ export default function PatientYourInformation() {
                       onChange={(e) => setForm((f) => ({ ...f, birthday: e.target.value }))}
                     />
                   </div>
+
                   <div className="pd-form-row">
                     <label htmlFor="pi-gender">Gender</label>
                     <input
@@ -180,6 +230,7 @@ export default function PatientYourInformation() {
                       placeholder="Gender"
                     />
                   </div>
+
                   <div className="pd-form-row">
                     <label htmlFor="pi-age">Age</label>
                     <input
@@ -192,6 +243,7 @@ export default function PatientYourInformation() {
                       placeholder="Age"
                     />
                   </div>
+
                   <div className="pd-form-row">
                     <label htmlFor="pi-blood_type">Blood type</label>
                     <select
@@ -201,15 +253,19 @@ export default function PatientYourInformation() {
                     >
                       <option value="">Select</option>
                       {BLOOD_TYPES.map((bt) => (
-                        <option key={bt} value={bt}>{bt}</option>
+                        <option key={bt} value={bt}>
+                          {bt}
+                        </option>
                       ))}
                     </select>
                   </div>
+
                   {message && (
                     <p className={message.type === 'error' ? 'pd-alert pd-alert-warning' : 'pd-card-desc'}>
                       {message.text}
                     </p>
                   )}
+
                   <div className="pd-form-actions">
                     <button type="submit" className="pd-btn pd-btn-primary" disabled={saving}>
                       {saving ? 'Saving...' : 'Save'}
@@ -222,5 +278,6 @@ export default function PatientYourInformation() {
         </main>
       </div>
     </div>
-  )
+  </SidebarProvider>
+)
 }
