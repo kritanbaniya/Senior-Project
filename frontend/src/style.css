@@ -601,13 +601,14 @@ button:focus-visible {
 }
 
 /* ========== Patient Dashboard – Modern Medical UI ========== */
+/*This layout is deprecated*/
 .pd-layout {
   display: flex;
   min-height: 100vh;
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  background: #f8fafc;
+  background: #8D7BEE;
   font-size: 1rem;
   line-height: 1.5;
   color: #1e293b;

@@ -418,7 +418,6 @@ export default function PatientAppointmentManager() {
 
                return(
             <SidebarProvider defaultOpen>
-                <div className="pd-layout">
                     <PatientSidebar />
                         
                     <div className="pd-right">
@@ -471,7 +470,6 @@ export default function PatientAppointmentManager() {
                                 </>)}
                         </div>
                     </div>
-                </div>
             </SidebarProvider>
         );
     }

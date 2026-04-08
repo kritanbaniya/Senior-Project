@@ -203,7 +203,6 @@ export default function PatientDashboard() {
 
       return (
     <SidebarProvider defaultOpen>
-      <div className="pd-layout">
         <PatientSidebar />
 
         <div className="pd-right">
@@ -505,7 +504,6 @@ export default function PatientDashboard() {
             </div>
           </main>
         </div>
-      </div>
     </SidebarProvider>
   )
 }
