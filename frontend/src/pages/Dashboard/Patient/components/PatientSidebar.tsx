@@ -36,7 +36,7 @@ const mainItems: SidebarItem[] = [
     icon: LayoutDashboard,
   },
   {
-    title: "Your Information",
+    title: "My Profile",
     url: "/dashboard/patient/information",
     icon: UserRound,
   },
