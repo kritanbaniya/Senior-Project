@@ -121,14 +121,18 @@ export default function PatientSidebar() {
         <div className="flex items-start justify-between gap-3 group-data-[collapsible=icon]:justify-center">
           <div className="flex min-w-0 items-center gap-3 group-data-[collapsible=icon]:hidden">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
-              <HeartPulse className="h-5 w-5 text-sky-700" />
+              <img
+              src="/assets/ClinicIQ Logo.png"
+              alt="ClinicIQ"
+              className="h-12 w-14 object-contain"
+            />
           </div>
 
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-slate-900">
               ClinicIQ
             </p>
-            <p className="truncate text-xs text-slate-600">
+            <p className="truncate text-xs font-semibold text-slate-600">
               Patient Portal
             </p>
           </div>
@@ -141,7 +145,11 @@ export default function PatientSidebar() {
 
       <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
-          <HeartPulse className="h-5 w-5 text-sky-700" />
+          <img
+            src="/assets/ClinicIQ Logo.png"
+            alt="ClinicIQ"
+            className="h-8 w-8 object-contain"
+          />
         </div>
       </div>
     </SidebarHeader>
