@@ -7,7 +7,6 @@ import {
   CalendarClock,
   FileText,
   Activity,
-  MessageSquare,
   Pill,
   LogOut,
 } from "lucide-react"
@@ -65,11 +64,6 @@ const healthItems: SidebarItem[] = [
     icon: Activity,
   },
   {
-    title: "Messages",
-    url: "/dashboard/patient",
-    icon: MessageSquare,
-  },
-  {
     title: "Prescriptions",
     url: "/dashboard/patient",
     icon: Pill,
@@ -92,9 +86,9 @@ function SidebarLink({
           className={({ isActive }) =>
             [
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              "hover:bg-white/70 hover:text-slate-900",
+              "hover:text-slate-900",
               isActive
-                ? "bg-white text-slate-900 shadow-sm"
+                ? "bg-white text-indigo-900 shadow-sm"
                 : "text-slate-700",
             ].join(" ")
           }
@@ -156,7 +150,7 @@ export default function PatientSidebar() {
 
       <SidebarContent className="bg-[#d8eef7]">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+          <SidebarGroupLabel className="text-[11px] font-bold uppercase tracking-wide text-slate-600">
             Main
           </SidebarGroupLabel>
 
@@ -168,7 +162,7 @@ export default function PatientSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+          <SidebarGroupLabel className="text-[11px] font-bold uppercase tracking-wide text-slate-600">
             Health
           </SidebarGroupLabel>
 
