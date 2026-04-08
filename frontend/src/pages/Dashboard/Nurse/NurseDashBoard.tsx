@@ -92,7 +92,6 @@ export default function NurseDashBoard() {
 
   return (
     <SidebarProvider>
-      <div className="pd-layout">
       <NurseSideBar />
 
       <div className="pd-right">
@@ -186,10 +185,6 @@ export default function NurseDashBoard() {
               </Link>
             </div>
           </div>
-
-          <Link to="/" className="back-link">
-            ← Back to Home
-          </Link>
         </main>
       </div>
 
@@ -245,7 +240,6 @@ export default function NurseDashBoard() {
           </div>
         </div>
       )}
-      </div>
       </SidebarProvider>
   )
 }
