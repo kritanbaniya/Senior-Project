@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase.ts' 
-import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx';
-import type { MemberList, Appointment, AppointmentViewPrefs, AppointmentType, AppointmentFormType } from '@/features/appointment/types.ts';
-import PatientSideBar from './PatientSideBar'
-import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
-
-
+import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
+import type { MemberList, Appointment, AppointmentViewPrefs, AppointmentType, AppointmentFormType } from '@/features/appointment/types.ts'
+import AppointmentForm from '@/features/appointment/AppointmentForm.tsx'
+import PatientSidebar from './components/PatientSidebar.tsx'
+import { SidebarProvider } from '@/components/ui/sidebar'
 
 
 
@@ -417,11 +416,10 @@ export default function PatientAppointmentManager() {
 
 
 
-        return(
-            <>
+               return(
+            <SidebarProvider defaultOpen>
                 <div className="pd-layout">
-                {/* Left sidebar */}
-                <PatientSideBar/> 
+                    <PatientSidebar />
                         
                     <div className="pd-right">
                         <div className="info-box appointments-section">
@@ -474,21 +472,6 @@ export default function PatientAppointmentManager() {
                         </div>
                     </div>
                 </div>
-            </>
+            </SidebarProvider>
         );
-    } 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    }
