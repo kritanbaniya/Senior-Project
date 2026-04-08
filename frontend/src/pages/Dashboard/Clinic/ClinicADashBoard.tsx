@@ -18,6 +18,7 @@ import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
 import ClinicSideBar from './ClinicSideBar'
 import type { ClinicFormData } from './ClinicCreation'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 export type AdminFormData = {
   name: string
@@ -98,7 +99,7 @@ export function useClinicDashboard() {
 }
 
 export default function ClinicADashBoard() {
-  const { profile } = useAuth()
+  const { profile, logout } = useAuth()
   const displayName = profile?.full_name?.trim() || 'Admin'
 
   const [profileOpen, setProfileOpen] = useState(false)
@@ -142,7 +143,6 @@ export default function ClinicADashBoard() {
     void load()
   }, [])
 
-  // creates a new clinic_admin row (first-time profile setup)
   const handleAdminProfileSubmit = async (form: AdminFormData) => {
     setMessage(null)
 
@@ -186,11 +186,11 @@ export default function ClinicADashBoard() {
       title: form.title || null,
       clinic_created: false,
     }
+
     setAdminRow(newRow)
     setMessage({ type: 'success', text: 'profile saved' })
   }
 
-  // updates an existing clinic_admin row
   const handleAdminProfileUpdate = async (form: AdminFormData) => {
     setMessage(null)
 
@@ -233,10 +233,10 @@ export default function ClinicADashBoard() {
           }
         : prev,
     )
+
     setMessage({ type: 'success', text: 'profile updated' })
   }
 
-  // inserts a new clinics row and flips clinic_created on clinic_admin
   const handleClinicCreateSubmit = async (form: ClinicFormData) => {
     setMessage(null)
 
@@ -315,11 +315,10 @@ export default function ClinicADashBoard() {
     }
 
     setClinicRow(insertedClinic as ClinicRow)
-    setAdminRow((prev) => prev ? { ...prev, clinic_created: true } : prev)
+    setAdminRow((prev) => (prev ? { ...prev, clinic_created: true } : prev))
     setMessage({ type: 'success', text: 'clinic created successfully' })
   }
 
-  // updates an existing approved clinic's editable fields
   const handleClinicUpdate = async (form: ClinicFormData) => {
     setMessage(null)
 
@@ -380,39 +379,74 @@ export default function ClinicADashBoard() {
   }
 
   return (
-    <div className="pd-layout">
+    <SidebarProvider>
       <ClinicSideBar />
 
-      <div className="pd-right">
-        <header className="pd-header">
-          <div className="pd-header-left">
-            <h1 className="pd-header-title">Clinic Admin Dashboard</h1>
-            <span className="pd-header-patient">{displayName}</span>
-          </div>
-          <div className="pd-header-actions">
-            <div className="pd-profile-wrap">
-              <button type="button" className="pd-profile-btn" onClick={() => setProfileOpen((o) => !o)} aria-expanded={profileOpen} aria-haspopup="true">
-                <span className="pd-avatar">{displayName.slice(0, 2).toUpperCase()}</span>
-                <span className="pd-profile-name">{displayName}</span>
-                <span className="pd-chevron">v</span>
-              </button>
-              {profileOpen && (
-                <div className="pd-dropdown" role="menu">
-                  <Link to="/" className="pd-dropdown-item">Home</Link>
-                  <Link to="/dashboard/clinic" className="pd-dropdown-item">Dashboard</Link>
-                  <button type="button" className="pd-dropdown-item" onClick={() => setProfileOpen(false)}>Sign out</button>
-                </div>
-              )}
+      <SidebarInset className="min-h-[calc(100vh-60px)]">
+        <div className="flex min-h-[calc(100vh-60px)] flex-col">
+          <header className="pd-header">
+            <div className="pd-header-left">
+              <h1 className="pd-header-title">Clinic Admin Dashboard</h1>
+              <span className="pd-header-patient">{displayName}</span>
             </div>
-          </div>
-        </header>
 
-        <main className="pd-main">
-          <div className="pd-grid">
-            <Outlet context={ctx} />
-          </div>
-        </main>
-      </div>
-    </div>
+            <div className="pd-header-actions">
+              <div className="pd-profile-wrap">
+                <button
+                  type="button"
+                  className="pd-profile-btn"
+                  onClick={() => setProfileOpen((o) => !o)}
+                  aria-expanded={profileOpen}
+                  aria-haspopup="true"
+                >
+                  <span className="pd-avatar">
+                    {displayName.slice(0, 2).toUpperCase()}
+                  </span>
+                  <span className="pd-profile-name">{displayName}</span>
+                  <span className="pd-chevron">v</span>
+                </button>
+
+                {profileOpen && (
+                  <div className="pd-dropdown" role="menu">
+                    <Link
+                      to="/"
+                      className="pd-dropdown-item"
+                      onClick={() => setProfileOpen(false)}
+                    >
+                      Home
+                    </Link>
+
+                    <Link
+                      to="/dashboard/clinic"
+                      className="pd-dropdown-item"
+                      onClick={() => setProfileOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+
+                    <button
+                      type="button"
+                      className="pd-dropdown-item"
+                      onClick={() => {
+                        setProfileOpen(false)
+                        void logout()
+                      }}
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+
+          <main className="pd-main">
+            <div className="pd-grid">
+              <Outlet context={ctx} />
+            </div>
+          </main>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
