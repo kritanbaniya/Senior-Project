@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase.ts' 
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx';
-import type { reqAppointmentTypes, clinicListInfoType, MemberList, Appointment, AppointmentViewPrefs, AppointmentType, AppointmentFormType } from '@/features/appointment/types.ts';
+import type { reqAppointmentTypes, UserClinicRelationship, Appointment, AppointmentViewPrefs, AppointmentType, AppointmentFormType } from '@/features/appointment/types.ts';
 import PatientSideBar from './PatientSideBar'
 import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
 
@@ -85,7 +85,7 @@ export default function PatientAppointmentManager() {
     const [ showClinicSelector, setShowClinicSelector ] = useState<boolean>(true) // decides if form needs to show clinic selector UI 
     const [ clinicReq, setClinicReq ] = useState<string>() // for the Form 
     const [clinicView, setClinicView] = useState<string>() // for the View 
-    const [clinicList, setClinicList] = useState<clinicListInfoType[]>([])
+    const [clinicList, setClinicList] = useState<UserClinicRelationship[]>([])
     // Retrieve clinic ID  
     const loadClinics = async () => {
         const { data: authData, error: authErr } = await supabase.auth.getUser()
@@ -111,7 +111,7 @@ export default function PatientAppointmentManager() {
     }
 
     // Retrieve the Practicianers of selected clinic 
-    const [practicionerList, setPracticionerList] = useState<MemberList[]>([])
+    const [practicionerList, setPracticionerList] = useState<UserClinicRelationship[]>([])
     const retrievePracticioners = async (clinicId: string) => {
         if(clinicId == 'all'){
             setPracticionerList([])
@@ -138,7 +138,7 @@ export default function PatientAppointmentManager() {
 
 
     
-    // const [patientName, setPatientName] = useState<MemberList | undefined>(undefined)
+    // const [patientName, setPatientName] = useState<UserClinicRelationship | undefined>(undefined)
     // const [patientId, setPatientId] = useState<string>()
     type patientInfoType = {
         created_at : string, 

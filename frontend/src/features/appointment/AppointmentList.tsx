@@ -1,5 +1,5 @@
 import { useMemo, useEffect,  useState } from "react";
-import type {  Appointment, ApptProps} from "./types.ts"; 
+import type {  AppointmentType, Appointment, ApptProps, SearchBy } from "./types.ts"; 
 import { Button } from "@/components/ui/button.tsx";
 import { Switch } from "radix-ui";
 
@@ -11,117 +11,219 @@ import { Switch } from "radix-ui";
 
 
 export default function AppointmentList({
-  appointments,
-  reqAppointments, 
+  appointments, 
   onSelectAppointment,
-  onDeleteAppointment,
-  // onSelectSlot,
+  onDeleteAppointment, 
   viewPrefs,
   totalPages,
   onUpdateViewPrefs,
-}: ApptProps) { 
-  // pull info from view pref obj 
-  let page = viewPrefs ? (viewPrefs.page) : (1)
-  const safeTotalPages = totalPages ?? 1
-  // let totalPages = viewPrefs ? (viewPrefs.totalpages) : (1)
-  // console.log(totalPages)
+}: ApptProps) {  
+    //// PAGE and ROW ADJUSTMENTS 
+    // Validate that the number in the input box is an integer, and follows the min and max 
+    let page = viewPrefs ? (viewPrefs.page) : (1)
+    const safeTotalPages = totalPages ?? 1 
+    const [rowsInput, setRowsInput] = useState(Number(viewPrefs.rowsPerPage))
+    const commitRowsPerPage = () => {
+        const parsed = Number(rowsInput)
+        if ((Number.isInteger(parsed)) && (parsed > 0) && (parsed < 201)) {
+        onUpdateViewPrefs({ rowsPerPage: parsed })
+        return
+        } else { 
+        setRowsInput(viewPrefs.rowsPerPage)
+        console.log("ROW SETTING ERROR")
+        }
+    }
+    const [pageNum, setPageNum] = useState(Number(viewPrefs.page))
+    const CommitPageNumber = () => {
+        const parsed = Number(pageNum)
+        if ((Number.isInteger(parsed)) && (parsed > 0) && (parsed <= safeTotalPages)) {
+        onUpdateViewPrefs({ page: parsed })
+        return
+        } else { 
+        setPageNum(viewPrefs.page)
+        console.log("PAGE SETTING ERROR")
+        }
+    }
 
-  const [ searchType , setSearchType ] = useState<string>('')
-  const [ search , setSearch ] = useState<string>('') 
 
-  // Validate that the number in the input box is an integer, and follows the min and max 
-  const [rowsInput, setRowsInput] = useState(Number(viewPrefs.rowsPerPage))
-  const commitRowsPerPage = () => {
-    const parsed = Number(rowsInput)
-    if ((Number.isInteger(parsed)) && (parsed > 0) && (parsed < 201)) {
-      onUpdateViewPrefs({ rowsPerPage: parsed })
-      return
-    } else { 
-      setRowsInput(viewPrefs.rowsPerPage)
-      console.log("ROW SETTING ERROR")
+
+
+    //// SEARCH STATES 
+    const searchByTypes: { label: string; value: SearchBy }[] = [
+        { label: 'Search by...', value: '' },
+        { label: 'Date Range', value: 'date range' },
+        { label: 'Visit Type', value: 'visit type' },
+        { label: 'Patient', value: 'patient' },
+        { label: 'Provider', value: 'provider' },
+        { label: 'Clinic', value: 'clinic' }, // if nurse dont have 
+    ]
+    const [ searchBy , setSearchBy ] = useState<SearchBy>('') 
+    // remember input values 
+    const [ searchValue , setSearchValue ] = useState<string>('') 
+    const [ searchStart , setSearchStart ] = useState<string>('') 
+    const [ searchEnd , setSearchEnd ] = useState<string>('') 
+
+    // SEARCH BY: visit Type 
+    const ApptTypeList : { label: string; value: AppointmentType }[] = [
+        { label: 'visit type...', value: '' },
+        { label: 'General Check-up', value: 'General Check-up' },
+        { label: 'Follow-up', value: 'Follow-up' },
+        { label: 'Consultation', value: 'Consultation' },
+        { label: 'Vaccination', value: 'Vaccination' },
+        { label: 'Lab Work', value: 'Lab Work' } 
+    ]
+    const [ searchApptType , setSearchApptType ] = 
+        useState<AppointmentType>('')
+
+
+
+    // DISPLAY DIFFERENT INPUT TYPES PER SEARCH TYPE 
+    function renderSearchControl() {
+        switch (searchBy) {
+            // DATE RANGE 
+            case 'date range':
+            return <div className = "flex ml-3 w-full items-center">
+                <p className = "">
+                    From: </p>
+                <input
+                    className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg text-gray-400" 
+                    id="start-date"
+                    type="date" 
+                    value={searchStart}
+                    onChange={e => setSearchStart(e.target.value as string)}
+                    placeholder="search by ..." 
+                /> 
+                <p className=""> 
+                    to </p>
+                <input
+                    className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg text-gray-400"
+                    id="end-date"
+                    type="date" 
+                    value={searchEnd}
+                    onChange={e => setSearchEnd(e.target.value as string)}
+                    placeholder="search by ..." 
+                /> 
+                </div>
+
+
+            // VISIT TYPE
+            case 'visit type':
+            return <select 
+            value={searchApptType}
+            onChange={e => setSearchApptType(e.target.value as AppointmentType)} 
+            className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg text-gray-400">
+                {ApptTypeList.map((d) => (<option value={d.value} key={(d.value)+'visit'}>
+                    {d.label} 
+                </option>))}
+            </select>
+
+
+            // PATIENT NAME 
+            case 'patient':
+            return <input type="text" 
+                className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg text-gray-400"
+                placeholder="Patient name" />
+
+
+            // PROVIDER NAME 
+            case 'provider':
+            return <input type="text" 
+                className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg"
+                placeholder="Provider name" />
+
+            
+            // PROVIDER NAME 
+            case 'clinic':
+            return <input type="text" 
+                className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg"
+                placeholder="Clinic name" />
+
+
+            // default
+            case '':
+            return <input
+                    className = "p-2 m-3 w-full bg-white rounded-lg"
+                    id="search-disabled"
+                    type="text"
+                    disabled
+                    value={searchValue}
+                    onChange={e => setSearchValue(e.target.value as SearchBy)}
+                    placeholder="Search through Appointments" 
+                />   
+        }
+    }
+
+
+
+    function getStatusColor(status: string): string {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-600 border-[#F5F3EE]"
+      case "unseen":
+        return "bg-red-700 border-[#F5F3EE]"
+      case "canceled":
+        return "bg-slate-400 border-[#F5F3EE]"
+      case "deserted":
+        return "bg-yellow-500 border-[#F5F3EE]"
+      case "active":
+        return "bg-green-500 border-[#F5F3EE]"
+      case "completed":
+        return "bg-[#7c86ff] border-[#F5F3EE]"
+      default:
+        return "bg-slate-300 border-[#F5F3EE]"
     }
   }
 
 
-  const [pageNum, setPageNum] = useState(Number(viewPrefs.page))
-  const CommitPageNumber = () => {
-    const parsed = Number(pageNum)
-    if ((Number.isInteger(parsed)) && (parsed > 0) && (parsed <= safeTotalPages)) {
-      onUpdateViewPrefs({ page: parsed })
-      return
-    } else { 
-      setPageNum(viewPrefs.page)
-      console.log("PAGE SETTING ERROR")
-    }
-  }
 
 
-  useEffect(()=>{
-    setPageNum(Number(page))
-  }, [page, rowsInput])
- 
-  useEffect(()=>{
-    // console.log(
-    //   "ROWs AND PAGE:", 
-    //   rowsInput, pageNum
-    // )
-  }, [rowsInput, pageNum])
 
-  const Totalappointments: Appointment[] = useMemo(() => {
-    
-    if (viewPrefs.showReqs === 'Both'){ 
-      const merged = [...appointments, ...reqAppointments]; 
-      return merged}
-    else if (viewPrefs.showReqs === 'Requests'){ 
-      return reqAppointments}
-    else if (viewPrefs.showReqs === 'Hide'){ 
-      return appointments}
-    
-    return []
-  }, [reqAppointments, appointments, viewPrefs.showReqs])
+    //// REACT HOOKS 
+    useEffect(()=>{
+        setPageNum(Number(page))
+    }, [page, rowsInput])
+  
+  
 
 
   return (
     <div className="nurse-appointment-list border border-[var(--border)] p-2 rounded-lg">
       
-      <p className="small-label">Appointments</p>
-      {/* SEARCHBAR */}
+      {/* <p className="small-label">Appointments</p> */}
+      {/* SEARCH SETTINGS */}
       <div className="flex">
-        <input
-          className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg"
-          id="search"
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="search by ..." 
-        />
-        
+        {/* SEARCHBAR */}
+        <> {renderSearchControl()} </>
+        {/* SEARCHBY DROPDOWN */}
         <select
-          onChange={(e) => setSearchType(() => (e.target.value))}
+          onChange={(e) => setSearchBy( e.target.value as SearchBy)}
           className = "p-2 m-3 w-1/3 bg-[#F5F3EE] rounded-lg">
-            <option value="">select an option</option>
-            <option value ="date">Date</option>
-            <option value ="provider">Provider</option>
-            <option value ="type">Type</option>
-            <option value ="patient">Patient</option>
+            {searchByTypes.map((d) => (
+              <option key={d.value+"-SearchBy"} value={d.value}>
+              {d.label}
+              </option>
+            ))} 
         </select>
-        <div></div>
+        {/* search button? */}
+        <div>
+        </div>
       </div>
 
       {/* THE LIST ITSELF */}
       <div className="overflow-x-auto rounded-md m-3">
         <ul className="appointment-list min-w-[760px]">
           {/* header */}
-          <div className="bg-[#90a1b9] grid grid-cols-[100px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm font-semibold text-slate-500">
-            <span className = "text-black">Date</span>
-            <span className = "text-black">Time</span>
-            <span className = "text-black">Provider</span>
-            <span className = "text-black">Type</span>
-            <span className = "text-black">Patient</span>
-            <span className = "text-black">Actions</span>
+          <div className="bg-[#90a1b9] grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm font-semibold text-slate-500">
+            <button className = "text-black text-start"> </button>
+            <button className = "text-black text-start">Date</button>
+            <button className = "text-black text-start">Time</button>
+            <button className = "text-black text-start">Provider</button>
+            <button className = "text-black text-start">Type</button>
+            <button className = "text-black text-start">Patient</button>
+            <button className = "text-black text-start">Actions</button>
           </div>
           {/* rows */}
-          {Totalappointments.map((apt) => {
+          {appointments.map((apt) => {
             // Convert timestamp from SQL to human readable local time  
             const dt = new Date(apt.appointment_date)
             const dateText = Number.isNaN(dt.getTime())
@@ -136,9 +238,11 @@ export default function AppointmentList({
             return (
               <li
                 key={apt.Appointment_id}
-                className="bg-[#F5F3EE] grid grid-cols-[100px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm text-slate-700"
-              >
-                {/* columns! Design the colors better */}
+                className="bg-[#F5F3EE] grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm text-slate-700"
+              > 
+                <div className="flex"> {/* justify-center*/}
+                  <span className={`inline-block h-3 w-3 rounded-full border border-solid ${getStatusColor(apt.appointment_status)}`} />
+                </div>
                 <span className = "font-bold">{dateText}</span>
                 <span>{timeText}</span>
                 <span>{apt.clinician_name}</span>
@@ -171,10 +275,9 @@ export default function AppointmentList({
           })}
         </ul>
       </div>
-
-
+ 
       <hr className="m-5 border-2 border-solid rad rounded-xl"></hr>
-      {/* SET THE VIEW PREFERENCES */}
+      {/* SET VIEW PREFERENCES */}
       <div>
         <label className="flex items-center gap-2 justify-between">
           {/* Display Past Switch */}
