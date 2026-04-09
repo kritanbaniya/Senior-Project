@@ -1429,6 +1429,18 @@ button:focus-visible {
 .clinic-discovery .cd-back:hover {
   text-decoration: underline;
 }
+.clinic-discovery-map .cd-back-floating {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 3;
+  margin-top: 0;
+  padding: 0.45rem 0.7rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0,0,0,0.12);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
 @media (max-width: 768px) {
   .clinic-discovery-map {
     min-height: calc(100vh - 6rem);
@@ -1460,6 +1472,11 @@ button:focus-visible {
   .clinic-discovery-map .cd-toggle-show {
     left: 0.8rem;
     top: auto;
+    bottom: 0.5rem;
+  }
+  .clinic-discovery-map .cd-back-floating {
+    left: auto;
+    right: 0.8rem;
     bottom: 0.5rem;
   }
 }

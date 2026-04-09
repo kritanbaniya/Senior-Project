@@ -13,7 +13,10 @@ const NYC_BOUNDS: [[number, number], [number, number]] = [
     [-74.2591, 40.4774],
     [-73.7002, 40.9176],
 ]
-const MAP_STYLE_URL = 'https://demotiles.maplibre.org/style.json'
+const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY?.trim() ?? ''
+const MAP_STYLE_URL = MAPTILER_KEY
+    ? `https://api.maptiler.com/maps/streets-v4/style.json?key=${MAPTILER_KEY}`
+    : null
 
 export default function ClinicDiscoveryPage() {
     const navigate = useNavigate()
@@ -46,6 +49,10 @@ export default function ClinicDiscoveryPage() {
         if (!mapContainerRef.current || mapRef.current) {
             return
         }
+        if (!MAP_STYLE_URL) {
+            console.error('missing VITE_MAPTILER_KEY. map initialization skipped.')
+            return
+        }
 
         mapRef.current = new maplibregl.Map({
             container: mapContainerRef.current,
@@ -55,6 +62,9 @@ export default function ClinicDiscoveryPage() {
             minZoom: 9.7,
             maxZoom: 16,
             maxBounds: NYC_BOUNDS,
+        })
+        mapRef.current.on('error', (evt) => {
+            console.error('maplibre style or tile load error', evt.error)
         })
         mapRef.current.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
@@ -184,9 +194,6 @@ export default function ClinicDiscoveryPage() {
                             )}
                         </>
                     )}
-                    {!loading && (
-                        <Link to="/" className="cd-back">← Back to Home</Link>
-                    )}
                 </section>
             </div>
 
@@ -201,6 +208,7 @@ export default function ClinicDiscoveryPage() {
                     Show clinics
                 </button>
             )}
+            <Link to="/" className="cd-back cd-back-floating">← Back to Home</Link>
         </div>
     )
 }
