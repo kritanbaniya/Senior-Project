@@ -43,7 +43,7 @@ const mainItems: SidebarItem[] = [
 
 const workItems: SidebarItem[] = [
   {
-    title: "Appointments",
+    title: "Appointment Manager",
     url: "/dashboard/nurse/appointments",
     icon: CalendarClock,
   },
