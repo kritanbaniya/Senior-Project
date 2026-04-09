@@ -197,7 +197,7 @@ export default function AppointmentList({
         {/* SEARCHBY DROPDOWN */}
         <select
           onChange={(e) => setSearchBy( e.target.value as SearchBy)}
-          className = "p-2 m-3 w-1/3 bg-[#F5F3EE] rounded-lg">
+          className = "p-2 m-3 w-1/3 bg-white border  rounded-lg">
             {searchByTypes.map((d) => (
               <option key={d.value+"-SearchBy"} value={d.value}>
               {d.label}

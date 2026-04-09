@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabase.ts'
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx';
 import type { reqAppointmentTypes, UserClinicRelationship, Appointment, AppointmentViewPrefs, AppointmentType, AppointmentFormType } from '@/features/appointment/types.ts';
 import PatientSideBar from './PatientSideBar'
-import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
+import AppointmentForm from '@/features/appointment/ApptCreateModal.tsx';
 
 
 // clinicView is for adjusting what appointments can be seen 

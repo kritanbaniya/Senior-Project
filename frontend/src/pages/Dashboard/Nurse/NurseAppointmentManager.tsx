@@ -9,8 +9,8 @@ import type {
   AppointmentType ,  
   UpdateApptForm
 } from "@/features/appointment/types.ts"; 
-import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
-import AppointmentEditModal from '@/features/appointment/AppointmentEditModel.tsx';
+import AppointmentForm from '@/features/appointment/ApptCreateModal.tsx';
+import AppointmentEditModal from '@/features/appointment/ApptEditModel.tsx';
 import NurseSideBar from './NurseSideBar';  
 import { 
     // UPDATE API THINGS 
