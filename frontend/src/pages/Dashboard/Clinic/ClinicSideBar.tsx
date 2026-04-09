@@ -54,11 +54,10 @@ function SidebarLink({ item }: { item: SidebarItem }) {
           end={item.url === "/dashboard/clinic"}
           className={({ isActive }) =>
             [
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              "hover:text-slate-900",
+              "flex items-center gap-3 px-3 py-2 font-medium transition-colors rounded-md",
               isActive
                 ? "bg-white text-indigo-900 shadow-sm"
-                : "text-slate-700",
+                : "text-slate-700 hover:bg-white/60 hover:text-indigo-700",
             ].join(" ")
           }
         >
