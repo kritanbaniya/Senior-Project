@@ -343,7 +343,7 @@ export default function PatientDashboard() {
             </div>
 
             <div className="xl:col-span-3">
-              <DashboardPanel title="Upcoming appointments" id="appointments" classname="min-h-[400px]">
+              <DashboardPanel title="Upcoming appointments" id="appointments" className="min-h-[400px]">
                 {upcomingAppointments.length === 0 ? (
                   <p className="text-sm text-slate-500">No upcoming appointments.</p>
                 ) : (
