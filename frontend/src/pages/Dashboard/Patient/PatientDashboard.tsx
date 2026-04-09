@@ -27,9 +27,8 @@ type VisitRecord = {
 
 type Medication = { id: string; name: string; dosage: string; schedule: string }
 type Vital = { label: string; value: string; unit: string; status?: 'normal' | 'warning' }
-type LabPoint = { label: string; value: number; max: number } // for simple bar chart
+type LabPoint = { label: string; value: number; max: number }
 
-// Mock data – replace with Supabase/API
 const MOCK_DOCTORS = ['Dr. Smith', 'Dr. Lee', 'Dr. Johnson']
 const MOCK_APPOINTMENT_TYPES = ['General Check-up', 'Follow-up', 'Consultation', 'Vaccination', 'Lab Work']
 
@@ -94,6 +93,37 @@ export type PatientInfo = {
   name: string | null
 }
 
+function DashboardPanel({
+  title,
+  id,
+  children,
+  className = '',
+}: {
+  title: string
+  id?: string
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <section
+      id={id}
+      className={[
+        'w-full overflow-hidden rounded-2xl bg-white/95 border border-slate-200/70',
+        'shadow-[0px_4px_14px_rgba(15,23,42,0.08)]',
+        'transition-all duration-300 ease-out motion-reduce:transition-none',
+        'hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0px_20px_40px_rgba(15,23,42,0.14)]',
+        'backdrop-blur-sm',
+        className,
+      ].join(' ')}
+    >
+      <div className="border-b border-slate-200/80 px-6 py-5">
+        <h2 className="text-xl font-semibold text-slate-800">{title}</h2>
+      </div>
+      <div className="px-6 py-5">{children}</div>
+    </section>
+  )
+}
+
 export default function PatientDashboard() {
   const location = useLocation()
   const { selectedClinicId, selectedClinicName, setSelectedClinicId, setSelectedClinicName } = useClinicContext()
@@ -115,9 +145,11 @@ export default function PatientDashboard() {
     type: MOCK_APPOINTMENT_TYPES[0],
     reason: '',
   })
-  const [profileOpen, setProfileOpen] = useState(false) 
+  const [profileOpen, setProfileOpen] = useState(false)
   const [info, setInfo] = useState<PatientInfo | null>(null)
+
   const activeClinicId = selectedClinicId
+
   const {
     loading: queueLoading,
     error: queueError,
@@ -138,9 +170,8 @@ export default function PatientDashboard() {
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        return
-      }
+      if (!user) return
+
       const { data, error } = await supabase
         .from('patient_info')
         .select('id, name, birthday, gender, age, blood_type')
@@ -153,13 +184,16 @@ export default function PatientDashboard() {
         setInfo(null)
       }
     }
+
     void load()
   }, [])
+
   const displayName = info?.name?.trim() || MOCK_PATIENT.name
   const todayStr = new Date().toISOString().slice(0, 10)
 
   const handleScheduleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
     const newApt: Appointment = {
       id: String(Date.now()),
       date: scheduleForm.date,
@@ -168,8 +202,18 @@ export default function PatientDashboard() {
       type: scheduleForm.type,
       status: 'scheduled',
     }
-    setAppointments((prev) => [...prev, newApt].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)))
-    setScheduleForm({ date: '', time: '', doctor: MOCK_DOCTORS[0], type: MOCK_APPOINTMENT_TYPES[0], reason: '' })
+
+    setAppointments((prev) =>
+      [...prev, newApt].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)),
+    )
+
+    setScheduleForm({
+      date: '',
+      time: '',
+      doctor: MOCK_DOCTORS[0],
+      type: MOCK_APPOINTMENT_TYPES[0],
+      reason: '',
+    })
     setShowScheduleForm(false)
   }
 
@@ -185,291 +229,370 @@ export default function PatientDashboard() {
     setShowConsentForm(false)
   }
 
-  const upcomingAppointments = appointments.filter((a) => ['scheduled', 'confirmed', 'checked_in'].includes(a.status))
+  const upcomingAppointments = appointments.filter((a) =>
+    ['scheduled', 'confirmed', 'checked_in'].includes(a.status),
+  )
   const recentRecords = MOCK_RECORDS.slice(0, 2)
-  /*if (!true) {
-    return (
-      <div className="pd-layout pd-login-required">
-        <div className="pd-login-required-content">
-          <p className="pd-login-required-text">Please log in first</p>
-          <p className="pd-login-required-hint">Log in to use the patient portal — view appointments, queue status, and medical records.</p>
-          <button type="button" className="pd-btn pd-btn-primary pd-login-required-btn" onClick={onOpenLogin}>
-            Log in
-          </button>
-        </div>
-      </div>
-    )
-  }*/
 
-      return (
+  return (
     <SidebarProvider defaultOpen>
-        <PatientSidebar />
+      <PatientSidebar />
 
-        <div className="pd-right">
-          {/* Top header */}
-          <header className="pd-header">
-            <div className="pd-header-left">
-              <h1 className="pd-header-title">Patient Dashboard</h1>
-              <span className="pd-header-patient">{displayName}</span>
+      <div className="pd-right">
+        <header className="pd-header">
+          <div className="pd-header-left">
+            <h1 className="pd-header-title">Patient Dashboard</h1>
+            <span className="pd-header-patient">{displayName}</span>
+          </div>
+
+          <div className="pd-header-actions">
+            <div className="pd-search-wrap">
+              <span className="pd-search-icon" aria-hidden>🔍</span>
+              <input type="search" className="pd-search" placeholder="Search..." aria-label="Search" />
             </div>
-            <div className="pd-header-actions">
-              <div className="pd-search-wrap">
-                <span className="pd-search-icon" aria-hidden>🔍</span>
-                <input type="search" className="pd-search" placeholder="Search..." aria-label="Search" />
-              </div>
-              <button type="button" className="pd-icon-btn" aria-label="Notifications">
-                <span className="pd-bell">🔔</span>
-                {MOCK_ALERTS.length > 0 && <span className="pd-badge">{MOCK_ALERTS.length}</span>}
+
+            <button type="button" className="pd-icon-btn" aria-label="Notifications">
+              <span className="pd-bell">🔔</span>
+              {MOCK_ALERTS.length > 0 && <span className="pd-badge">{MOCK_ALERTS.length}</span>}
+            </button>
+
+            <div className="pd-profile-wrap">
+              <button
+                type="button"
+                className="pd-profile-btn"
+                onClick={() => setProfileOpen((o) => !o)}
+                aria-expanded={profileOpen}
+                aria-haspopup="true"
+              >
+                <span className="pd-avatar">{displayName.slice(0, 2).toUpperCase()}</span>
+                <span className="pd-profile-name">{displayName}</span>
+                <span className="pd-chevron">▼</span>
               </button>
-              <div className="pd-profile-wrap">
-                <button
-                  type="button"
-                  className="pd-profile-btn"
-                  onClick={() => setProfileOpen((o) => !o)}
-                  aria-expanded={profileOpen}
-                  aria-haspopup="true"
-                >
-                  <span className="pd-avatar">{displayName.slice(0, 2).toUpperCase()}</span>
-                  <span className="pd-profile-name">{displayName}</span>
-                  <span className="pd-chevron">▼</span>
-                </button>
-                {profileOpen && (
-                  <div className="pd-dropdown" role="menu">
-                    <Link to="/" className="pd-dropdown-item">Home</Link>
-                    <button type="button" className="pd-dropdown-item" onClick={() => setProfileOpen(false)}>
-                      Sign out
-                    </button>
-                  </div>
-                )}
-              </div>
+
+              {profileOpen && (
+                <div className="pd-dropdown" role="menu">
+                  <Link to="/" className="pd-dropdown-item">Home</Link>
+                  <button type="button" className="pd-dropdown-item" onClick={() => setProfileOpen(false)}>
+                    Sign out
+                  </button>
+                </div>
+              )}
             </div>
-          </header>
+          </div>
+        </header>
 
-          {/* Main content – card grid */}
-          <main className="pd-main">
+        <main className="pd-main">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+            <div className="xl:col-span-3">
+              <DashboardPanel title="Patient overview" id="overview" className="h-full">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Age</span>
+                    <span className="text-base font-semibold text-slate-800">{info ? info.age : '-'}</span>
+                  </div>
 
-            <div className="pd-grid">
-              <section className="pd-card pd-card-overview" id="overview">
-                <h2 className="pd-card-title">Patient overview</h2>
-                <div className="pd-overview-grid">
-                  <div className="pd-overview-item">
-                    <span className="pd-overview-label">Age</span>
-                    <span className="pd-overview-value">{info ? info.age : '-'}</span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Gender</span>
+                    <span className="text-base font-semibold text-slate-800">{info ? info.gender : '-'}</span>
                   </div>
-                  <div className="pd-overview-item">
-                    <span className="pd-overview-label">Gender</span>
-                    <span className="pd-overview-value">{info ? info.gender : '-'}</span>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Patient ID</span>
+                    <span className="font-mono text-base font-semibold text-slate-800">-</span>
                   </div>
-                  <div className="pd-overview-item">
-                    <span className="pd-overview-label">Patient ID</span>
-                    <span className="pd-overview-value pd-mono">-</span>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Blood Type</span>
+                    <span className="font-mono text-base font-semibold text-slate-800">{info ? info.blood_type : '-'}</span>
                   </div>
-                  <div className="pd-overview-item">
-                    <span className="pd-overview-label">Blood Type</span>
-                    <span className="pd-overview-value pd-mono">{info ? info.blood_type : '-'}</span>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Birthday</span>
+                    <span className="font-mono text-base font-semibold text-slate-800">{info ? info.birthday : '-'}</span>
                   </div>
-                  <div className="pd-overview-item">
-                    <span className="pd-overview-label">Birthday</span>
-                    <span className="pd-overview-value pd-mono">{info ? info.birthday : '-'}</span>
-                  </div>
-                  <div className="pd-overview-item">
-                    <span className="pd-overview-label">Status</span>
-                    <span className="pd-overview-value pd-status-badge">{info ? 'active' : 'inactive'}</span>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</span>
+                    <span className="inline-flex w-fit rounded-md bg-emerald-100 px-2.5 py-1 text-sm font-semibold text-emerald-700">
+                      {info ? 'active' : 'inactive'}
+                    </span>
                   </div>
                 </div>
-              </section>
+              </DashboardPanel>
+            </div>
 
-              <PatientQueueCard
-                clinicSelected={Boolean(activeClinicId)}
-                selectedClinicName={selectedClinicName}
-                loading={queueLoading}
-                row={queueRow}
-                activePosition={activePosition}
-                peopleAhead={peopleAhead}
-                exitState={exitState}
-                onJoin={join}
-                onLeave={leave}
-                onClearClinic={() => {
-                  setSelectedClinicId(null)
-                  setSelectedClinicName(null)
-                }}
-              />
+            <div className="xl:col-span-3">
+              <div className="transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02]">
+                <PatientQueueCard
+                  clinicSelected={Boolean(activeClinicId)}
+                  selectedClinicName={selectedClinicName}
+                  loading={queueLoading}
+                  row={queueRow}
+                  activePosition={activePosition}
+                  peopleAhead={peopleAhead}
+                  exitState={exitState}
+                  onJoin={join}
+                  onLeave={leave}
+                  onClearClinic={() => {
+                    setSelectedClinicId(null)
+                    setSelectedClinicName(null)
+                  }}
+                />
+              </div>
+              {queueError && <p className="mt-3 text-sm text-slate-500">{queueError}</p>}
+            </div>
 
-              {queueError && <p className="pd-empty">{queueError}</p>}
-
-              <section className="pd-card pd-card-appointments" id="appointments">
-                <h2 className="pd-card-title">Upcoming appointments</h2>
+            <div className="xl:col-span-3">
+              <DashboardPanel title="Upcoming appointments" id="appointments" className="h-full">
                 {upcomingAppointments.length === 0 ? (
-                  <p className="pd-empty">No upcoming appointments.</p>
+                  <p className="text-sm text-slate-500">No upcoming appointments.</p>
                 ) : (
-                  <ul className="pd-list pd-apt-list">
+                  <ul className="flex flex-col gap-3">
                     {upcomingAppointments.map((apt) => (
-                      <li key={apt.id} className="pd-apt-item">
-                        <span className="pd-apt-date">{apt.date}</span>
-                        <span className="pd-apt-time">{apt.time}</span>
-                        <span className="pd-apt-doctor">{apt.doctor}</span>
-                        <span className="pd-apt-type">{apt.type}</span>
-                        <span className={`pd-apt-status pd-status-${apt.status}`}>
-                          {apt.status.replace('_', ' ')}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                {!showScheduleForm ? (
-                  <button
-                    type="button"
-                    className="pd-btn pd-btn-secondary pd-btn-sm"
-                    onClick={() => setShowScheduleForm(true)}
-                  >
-                    Book appointment
-                  </button>
-                ) : (
-                  <form className="pd-form" onSubmit={handleScheduleSubmit}>
-                    <div className="pd-form-row">
-                      <label>Date</label>
-                      <input
-                        type="date"
-                        value={scheduleForm.date}
-                        onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))}
-                        min={todayStr}
-                        required
-                      />
-                    </div>
-                    <div className="pd-form-row">
-                      <label>Time</label>
-                      <input
-                        type="time"
-                        value={scheduleForm.time}
-                        onChange={(e) => setScheduleForm((f) => ({ ...f, time: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="pd-form-row">
-                      <label>Provider</label>
-                      <select
-                        value={scheduleForm.doctor}
-                        onChange={(e) => setScheduleForm((f) => ({ ...f, doctor: e.target.value }))}
-                      >
-                        {MOCK_DOCTORS.map((d) => (
-                          <option key={d} value={d}>{d}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="pd-form-row">
-                      <label>Visit type</label>
-                      <select
-                        value={scheduleForm.type}
-                        onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value }))}
-                      >
-                        {MOCK_APPOINTMENT_TYPES.map((t) => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="pd-form-actions">
-                      <button type="submit" className="pd-btn pd-btn-primary">Confirm</button>
-                      <button
-                        type="button"
-                        className="pd-btn pd-btn-secondary"
-                        onClick={() => setShowScheduleForm(false)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </section>
-
-              <section className="pd-card pd-card-records" id="records">
-                <h2 className="pd-card-title">Recent medical records</h2>
-                {recentRecords.length === 0 ? (
-                  <p className="pd-empty">No recent records.</p>
-                ) : (
-                  <ul className="pd-list pd-records-list">
-                    {recentRecords.map((rec) => (
-                      <li key={rec.id} className="pd-record-item">
-                        <div className="pd-record-meta">
-                          <span className="pd-record-date">{rec.date}</span>
-                          <span className="pd-record-doctor">{rec.doctor}</span>
+                      <li key={apt.id} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-semibold text-slate-800">{apt.date}</span>
+                          <span
+                            className={[
+                              'rounded-md px-2 py-1 text-xs font-semibold',
+                              apt.status === 'confirmed'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : apt.status === 'checked_in'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : 'bg-indigo-100 text-indigo-700',
+                            ].join(' ')}
+                          >
+                            {apt.status.replace('_', ' ')}
+                          </span>
                         </div>
-                        <p className="pd-record-summary">{rec.summary}</p>
+                        <div className="mt-2 text-sm text-slate-600">{apt.time}</div>
+                        <div className="text-sm text-slate-700">{apt.doctor}</div>
+                        <div className="text-sm text-slate-500">{apt.type}</div>
                       </li>
                     ))}
                   </ul>
                 )}
-                <Link to="/dashboard/patient#records" className="pd-link">View all records</Link>
-              </section>
 
-              <section className="pd-card pd-card-lab" id="lab">
-                <h2 className="pd-card-title">Lab results summary</h2>
-                <div className="pd-lab-chart">
+                <div className="mt-4">
+                  {!showScheduleForm ? (
+                    <button
+                      type="button"
+                      className="rounded-lg bg-indigo-400 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                      onClick={() => setShowScheduleForm(true)}
+                    >
+                      Book appointment
+                    </button>
+                  ) : (
+                    <form className="flex flex-col gap-3" onSubmit={handleScheduleSubmit}>
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Date</label>
+                        <input
+                          type="date"
+                          value={scheduleForm.date}
+                          onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))}
+                          min={todayStr}
+                          required
+                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Time</label>
+                        <input
+                          type="time"
+                          value={scheduleForm.time}
+                          onChange={(e) => setScheduleForm((f) => ({ ...f, time: e.target.value }))}
+                          required
+                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Provider</label>
+                        <select
+                          value={scheduleForm.doctor}
+                          onChange={(e) => setScheduleForm((f) => ({ ...f, doctor: e.target.value }))}
+                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
+                        >
+                          {MOCK_DOCTORS.map((d) => (
+                            <option key={d} value={d}>{d}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Visit type</label>
+                        <select
+                          value={scheduleForm.type}
+                          onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value }))}
+                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
+                        >
+                          {MOCK_APPOINTMENT_TYPES.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="mt-2 flex gap-3">
+                        <button type="submit" className="rounded-lg bg-indigo-400 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500">
+                          Confirm
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                          onClick={() => setShowScheduleForm(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              </DashboardPanel>
+            </div>
+
+            <div className="xl:col-span-3">
+              <DashboardPanel title="Recent medical records" id="records" className="h-full">
+                {recentRecords.length === 0 ? (
+                  <p className="text-sm text-slate-500">No recent records.</p>
+                ) : (
+                  <ul className="flex flex-col gap-3">
+                    {recentRecords.map((rec) => (
+                      <li key={rec.id} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        <div className="mb-2 flex flex-wrap gap-2 text-sm">
+                          <span className="font-semibold text-sky-700">{rec.date}</span>
+                          <span className="text-slate-500">{rec.doctor}</span>
+                        </div>
+                        <p className="text-sm leading-6 text-slate-600">{rec.summary}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <Link to="/dashboard/patient#records" className="mt-4 inline-block text-sm font-medium text-sky-600 hover:underline">
+                  View all records
+                </Link>
+              </DashboardPanel>
+            </div>
+
+            <div className="xl:col-span-3">
+              <DashboardPanel title="Lab results summary" id="lab" className="h-full">
+                <div className="flex flex-col gap-4">
                   {MOCK_LAB_CHART.map((point) => (
-                    <div key={point.label} className="pd-lab-bar-wrap">
-                      <span className="pd-lab-label">{point.label}</span>
-                      <div className="pd-lab-bar-bg">
+                    <div key={point.label} className="grid grid-cols-[80px_1fr_40px] items-center gap-2 text-sm">
+                      <span className="font-medium text-slate-600">{point.label}</span>
+                      <div className="h-2 overflow-hidden rounded-full bg-slate-200">
                         <div
-                          className="pd-lab-bar-fill"
+                          className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600 transition-all"
                           style={{ width: `${Math.min(100, (point.value / point.max) * 100)}%` }}
                         />
                       </div>
-                      <span className="pd-lab-value">{point.value}</span>
+                      <span className="text-right font-semibold text-slate-800">{point.value}</span>
                     </div>
                   ))}
                 </div>
-                <p className="pd-card-note">Values within reference range. Last updated Feb 2025.</p>
-              </section>
 
-              <section className="pd-card pd-card-meds" id="medications">
-                <h2 className="pd-card-title">Medications</h2>
-                <ul className="pd-list pd-med-list">
+                <p className="mt-4 text-sm leading-6 text-slate-500">
+                  Values within reference range. Last updated Feb 2025.
+                </p>
+              </DashboardPanel>
+            </div>
+
+            <div className="xl:col-span-3">
+              <DashboardPanel title="Medications" id="medications" className="h-full">
+                <ul className="flex flex-col gap-3">
                   {MOCK_MEDICATIONS.map((m) => (
-                    <li key={m.id} className="pd-med-item">
-                      <span className="pd-med-name">{m.name}</span>
-                      <span className="pd-med-dosage">{m.dosage}</span>
-                      <span className="pd-med-schedule">{m.schedule}</span>
+                    <li key={m.id} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-slate-800">{m.name}</span>
+                        <span className="text-sm font-medium text-sky-700">{m.dosage}</span>
+                      </div>
+                      <div className="mt-1 text-sm text-slate-500">{m.schedule}</div>
                     </li>
                   ))}
                 </ul>
-              </section>
+              </DashboardPanel>
+            </div>
 
-              <section className="pd-card pd-card-vitals" id="vitals">
-                <h2 className="pd-card-title">Vital signs</h2>
-                <div className="pd-vitals-grid">
+            <div className="xl:col-span-3">
+              <DashboardPanel title="Vital signs" id="vitals" className="h-full">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {MOCK_VITALS.map((v) => (
-                    <div key={v.label} className="pd-vital-item">
-                      <span className="pd-vital-label">{v.label}</span>
-                      <span className="pd-vital-value">
-                        {v.value} <span className="pd-vital-unit">{v.unit}</span>
-                      </span>
-                      {v.status && <span className={`pd-vital-status pd-vital-${v.status}`}>{v.status}</span>}
+                    <div key={v.label} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-center">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{v.label}</div>
+                      <div className="mt-2 text-lg font-bold text-slate-800">
+                        {v.value} <span className="text-sm font-medium text-slate-500">{v.unit}</span>
+                      </div>
+                      {v.status && (
+                        <div className="mt-2 text-xs font-semibold capitalize text-emerald-700">
+                          {v.status}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
-                <p className="pd-card-note">Last recorded at your most recent visit.</p>
-              </section>
 
-              <section className="pd-card pd-card-forms" id="forms">
-                <h2 className="pd-card-title">Digital intake & consent</h2>
-                <p className="pd-card-desc">Complete before your visit to reduce paperwork.</p>
-                <div className="pd-form-status-list">
-                  <div className="pd-form-status">
-                    <span>Intake form</span>
-                    {intakeComplete ? (
-                      <span className="pd-status-done">Done</span>
-                    ) : !showIntakeForm ? (
-                      <button type="button" className="pd-btn pd-btn-sm" onClick={() => setShowIntakeForm(true)}>
-                        Complete
-                      </button>
-                    ) : (
-                      <form className="pd-form compact" onSubmit={handleIntakeSubmit}>
-                        <div className="pd-form-row"><label>Allergies</label><input type="text" placeholder="List any" /></div>
-                        <div className="pd-form-row"><label>Medications</label><input type="text" placeholder="Current meds" /></div>
-                        <div className="pd-form-row"><label>Emergency contact</label><input type="text" placeholder="Name, phone" /></div>
-                        <div className="pd-form-actions">
-                          <button type="submit" className="pd-btn pd-btn-primary">Submit</button>
-                          <button type="button" className="pd-btn pd-btn-secondary" onClick={() => setShowIntakeForm(false)}>
+                <p className="mt-4 text-sm text-slate-500">Last recorded at your most recent visit.</p>
+              </DashboardPanel>
+            </div>
+
+            <div className="xl:col-span-3">
+              <DashboardPanel title="Digital intake & consent" id="forms" className="h-full">
+                <p className="mb-4 text-sm text-slate-500">Complete before your visit to reduce paperwork.</p>
+
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="font-medium text-slate-800">Intake form</span>
+
+                      {intakeComplete ? (
+                        <span className="text-sm font-semibold text-emerald-700">Done</span>
+                      ) : !showIntakeForm ? (
+                        <button
+                          type="button"
+                          className="rounded-lg bg-indigo-400 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                          onClick={() => setShowIntakeForm(true)}
+                        >
+                          Complete
+                        </button>
+                      ) : null}
+                    </div>
+
+                    {showIntakeForm && !intakeComplete && (
+                      <form className="mt-4 flex flex-col gap-3" onSubmit={handleIntakeSubmit}>
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-slate-700">Allergies</label>
+                          <input
+                            type="text"
+                            placeholder="List any"
+                            className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-slate-700">Medications</label>
+                          <input
+                            type="text"
+                            placeholder="Current meds"
+                            className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-slate-700">Emergency contact</label>
+                          <input
+                            type="text"
+                            placeholder="Name, phone"
+                            className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
+                          />
+                        </div>
+                        <div className="flex gap-3">
+                          <button type="submit" className="rounded-lg bg-indigo-400 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500">
+                            Submit
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                            onClick={() => setShowIntakeForm(false)}
+                          >
                             Cancel
                           </button>
                         </div>
@@ -477,22 +600,39 @@ export default function PatientDashboard() {
                     )}
                   </div>
 
-                  <div className="pd-form-status">
-                    <span>Consent form</span>
-                    {consentComplete ? (
-                      <span className="pd-status-done">Done</span>
-                    ) : !showConsentForm ? (
-                      <button type="button" className="pd-btn pd-btn-sm" onClick={() => setShowConsentForm(true)}>
-                        Complete
-                      </button>
-                    ) : (
-                      <form className="pd-form compact" onSubmit={handleConsentSubmit}>
-                        <label className="pd-checkbox-label">
-                          <input type="checkbox" required /> I consent to treatment and privacy practices.
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="font-medium text-slate-800">Consent form</span>
+
+                      {consentComplete ? (
+                        <span className="text-sm font-semibold text-emerald-700">Done</span>
+                      ) : !showConsentForm ? (
+                        <button
+                          type="button"
+                          className="rounded-lg bg-indigo-400 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                          onClick={() => setShowConsentForm(true)}
+                        >
+                          Complete
+                        </button>
+                      ) : null}
+                    </div>
+
+                    {showConsentForm && !consentComplete && (
+                      <form className="mt-4 flex flex-col gap-3" onSubmit={handleConsentSubmit}>
+                        <label className="flex items-start gap-2 text-sm text-slate-600">
+                          <input type="checkbox" required className="mt-1" />
+                          I consent to treatment and privacy practices.
                         </label>
-                        <div className="pd-form-actions">
-                          <button type="submit" className="pd-btn pd-btn-primary">Submit</button>
-                          <button type="button" className="pd-btn pd-btn-secondary" onClick={() => setShowConsentForm(false)}>
+
+                        <div className="flex gap-3">
+                          <button type="submit" className="rounded-lg bg-indigo-400 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500">
+                            Submit
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                            onClick={() => setShowConsentForm(false)}
+                          >
                             Cancel
                           </button>
                         </div>
@@ -500,10 +640,11 @@ export default function PatientDashboard() {
                     )}
                   </div>
                 </div>
-              </section>
+              </DashboardPanel>
             </div>
-          </main>
-        </div>
+          </div>
+        </main>
+      </div>
     </SidebarProvider>
   )
 }
