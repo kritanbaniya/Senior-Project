@@ -86,15 +86,15 @@ export default function PatientQueueCard({
                   <button
                     type="button"
                     onClick={onLeave}
-                    className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                    className="rounded-lg bg-red-400 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-red-600"
                   >
-                    leave queue
+                    Leave Queue
                   </button>
                 </div>
               </div>
             ) : row?.status === 'called' ? (
               <div className="flex flex-col gap-4">
-                <p className="text-sm leading-6 text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   You have been called! Please proceed to the front desk.
                 </p>
 
@@ -110,7 +110,7 @@ export default function PatientQueueCard({
                 </div>
               </div>
             ) : row?.status === 'in_progress' ? (
-              <p className="text-sm leading-6 text-slate-500">Your visit is in progress.</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Your visit is in progress.</p>
             ) : (
               <p className="text-sm leading-6 text-slate-500">You have an active queue entry.</p>
             )}
