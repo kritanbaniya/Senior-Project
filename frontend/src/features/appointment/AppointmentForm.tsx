@@ -3,7 +3,11 @@
 import {  useEffect, useState } from 'react'
 // import { supabase } from '../../../lib/supabase.ts' 
 // import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
-import type { clinicListInfoType, AppointmentFormType, MemberList ,AppointmentType } from "@/features/appointment/types.ts"; 
+import type { 
+    UserClinicRelationship, 
+    CreateApptForm, 
+    AppointmentType 
+} from "@/features/appointment/types.ts"; 
 import { Button } from '@/components/ui/button';
 // import ClinicSelector from "../queue/components/ClinicSelector";
 
@@ -24,29 +28,30 @@ type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
 type apptFormProp = {
     showClinicSelector : boolean,
-    clinicList : clinicListInfoType[], 
+    clinicList : UserClinicRelationship[], 
     selectedClinic : string,
     setSelectedClinic : (s:string) => void, 
 
-    showScheduleForm : boolean, 
-    setShowScheduleForm : (a : boolean) => void, 
+    // CREATE : form for UI and submission | display it 
+    showCreateForm : boolean, 
+    setShowCreateForm : (a : boolean) => void,  
+    createForm : CreateApptForm, 
+    setCreateForm: React.Dispatch<React.SetStateAction<CreateApptForm>>,  
 
-    scheduleForm : AppointmentFormType, 
-    setScheduleForm: React.Dispatch<React.SetStateAction<AppointmentFormType>>,  
-
+    // CREATE : STATUS and MESSAGE 
     createStatus : AppointmentCreateStatus,
     setCreateStatus : (s: AppointmentCreateStatus) => void,
     createMessage : string, 
     setCreateMessage : (m : string) => void, 
 
-    handleNewAppointment : (start: Date) => void, 
+    openCreateForm : (start: Date) => void, 
     createAppointment : () => void, 
 
     nurse : boolean, 
-    patientList : MemberList[], 
+    patientList : UserClinicRelationship[], 
     patientName : string | undefined, 
 
-    practicionerList : MemberList[], 
+    practicionerList : UserClinicRelationship[], 
     appointmentTypes : AppointmentType[], 
 
 }
@@ -58,18 +63,18 @@ export default function AppointmentForm({
     selectedClinic, 
     setSelectedClinic, 
 
-    showScheduleForm, 
-    setShowScheduleForm, 
+    showCreateForm, 
+    setShowCreateForm, 
 
-    scheduleForm, 
-    setScheduleForm, 
+    createForm, 
+    setCreateForm, 
 
     createStatus,
     setCreateStatus,
     createMessage ,
     setCreateMessage,
 
-    handleNewAppointment,
+    openCreateForm,
     createAppointment,
 
     nurse,
@@ -96,7 +101,7 @@ export default function AppointmentForm({
 
 
   const handleClose = () => {
-      setShowScheduleForm(false)
+      setShowCreateForm(false)
   }
 
 
@@ -107,13 +112,13 @@ export default function AppointmentForm({
           <div className="info-box-content">   
             <Button
                 type="button" 
-                onClick={() => handleNewAppointment(new Date())}
+                onClick={() => openCreateForm(new Date())}
               >
                 Create appointment
               </Button>
 
             {/* FORMS */}
-            {!showScheduleForm ? (
+            {!showCreateForm ? (
               <>
               </>
             ) : (
@@ -146,9 +151,9 @@ export default function AppointmentForm({
                         {nurse ? 
                         (<select
                         
-                          value={scheduleForm.patientId}
+                          value={createForm.patientId}
                           onChange={(e) =>
-                            setScheduleForm((f) => ({ ...f, patientId: e.target.value }))
+                            setCreateForm((f) => ({ ...f, patientId: e.target.value }))
                           }>
                           {(patientList.map((d) => (
                           <option key={d.user_id} value={d.user_id}>
@@ -166,9 +171,9 @@ export default function AppointmentForm({
                       <label>Date</label>
                       <input
                         type="date"
-                        value={scheduleForm.date}
+                        value={createForm.date}
                         //min={getNowForDateTimeInput().date} redundant, and mismatching style. but may still be useful
-                        onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))}
+                        onChange={(e) => setCreateForm((f) => ({ ...f, date: e.target.value }))}
                         required
                       />
                     </div>
@@ -177,8 +182,8 @@ export default function AppointmentForm({
                       <label>Time</label>
                       <input
                         type="time"
-                        value={scheduleForm.time}
-                        onChange={(e) => setScheduleForm((f) => ({ ...f, time: e.target.value }))}
+                        value={createForm.time}
+                        onChange={(e) => setCreateForm((f) => ({ ...f, time: e.target.value }))}
                         required
                       />
                     </div>
@@ -186,9 +191,9 @@ export default function AppointmentForm({
                     <div className="form-row">
                       <label>Provider</label>
                       <select
-                        value={scheduleForm.doctorId}
+                        value={createForm.doctorId}
                         onChange={(e) =>
-                          setScheduleForm((f) => ({ ...f, doctorId: e.target.value }))
+                          setCreateForm((f) => ({ ...f, doctorId: e.target.value }))
                         }
                       >
                         {practicionerList.map((d) => (
@@ -203,8 +208,8 @@ export default function AppointmentForm({
                       <label>Visit type</label>
                       <select
                         name="type"
-                        value={scheduleForm.type}
-                        onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
+                        value={createForm.type}
+                        onChange={(e) => setCreateForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
                       >
                         {appointmentTypes.map((t) => (
                           <option key={t} value={t}>
@@ -246,7 +251,7 @@ export default function AppointmentForm({
                         type="button"
                         className="btn-secondary"
                         onClick={() => {
-                          setShowScheduleForm(false)
+                          setShowCreateForm(false)
                           setCreateStatus('idle')
                           setCreateMessage('')
                         }}

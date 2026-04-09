@@ -27,27 +27,28 @@ export type viewRequestTypes =
 ////// FORMS - these are forms we can push into supabase 
 // create form  
 export type CreateApptForm = {
-  appointmentId: string 
-  patientId: string
-  doctorId: string
-  date: string
-  time: string
-  type: AppointmentType | ''
-  appointment_status: string
-  nurse_note: string
-  patient_note: string 
+    // add clinicId (for patient use and easier to manage data)
+    appointmentId: string 
+    patientId: string
+    doctorId: string
+    date: string
+    time: string
+    type: AppointmentType | ''
+    appointment_status: string
+    nurse_note: string
+    patient_note: string 
 } 
 // update form 
 export type  UpdateApptForm = {
-  appointmentId: string 
-  patientId: string
-  doctorId: string
-  date: string
-  time: string
-  type: AppointmentType | ''
-  appointment_status: string
-  nurse_note: string
-  patient_note: string 
+    appointmentId: string 
+    patientId: string
+    doctorId: string
+    date: string
+    time: string
+    type: AppointmentType | ''
+    appointment_status: string
+    nurse_note: string
+    patient_note: string 
 }
 
 

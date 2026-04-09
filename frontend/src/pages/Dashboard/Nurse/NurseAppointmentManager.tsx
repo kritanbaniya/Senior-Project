@@ -12,6 +12,11 @@ import type {
 import AppointmentForm from '@/features/appointment/AppointmentForm.tsx';
 import AppointmentEditModal from '@/features/appointment/AppointmentEditModel.tsx';
 import NurseSideBar from './NurseSideBar';  
+import { 
+    // UPDATE API THINGS 
+    apiUpdateAppt, 
+    apiFetchSpecificAppt
+} from '@/features/appointment/appointment.api.ts';
 // import AppointmentR
 // import { Switch } from "radix-ui";
  
@@ -118,7 +123,7 @@ export default function NurseAppointmentManager() {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     ///// C R U D !!! 
     // C: UI 
-    const [showCreateForm, setShowCreateForm] = useState(false)
+    const [showCreateForm, setShowCreateForm] = useState<boolean>(false)
     const [createForm, setCreateForm] = useState<CreateApptForm>({ 
         appointmentId: '', 
         patientId: '',
@@ -380,7 +385,7 @@ export default function NurseAppointmentManager() {
 
 
 
-  /////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////
     // U: UI 
     const [showAptUpdateForm, setShowAptUpdateForm] = useState(false)
     const [updateForm, setUpdateForm] = useState<UpdateApptForm>({
@@ -397,85 +402,64 @@ export default function NurseAppointmentManager() {
     const [updateStatus, setUpdateStatus] = useState<AppointmentCreateStatus>('idle')
     const [updateMessage, setUpdateMessage] = useState('')
     //// U: UPDATE EXISTING APPOINTMENT
-    const updateAppointments = async () => {
+    const updateAppointments = async () => { // relies on updateForm data 
         if(debuglog == true){console.log('UPDATEFORM SUBMITTED:', updateForm)}
-
 
         ////// SET UI 
         setUpdateStatus('loading')
         setUpdateMessage('')  
         
-
         ////// EXIT CASES 
         if (updateForm.appointmentId === null || updateForm.doctorId === null) return
 
-
         // UPDATE IT 
-        let appointmentDate = `${updateForm.date} ${updateForm.time}:00`
-        const { data, error } = await supabase
-            .schema('public')
-            .from('Appointments')
-            .update({
-                appointment_date: appointmentDate,
-                patient_id: updateForm.patientId,
-                clinician_id: updateForm.doctorId,
-                visit_type: updateForm.type,
-                appointment_status: updateForm.appointment_status, 
-                nurse_note: updateForm.nurse_note 
-            })
-            .eq('Appointment_id', updateForm.appointmentId)
-            .select()
-            .single() 
-        // if Supabase error 
-        if (error) {console.log('UPDATE ERROR:', error)
+        try {
+            const updated = await apiUpdateAppt(updateForm)
+            if(debuglog == true) console.log('UPDATED:', updated)
+            // TAIL UI CHANGES  
+            const patientName = patientList.find((p) => p.user_id === updateForm.patientId)?.full_name ?? 'Unknown patient'
+            const doctorName = practicionerList.find((d) => d.user_id === updateForm.doctorId)?.full_name ?? 'Unknown provider' 
+            setUpdateStatus('success')
+            setUpdateMessage(`Appointment created for ${patientName} on ${updateForm.date} at ${updateForm.time} with ${doctorName}.`)
+            // since appt list changed, re-call readAppt
+            if(clinic) await readAppointments(clinic, viewPrefs)
+        } catch (error) {
+            console.log('UPDATE ERROR:', error)
+            // TAIL UI CHANGES  
             setUpdateStatus('failed')
-            setUpdateMessage('Appointment update failed.')
-            console.log('ERROR CREATE:', error)
-            return
-        } 
-        if(debuglog == true){console.log('UPDATE DATA:', data)}
-        
-        // TAIL UI CHANGES 
-        const patientName = patientList.find((p) => p.user_id === updateForm.patientId)?.full_name ?? 'Unknown patient'
-        const doctorName = practicionerList.find((d) => d.user_id === updateForm.doctorId)?.full_name ?? 'Unknown provider'
-        setUpdateStatus('success')
-        setUpdateMessage(`Appointment created for ${patientName} on ${updateForm.date} at ${updateForm.time} with ${doctorName}.`)
-        
-        // since appt list changed, re-call readAppt
-        if(clinic) await readAppointments(clinic, viewPrefs)
-    }
-
-  const handleEditAppointment = async (apt: Appointment) => {
-    const { data, error } = await supabase
-      .schema('public')
-      .from('Appointments')
-      .select('*')
-      .eq('Appointment_id', apt.Appointment_id)
-      .single() 
-    if (error || !data) {
-      return
+            setUpdateMessage('Appointment update failed.') 
+        } finally {
+        }
     } 
-    if(debuglog == true){
-    console.log("UPDATE FORM PREFILLED", data)}
-
-    const d = new Date(data.appointment_date)
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const dd = String(d.getDate()).padStart(2, '0')
-    const hh = String(d.getHours()).padStart(2, '0')
-    const min = String(d.getMinutes()).padStart(2, '0')
-
-    setUpdateForm({
-      appointmentId: data.Appointment_id,
-      patientId: data.patient_id ?? '',
-      doctorId: data.clinician_id ?? '',
-      date: `${yyyy}-${mm}-${dd}`,
-      time: `${hh}:${min}`,
-      type: data.visit_type ?? appointmentTypes[0],
-    })
-
-    setShowAptUpdateForm(true)
-  } 
+    // open createForm and prefill information 
+    const openUpdateForm = async (apt: Appointment) => {
+        try {
+            const singleAppt = await apiFetchSpecificAppt(apt)
+            if(debuglog == true) console.log("UPDATE FORM PREFILLED", singleAppt) 
+            // transform datetime data 
+            const d = new Date(singleAppt.appointment_date)
+            const yyyy = d.getFullYear()
+            const mm = String(d.getMonth() + 1).padStart(2, '0')
+            const dd = String(d.getDate()).padStart(2, '0')
+            const hh = String(d.getHours()).padStart(2, '0')
+            const min = String(d.getMinutes()).padStart(2, '0')
+            // UI CHANGES 
+            setUpdateForm({
+                appointmentId: singleAppt.Appointment_id,
+                patientId: singleAppt.patient_id ?? '',
+                doctorId: singleAppt.clinician_id ?? '',
+                date: `${yyyy}-${mm}-${dd}`,
+                time: `${hh}:${min}`,
+                type: singleAppt.visit_type as AppointmentType ?? '',
+                appointment_status: singleAppt.appointment_status,
+                nurse_note: singleAppt.nurse_note,
+                patient_note: singleAppt.patient_note
+            }) 
+            setShowAptUpdateForm(true)
+        } catch (error) {
+            console.log('READ SPECIFIC APPT:', error) 
+        }  
+    } 
 
 
 
@@ -590,17 +574,20 @@ export default function NurseAppointmentManager() {
                 clinicList = {clinicList} 
                 selectedClinic = { clinic ? clinic : '' }
                 setSelectedClinic={ setClinic } // should not be used 
-                
+                // CREATE : form for UI and submission | display it 
                 showCreateForm = {showCreateForm} 
                 setShowCreateForm = {setShowCreateForm}
                 createForm = {createForm}
                 setCreateForm = {setCreateForm}
+                // CREATE : STATUS and MESSAGE 
                 createStatus = {createStatus} 
                 setCreateStatus = {setCreateStatus}
                 createMessage = {createMessage} 
-                setCreateMessage = {setCreateMessage} 
+                setCreateMessage = {setCreateMessage}  
+
                 openCreateForm = {openCreateForm} 
                 createAppointment = {handleCreateAppointment} 
+
                 nurse = {true}
                 patientName = {undefined}
                 patientList = {patientList} 
@@ -614,26 +601,31 @@ export default function NurseAppointmentManager() {
           <div className = "flex items-center">
             <AppointmentEditModal
               showClinicSelector = {showClinicSelector} 
-              // display and change selected clinic 
-              clinicList = {clinicList} 
-              selectedClinic = { clinic ? clinic : '' }
-              setSelectedClinic={ setClinic } // should not be used 
-              
-              showAptUpdateForm = {showAptUpdateForm} 
-              setShowAptUpdateForm = {setShowAptUpdateForm}
-              updateForm = {updateForm}
-              setUpdateForm = {setUpdateForm}
-              updateStatus = {updateStatus} 
-              setUpdateStatus = {setUpdateStatus}
-              updateMessage = {updateMessage} 
-              setUpdateMessage = {setUpdateMessage} 
-              handleEditAppointment = {handleEditAppointment} 
-              updateAppointments = {updateAppointments} 
-              nurse = {true}
-              patientName = {undefined}
-              patientList = {patientList} 
-              practicionerList = {practicionerList}
-              appointmentTypes = {appointmentTypes} 
+                // display and change selected clinic 
+                clinicList = {clinicList} 
+                selectedClinic = { clinic ? clinic : '' }
+                setSelectedClinic={ setClinic } // should not be used 
+                
+                // UPDATE : form for UI and submission | display it 
+                showAptUpdateForm = {showAptUpdateForm} 
+                setShowAptUpdateForm = {setShowAptUpdateForm}
+                updateForm = {updateForm}
+                setUpdateForm = {setUpdateForm}
+                
+                // UPDATE : STATUS and MESSAGE 
+                updateStatus = {updateStatus} 
+                setUpdateStatus = {setUpdateStatus}
+                updateMessage = {updateMessage} 
+                setUpdateMessage = {setUpdateMessage} 
+
+                openUpdateForm = {openUpdateForm} 
+                updateAppointments = {updateAppointments} 
+
+                nurse = {true}
+                patientName = {undefined}
+                patientList = {patientList} 
+                practicionerList = {practicionerList}
+                appointmentTypes = {appointmentTypes} 
             />
           </div>
 
@@ -644,7 +636,7 @@ export default function NurseAppointmentManager() {
               appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
               // reqAppointmentsList={reqAppointmentsList? reqAppointmentsList : []}
               // functions to handle appointment CRUD actions 
-              onSelectAppointment={handleEditAppointment} 
+              onSelectAppointment={openUpdateForm} 
               onDeleteAppointment={(apt) =>
                 deleteAppointments(apt.Appointment_id, clinic)
               }

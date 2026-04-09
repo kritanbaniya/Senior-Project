@@ -3,7 +3,12 @@
 import {  useEffect, useState } from 'react'
 // import { supabase } from '../../../lib/supabase.ts' 
 // import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
-import type { UpdateAppointmentForm, clinicListInfoType, MemberList ,AppointmentType , Appointment} from "@/features/appointment/types.ts"; 
+import type { 
+    UpdateApptForm, 
+    UserClinicRelationship, 
+    AppointmentType , 
+    Appointment
+} from "@/features/appointment/types.ts"; 
 import { Button } from '@/components/ui/button';
 // import ClinicSelector from "../queue/components/ClinicSelector";
 
@@ -16,63 +21,61 @@ type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 type updateFormProp = {
     showClinicSelector : boolean,
     // display and change selected clinic 
-    clinicList : clinicListInfoType[], 
+    clinicList : UserClinicRelationship[], 
     selectedClinic : string,
     setSelectedClinic : (s:string) => void, 
-
-    //// UPDATE FORM 
-    // display it 
+    
+    // UPDATE : form for UI and submission | display it 
     showAptUpdateForm : boolean, 
     setShowAptUpdateForm : (a : boolean) => void, 
     // the form itself 
-    updateForm : UpdateAppointmentForm, 
-    setUpdateForm: React.Dispatch<React.SetStateAction<UpdateAppointmentForm>>,  
+    updateForm : UpdateApptForm, 
+    setUpdateForm: React.Dispatch<React.SetStateAction<UpdateApptForm>>,  
 
-    //// STATUS : message and status value 
+    // UPDATE : STATUS and MESSAGE 
     updateStatus : AppointmentCreateStatus,
     setUpdateStatus : (s: AppointmentCreateStatus) => void,
     updateMessage : string, 
     setUpdateMessage : (m : string) => void, 
- 
-
+    
     // UPDATE callback functions 
-    handleEditAppointment : (apt: Appointment) => void, 
+    openUpdateForm : (apt: Appointment) => void, 
     updateAppointments : () => void, 
 
     nurse : boolean, 
-    patientList : MemberList[], 
+    patientList : UserClinicRelationship[], 
     patientName : string | undefined, 
-
-    practicionerList : MemberList[], 
+    practicionerList : UserClinicRelationship[], 
     appointmentTypes : AppointmentType[], 
 
 }
 
 
 export default function AppointmentEditModal({
-    showClinicSelector,
+    showClinicSelector, 
+    // clinic sauce 
     clinicList, 
     selectedClinic, 
-    setSelectedClinic, 
+    setSelectedClinic,  
 
+    // UPDATE : form for UI and submission | display it 
     showAptUpdateForm, 
-    setShowAptUpdateForm, 
-
+    setShowAptUpdateForm,  
     updateForm, 
     setUpdateForm, 
 
+    // UPDATE : STATUS and MESSAGE 
     updateStatus,
     setUpdateStatus,
     updateMessage ,
     setUpdateMessage, 
 
-    // handleEditAppointment,
+    // openUpdateForm, dont need to open it from in here 
     updateAppointments,
 
     nurse,
     patientList,
     patientName,
-
     practicionerList,
     appointmentTypes,
     
@@ -148,7 +151,7 @@ export default function AppointmentEditModal({
                         {nurse ? 
                         (<select
                             className='p-3 w-full bg-[#F5F3EE] rounded-lg border border-solid text-end'
-                            value={updateForm.patientName}
+                            value={updateForm.patientId}
                             onChange={(e) =>
                                 setUpdateForm((f) => ({ ...f, patientId: e.target.value }))
                             }>
@@ -244,8 +247,8 @@ export default function AppointmentEditModal({
                       <select
                         className='p-3 w-50 bg-[#F5F3EE] rounded-lg border border-solid text-end'
                         name="type"
-                        value={updateForm.type}
-                        onChange={(e) => setUpdateForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
+                        value={updateForm.appointment_status}
+                        onChange={(e) => setUpdateForm((f) => ({ ...f, appointment_status: e.target.value as AppointmentType, }))}
                       >
                         {apptStatusTypes.map((t) => (
                           <option key={t} value={t}>
@@ -254,8 +257,46 @@ export default function AppointmentEditModal({
                         ))}
                       </select>
                     </div>
+
+
                     {/* Patient Note */}
+                    <div  className="flex justify-between">
+                      <label
+                        className='p-3 w-70 '
+                            >Appointment Status</label>
+                      <select
+                        className='p-3 w-50 bg-[#F5F3EE] rounded-lg border border-solid text-end'
+                        name="type"
+                        value={updateForm.appointment_status}
+                        onChange={(e) => setUpdateForm((f) => ({ ...f, appointment_status: e.target.value as AppointmentType, }))}
+                      >
+                        {apptStatusTypes.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+
                     {/* Nurse Note */} 
+                    <div  className="flex justify-between">
+                      <label
+                        className='p-3 w-70 '
+                            >Appointment Status</label>
+                      <select
+                        className='p-3 w-50 bg-[#F5F3EE] rounded-lg border border-solid text-end'
+                        name="type"
+                        value={updateForm.appointment_status}
+                        onChange={(e) => setUpdateForm((f) => ({ ...f, appointment_status: e.target.value as AppointmentType, }))}
+                      >
+                        {apptStatusTypes.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                       
                     
                     {/* CLINIC SELECT */}
@@ -266,8 +307,8 @@ export default function AppointmentEditModal({
                             >Clinic</label> 
                       <select 
                             className='p-2 w-full bg-[#F5F3EE] rounded-lg border border-solid'
-                        value={selectedClinic}
-                        onChange={(e) =>{
+                            value={selectedClinic}
+                            onChange={(e) =>{
                           setSelectedClinic( e.target.value ) }
                         }
                       >
