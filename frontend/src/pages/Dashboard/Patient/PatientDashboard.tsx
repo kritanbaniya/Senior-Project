@@ -284,7 +284,7 @@ export default function PatientDashboard() {
         <main className="pd-main">
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
             <div className="xl:col-span-3">
-              <DashboardPanel title="Patient overview" id="overview" className="h-full">
+              <DashboardPanel title="Patient overview" id="overview" className="min-h-[400px]">
                 <div className="grid grid-cols-2 gap-x-6 gap-y-5">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Age</span>
@@ -343,7 +343,7 @@ export default function PatientDashboard() {
             </div>
 
             <div className="xl:col-span-3">
-              <DashboardPanel title="Upcoming appointments" id="appointments" className="h-full">
+              <DashboardPanel title="Upcoming appointments" id="appointments" classname="min-h-[400px]">
                 {upcomingAppointments.length === 0 ? (
                   <p className="text-sm text-slate-500">No upcoming appointments.</p>
                 ) : (
@@ -452,7 +452,7 @@ export default function PatientDashboard() {
             </div>
 
             <div className="xl:col-span-3">
-              <DashboardPanel title="Recent medical records" id="records" className="h-full">
+              <DashboardPanel title="Recent medical records" id="records" className="min-h-[400px]">
                 {recentRecords.length === 0 ? (
                   <p className="text-sm text-slate-500">No recent records.</p>
                 ) : (
@@ -476,7 +476,7 @@ export default function PatientDashboard() {
             </div>
 
             <div className="xl:col-span-3">
-              <DashboardPanel title="Lab results summary" id="lab" className="h-full">
+              <DashboardPanel title="Lab results summary" id="lab" className="min-h-[350px]">
                 <div className="flex flex-col gap-4">
                   {MOCK_LAB_CHART.map((point) => (
                     <div key={point.label} className="grid grid-cols-[80px_1fr_40px] items-center gap-2 text-sm">
@@ -499,7 +499,7 @@ export default function PatientDashboard() {
             </div>
 
             <div className="xl:col-span-3">
-              <DashboardPanel title="Medications" id="medications" className="h-full">
+              <DashboardPanel title="Medications" id="medications" className="min-h-[350px]">
                 <ul className="flex flex-col gap-3">
                   {MOCK_MEDICATIONS.map((m) => (
                     <li key={m.id} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -515,7 +515,7 @@ export default function PatientDashboard() {
             </div>
 
             <div className="xl:col-span-3">
-              <DashboardPanel title="Vital signs" id="vitals" className="h-full">
+              <DashboardPanel title="Vital signs" id="vitals" className="min-h-[350px]">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {MOCK_VITALS.map((v) => (
                     <div key={v.label} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-center">
@@ -537,7 +537,7 @@ export default function PatientDashboard() {
             </div>
 
             <div className="xl:col-span-3">
-              <DashboardPanel title="Digital intake & consent" id="forms" className="h-full">
+              <DashboardPanel title="Digital intake & consent" id="forms" className="min-h-[350px]">
                 <p className="mb-4 text-sm text-slate-500">Complete before your visit to reduce paperwork.</p>
 
                 <div className="space-y-4">
