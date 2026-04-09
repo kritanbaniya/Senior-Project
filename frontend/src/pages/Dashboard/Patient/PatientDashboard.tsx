@@ -307,7 +307,7 @@ export default function PatientDashboard() {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Birthday</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Date of Birth</span>
                     <span className="font-mono text-base font-semibold text-slate-800">{info ? info.birthday : '-'}</span>
                   </div>
 
@@ -322,7 +322,6 @@ export default function PatientDashboard() {
             </div>
 
             <div className="xl:col-span-3">
-              <div className="transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02]">
                 <PatientQueueCard
                   clinicSelected={Boolean(activeClinicId)}
                   selectedClinicName={selectedClinicName}
@@ -338,7 +337,6 @@ export default function PatientDashboard() {
                     setSelectedClinicName(null)
                   }}
                 />
-              </div>
               {queueError && <p className="mt-3 text-sm text-slate-500">{queueError}</p>}
             </div>
 
