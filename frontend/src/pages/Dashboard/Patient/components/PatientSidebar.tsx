@@ -85,13 +85,12 @@ function SidebarLink({
           end={item.url === "/dashboard/patient"}
           className={({ isActive }) =>
             [
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              "hover:text-slate-900",
+              "flex items-center gap-3 px-3 py-2 font-medium transition-colors rounded-md",
               isActive
                 ? "bg-white text-indigo-900 shadow-sm"
-                : "text-slate-700",
+                : "text-slate-700 hover:bg-white/60 hover:text-indigo-700",
             ].join(" ")
-          }
+      }
         >
           <Icon className="h-5 w-5 shrink-0" />
           <span>{item.title}</span>
@@ -108,7 +107,7 @@ export default function PatientSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="top-[60px] h-[calc(100vh-60px)] border-r border-slate-200 bg-[#d8eef7] text-slate-900"
+      className="top-[60px] h-[calc(100vh-60px)] border-r border-slate-200 bg-[#d8eef7] text-yellow-600"
     >
       <SidebarHeader className="border-b border-slate-300/70 bg-[#d8eef7] px-3 py-4">
         <div className="flex items-start justify-between gap-3 group-data-[collapsible=icon]:justify-center">
