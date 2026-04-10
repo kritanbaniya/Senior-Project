@@ -96,10 +96,9 @@ export default function ApptCreateModal({
     }, [selectedClinic])
   
 
-
-  const handleClose = () => {
-      setShowCreateForm(false)
-  }
+    const handleClose = () => {
+        setShowCreateForm(false)
+    }
 
 
     return(<> 

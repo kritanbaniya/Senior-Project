@@ -60,22 +60,7 @@ export default function AppointmentSwitch({
 
 
 
-            {/* OPTION : Appointment Request  */}
-            {/* <div className="flex items-center">  
-                <span className = "m-2">Appointment Status: </span>
-                <select
-                    className='p-2 font-bold border-2 border-solid rounded-lg' 
-                    value={viewPrefs.showReqs}
-                    onChange={(e) =>
-                    onUpdateViewPrefs({showReqs : e.target.value as viewRequestTypes})
-                    }>
-                    {(viewRequests.map((d) => (
-                    <option key={d} value={d}>
-                        {d}
-                    </option>
-                    )))}
-                </select>
-            </div>  */}
+            {/* OPTION : Appointment Request  */} 
             <DropdownMenu.Root  open={menuOpen} onOpenChange={setMenuOpen}>
                 <DropdownMenu.Trigger asChild>
                     <button className=" border rounded-lg ">

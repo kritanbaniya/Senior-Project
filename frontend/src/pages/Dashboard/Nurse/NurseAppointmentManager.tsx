@@ -25,7 +25,7 @@ import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
 
 export default function NurseAppointmentManager() {
     type debuglogType = 'initial'| 'read' | 'create' | 'update' | 'delete' | 'lifecycle'
-    var debuglog: debuglogType[] = ['read']
+    var debuglog: debuglogType[] = ['create']
     type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
  
@@ -132,7 +132,7 @@ export default function NurseAppointmentManager() {
         date: '',
         time: '',
         type: '',
-        appointment_status: '',
+        appointment_status: 'pending',
         nurse_note: '',
         patient_note: '' 
     }) 
@@ -253,21 +253,19 @@ export default function NurseAppointmentManager() {
     })
     const updateViewPrefs = (updates: Partial<AppointmentViewPrefs>) => {
         setViewPrefs((prev) => {  // old object 
-        const next = {
-        ...prev,    // copy what remains the same 
-        ...updates, // overwrite with what changes 
-        }
-        if (
-            updates.rowsPerPage !== undefined &&
-            updates.rowsPerPage !== prev.rowsPerPage
-        ) {
-            next.page = 1
-        }
+            const next = {
+            ...prev,    // copy what remains the same 
+            ...updates, // overwrite with what changes 
+            }
+            if (
+                updates.rowsPerPage !== undefined &&
+                updates.rowsPerPage !== prev.rowsPerPage
+            ) {
+                next.page = 1
+            }
 
-        if(debuglog.includes('read')){
-            console.log("PREFERENCES:", viewPrefs)
-        }
-        return next
+            if(debuglog.includes('read')) console.log("PREFERENCES:", viewPrefs) 
+            return next
         })
     } 
     const [appointmentsLoading, setAppointmentsLoading] = useState(false)
@@ -302,77 +300,76 @@ export default function NurseAppointmentManager() {
 
     // CALENDAR MODE 
     if (prefs.mode === 'calendar') {
-      // from 
-      if (prefs.rangeStart) {
-        query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
-      }
-      if (prefs.rangeEnd) {
-        query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
-      }
+        // from 
+        if (prefs.rangeStart) {
+            query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
+        }
+        if (prefs.rangeEnd) {
+            query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
+        }
 
-      for (const rule of prefs.sortRules) {
-        query = query.order(rule.field, {
-          ascending: rule.direction === 'asc',
-        })
-      }
+        for (const rule of prefs.sortRules) {
+            query = query.order(rule.field, {
+            ascending: rule.direction === 'asc',
+            })
+        }
 
-      // USE THE QUERY TO OBTAIN RETURN DATA 
-      const { data, error } = await query
-      if (error) {
-        console.log('APPOINTMENT READ ERROR:', error)
-        setAppointmentsList([])
+        // USE THE QUERY TO OBTAIN RETURN DATA 
+        const { data, error } = await query
+        if (error) {
+            console.log('APPOINTMENT READ ERROR:', error)
+            setAppointmentsList([])
+            setAppointmentsLoading(false)
+            return
+        }
+        setAppointmentsList(data ?? [])
         setAppointmentsLoading(false)
         return
-      }
-      setAppointmentsList(data ?? [])
-      setAppointmentsLoading(false)
-      return
     }
 
 
     // LIST MODE 
     if (prefs.mode === 'list'){
-      const from = (prefs.page - 1) * prefs.rowsPerPage // first row on page 
-      const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
+        const from = (prefs.page - 1) * prefs.rowsPerPage // first row on page 
+        const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
 
-      // show past 
-      if (prefs.showPast === false){ 
-          query = query.gte('appointment_date', new Date().toISOString())
-      } 
-      
-      // search by date range 
-      if (prefs.searchBy === 'date range' &&
-          prefs.rangeStart &&
-          prefs.rangeEnd) {
-        query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
-        query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
-      } 
+        // show past 
+        if (prefs.showPast === false){ 
+            query = query.gte('appointment_date', new Date().toISOString())
+        } 
+        
+        // search by date range 
+        if (prefs.searchBy === 'date range' &&
+            prefs.rangeStart &&
+            prefs.rangeEnd) {
+            query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
+            query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
+        } 
 
-      for (const rule of prefs.sortRules) {
-        query = query.order(rule.field, {
-          ascending: rule.direction === 'asc',
-        })
-      }
-
-
+        for (const rule of prefs.sortRules) {
+            query = query.order(rule.field, {
+            ascending: rule.direction === 'asc',
+            })
+        } // add more sort rules 
 
 
-      // USE THE QUERY TO OBTAIN RETURN DATA 
-      const { data, error, count } = await query.range(from, to)
-      if (error) {
-        console.log('APPOINTMENT READ ERROR:', error)
-        setAppointmentsList([])
+
+        // USE THE QUERY TO OBTAIN RETURN DATA 
+        const { data, error, count } = await query.range(from, to)
+        if (error) {
+            console.log('APPOINTMENT READ ERROR:', error)
+            setAppointmentsList([])
+            setAppointmentsLoading(false)
+            return
+        }
+        setAppointmentsList(data ?? [])
         setAppointmentsLoading(false)
-        return
-      }
-      setAppointmentsList(data ?? [])
-      setAppointmentsLoading(false)
-      setTotalPage(count ? Math.ceil(count / viewPrefs.rowsPerPage) : 1) 
-      
-      if(debuglog.includes('read')) {console.log("total pages", totalPages)} 
+        setTotalPage(count ? Math.ceil(count / viewPrefs.rowsPerPage) : 1) 
+        
+        if(debuglog.includes('read')) {console.log("total pages", totalPages)} 
     } 
     setAppointmentsLoading(false)
-  }
+}
  
 
 
