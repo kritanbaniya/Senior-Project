@@ -1,21 +1,17 @@
 
 
-import {  useEffect, useState } from 'react'
-// import { supabase } from '../../../lib/supabase.ts' 
-// import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
+import {  useEffect, useState } from 'react' 
 import type { 
     UpdateApptForm, 
     UserClinicRelationship, 
     AppointmentType , 
     Appointment
 } from "@/features/appointment/types.ts"; 
-import { Button } from '@/components/ui/button';
-// import ClinicSelector from "../queue/components/ClinicSelector";
+import { Button } from '@/components/ui/button'; 
 
 
  
-
-
+ 
 type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
 type updateFormProp = {
@@ -27,8 +23,7 @@ type updateFormProp = {
     
     // UPDATE : form for UI and submission | display it 
     showAptUpdateForm : boolean, 
-    setShowAptUpdateForm : (a : boolean) => void, 
-    // the form itself 
+    setShowAptUpdateForm : (a : boolean) => void,  
     updateForm : UpdateApptForm, 
     setUpdateForm: React.Dispatch<React.SetStateAction<UpdateApptForm>>,  
 
@@ -51,7 +46,7 @@ type updateFormProp = {
 }
 
 
-export default function AppointmentEditModal({
+export default function ApptEditModal({
     showClinicSelector, 
     // clinic sauce 
     clinicList, 
@@ -89,7 +84,7 @@ export default function AppointmentEditModal({
         'deserted',  // patient did not show up 
         'active',   // active = APPOINTMENTS 
         'completed' // Appointment successfully closed 
-    ] // [ 'Both', 'Requests', 'Hide'] 
+    ]  
   
     const [ clinicNameById , setClinicNameById ] = useState<string>('')
     useEffect(() => {
@@ -103,15 +98,12 @@ export default function AppointmentEditModal({
   
 
 
-    const handleClose = () => {
-        // setUpdateForm((f) => ({}))
+    const handleClose = () => { 
         setShowAptUpdateForm(false)
     }
 
 
-    return(<>
-        
-        
+    return(<> 
           {/* CREATION / EDITING FORM */}
           <div className="info-box-content">    
             {/* FORMS */}
@@ -126,7 +118,7 @@ export default function AppointmentEditModal({
                     <p className="small-label font-bold">Edit Appointment Details</p>
                   )}
                   {updateStatus === 'loading' && (
-                    <p className="small-label">Creating appointment...</p>
+                    <p className="small-label">Editing appointment...</p>
                   )}
                   {updateStatus === 'success' && (
                     <p className="success-message" style={{color: 'green' }}>{updateMessage}</p>
@@ -142,6 +134,38 @@ export default function AppointmentEditModal({
                         e.preventDefault()
                         updateAppointments()
                         }}> 
+                      
+                    
+                    {/* CLINIC SELECT */}
+                    { showClinicSelector ? (
+                    <div  className="flex justify-between">
+                      <label
+                        className='p-3 w-40 '
+                            >Clinic</label> 
+                      <select 
+                            className='p-2 w-full bg-[#F5F3EE] rounded-lg border border-solid text-end'
+                            value={selectedClinic}
+                            onChange={(e) =>{
+                          setSelectedClinic( e.target.value ) }
+                        }
+                      >
+                        {clinicList.map((d) => (
+                          <option key={d.clinic_id} value={d.clinic_id}>
+                            {d.clinic_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    ) : (<>
+                        <div  className="flex justify-between">
+                            <label className='p-3 w-40 '>
+                                Clinic</label> 
+                            <label className='p-3 w-40 text-end'>
+                                {clinicNameById} </label> 
+                            
+                        </div>
+                    </>)}
+
 
                     {/* PATIENT SELECT */}
                     <div className="flex justify-between">
@@ -259,74 +283,55 @@ export default function AppointmentEditModal({
                     </div>
 
 
-                    {/* Patient Note */}
-                    <div  className="flex justify-between">
-                      <label
-                        className='p-3 w-70 '
-                            >Appointment Status</label>
-                      <select
-                        className='p-3 w-50 bg-[#F5F3EE] rounded-lg border border-solid text-end'
-                        name="type"
-                        value={updateForm.appointment_status}
-                        onChange={(e) => setUpdateForm((f) => ({ ...f, appointment_status: e.target.value as AppointmentType, }))}
-                      >
-                        {apptStatusTypes.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {/* Patient Note */} 
+                    {nurse? (<>
+                        <div  className="flex flex-col justify-between">
+                        <label
+                            className='p-3 w-70 '
+                                >Patient Note</label>
+                        <p className='p-3 w-full max-h-30 overflow-y-auto border rounded-lg border border-solid' > 
+                            { updateForm.patient_note || 'Empty'}  
+                        </p>
+                        </div> 
+                    </>):(<>
+                        <div  className="flex flex-col justify-between">
+                        <label
+                            className='p-3 w-70 '
+                                >Patient Note</label>
+                        <textarea
+                            className='p-3 w-full bg-[#F5F3EE] rounded-lg border border-solid'
+                            name="type" 
+                            value={updateForm.patient_note}
+                            onChange={(e) => setUpdateForm((f) => ({ ...f, patient_note: e.target.value as AppointmentType, }))}
+                        > 
+                        </textarea>
+                        </div>
+                    </>)}
 
 
                     {/* Nurse Note */} 
-                    <div  className="flex justify-between">
-                      <label
-                        className='p-3 w-70 '
-                            >Appointment Status</label>
-                      <select
-                        className='p-3 w-50 bg-[#F5F3EE] rounded-lg border border-solid text-end'
-                        name="type"
-                        value={updateForm.appointment_status}
-                        onChange={(e) => setUpdateForm((f) => ({ ...f, appointment_status: e.target.value as AppointmentType, }))}
-                      >
-                        {apptStatusTypes.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                      
-                    
-                    {/* CLINIC SELECT */}
-                    { showClinicSelector ? (
-                    <div  className="flex justify-between">
-                      <label
-                        className='p-3 w-40 '
-                            >Clinic</label> 
-                      <select 
-                            className='p-2 w-full bg-[#F5F3EE] rounded-lg border border-solid'
-                            value={selectedClinic}
-                            onChange={(e) =>{
-                          setSelectedClinic( e.target.value ) }
-                        }
-                      >
-                        {clinicList.map((d) => (
-                          <option key={d.clinic_id} value={d.clinic_id}>
-                            {d.clinic_name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    ) : (<>
-                        <div  className="flex justify-between">
-                            <label className='p-3 w-40 '>
-                                Clinic</label> 
-                            <label className='p-3 w-40 '>
-                                {clinicNameById} </label> 
-                            
+                    {nurse? (<>
+                        <div  className="flex flex-col justify-between">
+                        <label
+                            className='p-3 w-70 '
+                                >Nurse Note</label>
+                        <textarea
+                            className='p-3 w-full bg-[#F5F3EE] rounded-lg border border-solid '
+                            name="type" 
+                            value={updateForm.nurse_note}
+                            onChange={(e) => setUpdateForm((f) => ({ ...f, nurse_note: e.target.value as AppointmentType, }))}
+                        > 
+                        </textarea>
                         </div>
+                    </>):(<>
+                        <div  className="flex flex-col justify-between">
+                        <label
+                            className='p-3 w-70 '
+                                >Nurse Note</label>
+                        <p className='p-3 w-full max-h-30 overflow-y-auto bg-[#F5F3EE] rounded-lg border border-solid' > 
+                            {updateForm.nurse_note}
+                        </p>
+                        </div> 
                     </>)}
 
 

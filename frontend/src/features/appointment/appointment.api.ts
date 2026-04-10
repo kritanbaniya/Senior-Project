@@ -1,5 +1,6 @@
 import type { 
     Appointment, 
+    CreateApptForm, 
     UpdateApptForm 
 } from "./types";
 import { supabase } from "@/lib/supabase";
@@ -7,25 +8,30 @@ import { supabase } from "@/lib/supabase";
 
 
 /////// CREATE UTILITY 
-// export async function apiCreateAppt (input: UpdateApptForm):Promise<Appointment> {  
-//     let appointmentDate = `${input.date} ${input.time}:00`
-//     const { data, error } = await supabase
-//         .schema('public')
-//         .from('Appointments')
-//         .update({
-//             appointment_date: appointmentDate,
-//             patient_id: input.patientId,
-//             clinician_id: input.doctorId,
-//             visit_type: input.type,
-//             appointment_status: input.appointment_status, 
-//             nurse_note: input.nurse_note 
-//         })
-//         .eq('Appointment_id', input.appointmentId)
-//         .select('*')
-//         .single() 
-//     if (error) throw error
-//     return data
-// }
+export async function apiCreateAppt (input: CreateApptForm, clinicId: string):Promise<Appointment> {  
+    let appointmentDate = `${input.date} ${input.time}:00`
+    const { data, error } = await supabase
+        .schema('public')
+        .from('Appointments')
+        .insert([
+            {
+                // Appointment_id: -- leave blank so supabase auto generates  
+                appointment_date: appointmentDate,
+                patient_id: input.patientId,
+                clinician_id: input.doctorId,
+                clinic_id: clinicId,
+                checkin_at: null,
+                seen_at: null,
+                visit_type: input.type,
+                appointment_status: input.appointment_status, 
+                nurse_note: input.nurse_note 
+            },
+        ])
+        .select('*')
+        .single() 
+    if (error) throw error
+    return data
+}
 
 
 

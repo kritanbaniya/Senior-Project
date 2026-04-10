@@ -9,8 +9,8 @@ import type {
   AppointmentType ,  
   UpdateApptForm
 } from "@/features/appointment/types.ts"; 
-import AppointmentForm from '@/features/appointment/ApptCreateModal.tsx';
-import AppointmentEditModal from '@/features/appointment/ApptEditModel.tsx';
+import ApptCreateModal from '@/features/appointment/ApptCreateModal.tsx';
+import ApptEditModal from '@/features/appointment/ApptEditModel.tsx';
 import NurseSideBar from './NurseSideBar';  
 import { 
     // UPDATE API THINGS 
@@ -19,7 +19,7 @@ import {
 } from '@/features/appointment/appointment.api.ts';
 // import AppointmentR
 // import { Switch } from "radix-ui";
- 
+ import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
  
 
 
@@ -169,47 +169,30 @@ export default function NurseAppointmentManager() {
         }
 
 
-        // CREATE IT 
-        let appointmentDate = `${createForm.date} ${createForm.time}:00`
-        const { data, error } = await supabase
-            .schema('public')
-            .from('Appointments')
-            .insert([
-                {
-                    // Appointment_id: -- leave blank so supabase auto generates  
-                    appointment_date: appointmentDate,
-                    patient_id: createForm.patientId,
-                    clinician_id: createForm.doctorId,
-                    clinic_id: clinicId,
-                    checkin_at: null,
-                    seen_at: null,
-                    visit_type: createForm.type,
-                    appointment_status: createForm.appointment_status, 
-                    nurse_note: createForm.nurse_note 
-                },
-            ])
-            .select('*')
-            .single() 
-        // if Supabase error 
-        if (error || !data) {
-            setCreateStatus('failed')
-            setCreateMessage('Appointment creation failed.')
+        // CREATE IT  
+        try {
+            const created = await apiCreateAppt(createForm, clinicId)
+            if(debuglog == true) console.log('CREATED:', created)
+            // TAIL UI CHANGES  
+            const patientName = patientList.find((p) => p.user_id === createForm.patientId)?.full_name ?? 'Unknown patient'
+            const doctorName = practicionerList.find((d) => d.user_id === createForm.doctorId)?.full_name ?? 'Unknown provider' 
+            setCreateStatus('success')
+            setCreateMessage(`Appointment created for ${patientName} on ${createForm.date} at ${createForm.time} with ${doctorName}.`)
+            // since appt list changed, re-call readAppt
+            if(clinic) await readAppointments(clinic, viewPrefs)
+        } catch (error) {
             console.log('ERROR CREATE:', error)
-            return
-        }
-        if(debuglog == true){console.log('CREATE DATA:', data)}
-
-        // TAIL UI CHANGES 
-        const patientName = patientList.find((p) => p.user_id === createForm.patientId)?.full_name ?? 'Unknown patient'
-        const doctorName = practicionerList.find((d) => d.user_id === createForm.doctorId)?.full_name ?? 'Unknown provider'
-        setCreateStatus('success')
-        setCreateMessage(`Appointment created for ${patientName} on ${createForm.date} at ${createForm.time} with ${doctorName}.`)
-        
+            // TAIL UI CHANGES  
+            setCreateStatus('failed')
+            setCreateMessage('Appointment creation failed.') 
+        } finally {
+            // if(clinic) await readAppointments(clinic, viewPrefs)
+        } 
         // since appt list changed, re-call readAppt
-        await readAppointments(clinicId, viewPrefs)
+        // await readAppointments(clinicId, viewPrefs)
     }
     /// pass these to children 
-    // create am appointment 
+    // create an appointment 
     const handleCreateAppointment = async () => { // relies on clinic existing in nurseApptManager
         if (clinic){
         createAppointment(clinic)}
@@ -228,7 +211,7 @@ export default function NurseAppointmentManager() {
         const hh = String(start.getHours()).padStart(2, '0')
         const min = String(start.getMinutes()).padStart(2, '0')
 
-        setCreateForm((f) => ({             // prefill date and time  
+        setCreateForm((f: CreateApptForm) => ({     // prefill date and time  
             ...f,
             date: `${yyyy}-${mm}-${dd}`,
             time: `${hh}:${min}`,
@@ -429,6 +412,7 @@ export default function NurseAppointmentManager() {
             setUpdateStatus('failed')
             setUpdateMessage('Appointment update failed.') 
         } finally {
+            // if(clinic) await readAppointments(clinic, viewPrefs)
         }
     } 
     // open createForm and prefill information 
@@ -569,7 +553,7 @@ export default function NurseAppointmentManager() {
             {/* FORM/MODALS */}
             {/* CREATION FORM */}
             <div className = "flex items-center">
-              <AppointmentForm
+              <ApptCreateModal
                 showClinicSelector = {showClinicSelector}
                 clinicList = {clinicList} 
                 selectedClinic = { clinic ? clinic : '' }
@@ -599,7 +583,7 @@ export default function NurseAppointmentManager() {
 
           {/* EDITTING FORM */}
           <div className = "flex items-center">
-            <AppointmentEditModal
+            <ApptEditModal
               showClinicSelector = {showClinicSelector} 
                 // display and change selected clinic 
                 clinicList = {clinicList} 

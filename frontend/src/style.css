@@ -1573,8 +1573,11 @@ input:-webkit-autofill:active {
   padding: 2rem;
   width: 100%;
   max-width: 600px;
+  max-height: calc(100vh - 6rem);  
+  overflow-y: auto;    
   position: relative;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  
 }
 .form-close {
   position: absolute;
@@ -1587,10 +1590,7 @@ input:-webkit-autofill:active {
   color: #666;
   cursor: pointer;
   padding: 0.25rem;
-}
-
-
-
+}  
 
 
 

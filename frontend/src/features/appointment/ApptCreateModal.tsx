@@ -1,33 +1,21 @@
 
 
-import {  useEffect, useState } from 'react'
-// import { supabase } from '../../../lib/supabase.ts' 
-// import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
+import {  useEffect, useState } from 'react' 
 import type { 
     UserClinicRelationship, 
     CreateApptForm, 
     AppointmentType 
 } from "@/features/appointment/types.ts"; 
-import { Button } from '@/components/ui/button';
-// import ClinicSelector from "../queue/components/ClinicSelector";
+import { Button } from '@/components/ui/button'; 
 
 
-
-
-// type UpdateAppointmentForm = {
-//   appointmentId: string
-//   patientId: string
-//   date: string
-//   time: string
-//   doctorId: string
-//   type: AppointmentType | ''
-// }
 
 
 type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
 type apptFormProp = {
     showClinicSelector : boolean,
+    // display and change selected clinic 
     clinicList : UserClinicRelationship[], 
     selectedClinic : string,
     setSelectedClinic : (s:string) => void, 
@@ -44,31 +32,33 @@ type apptFormProp = {
     createMessage : string, 
     setCreateMessage : (m : string) => void, 
 
+    // CREATE callback functions 
     openCreateForm : (start: Date) => void, 
     createAppointment : () => void, 
 
     nurse : boolean, 
     patientList : UserClinicRelationship[], 
-    patientName : string | undefined, 
-
+    patientName : string | undefined,  
     practicionerList : UserClinicRelationship[], 
     appointmentTypes : AppointmentType[], 
 
 }
 
 
-export default function AppointmentForm({
+export default function ApptCreateModal({
     showClinicSelector,
+    // clinic sauce 
     clinicList, 
     selectedClinic, 
     setSelectedClinic, 
 
+    // CREATE : form for UI and submission | display it 
     showCreateForm, 
-    setShowCreateForm, 
-
+    setShowCreateForm,  
     createForm, 
     setCreateForm, 
 
+    // CREATE : STATUS and MESSAGE 
     createStatus,
     setCreateStatus,
     createMessage ,
@@ -79,24 +69,31 @@ export default function AppointmentForm({
 
     nurse,
     patientList,
-    patientName,
-
+    patientName, 
     practicionerList,
     appointmentTypes,
     
 }:apptFormProp){
  
-
-  
-  const [ clinicNameById , setClinicNameById ] = useState<string>('')
-  useEffect(() => {
-    for(var i = 0; i < clinicList.length ; i ++ ){
-      if (clinicList[i].clinic_id == selectedClinic){
-        setClinicNameById(clinicList[i].clinic_name)
-        break
-      }
-    }
-  }, [selectedClinic])
+ 
+    const apptStatusTypes : any[] = [ 
+        'pending',  // patient needs to make changes 
+        'unseen',   // nurse/clinic has not seen it 
+        'canceled', // appointment was canceled 
+        'deserted',  // patient did not show up 
+        'active',   // active = APPOINTMENTS 
+        'completed' // Appointment successfully closed 
+    ]  
+    
+    const [ clinicNameById , setClinicNameById ] = useState<string>('')
+    useEffect(() => {
+        for(var i = 0; i < clinicList.length ; i ++ ){
+        if (clinicList[i].clinic_id == selectedClinic){
+            setClinicNameById(clinicList[i].clinic_name)
+            break
+        }
+        }
+    }, [selectedClinic])
   
 
 
@@ -105,9 +102,7 @@ export default function AppointmentForm({
   }
 
 
-    return(<>
-        
-        
+    return(<> 
           {/* CREATION / EDITING FORM */}
           <div className="info-box-content">   
             <Button
@@ -115,8 +110,7 @@ export default function AppointmentForm({
                 onClick={() => openCreateForm(new Date())}
               >
                 Create appointment
-              </Button>
-
+              </Button> 
             {/* FORMS */}
             {!showCreateForm ? (
               <>
@@ -126,7 +120,7 @@ export default function AppointmentForm({
                 <div className="form-modal" onClick={e => e.stopPropagation()}> 
                   {/* STATUS MESSAGE */}
                   {createStatus === 'idle' && (
-                    <p className="small-label">Appointment Details</p>
+                    <p className="small-label">Create Appointment </p>
                   )}
                   {createStatus === 'loading' && (
                     <p className="small-label">Creating appointment...</p>
@@ -140,36 +134,75 @@ export default function AppointmentForm({
                   
                   
                   {/* THE FORM */}
-                  <form
-                    className="portal-form"
+                  <form className="portal-form"
                     onSubmit={(e) => {
-                      e.preventDefault()
-                      createAppointment()
-                    }}> 
-                    <div className="form-row">
-                      <label>Patient name</label>
+                        e.preventDefault()
+                        createAppointment()
+                        }}> 
+
+
+                    {/* CLINIC SELECT */}
+                    { showClinicSelector ? (
+                    <div  className="flex justify-between">
+                      <label
+                        className='p-3 w-40 '
+                            >Clinic</label> 
+                      <select 
+                            className='p-2 w-full bg-[#F5F3EE] rounded-lg border border-solid text-end'
+                            value={selectedClinic}
+                            onChange={(e) =>{
+                          setSelectedClinic( e.target.value ) }
+                        }
+                      >
+                        {clinicList.map((d) => (
+                          <option key={d.clinic_id} value={d.clinic_id}>
+                            {d.clinic_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    ) : (<>
+                        <div  className="flex justify-between">
+                            <label className='p-3 w-40 '>
+                                Clinic</label> 
+                            <label className='p-3 w-40 text-end'>
+                                {clinicNameById} </label> 
+                            
+                        </div>
+                    </>)}
+
+
+                    {/* PATIENT SELECT */}
+                    <div className="flex justify-between">
+                      <label 
+                        className='p-3 w-40 '
+                            >Patient name</label>
                         {nurse ? 
                         (<select
-                        
-                          value={createForm.patientId}
-                          onChange={(e) =>
-                            setCreateForm((f) => ({ ...f, patientId: e.target.value }))
-                          }>
-                          {(patientList.map((d) => (
-                          <option key={d.user_id} value={d.user_id}>
-                              {d.full_name}
-                          </option>
-                          )))}
+                            className='p-3 w-full bg-[#F5F3EE] rounded-lg border border-solid text-end'
+                            value={createForm.patientId}
+                            onChange={(e) =>
+                                setCreateForm((f) => ({ ...f, patientId: e.target.value }))
+                            }>
+                            {(patientList.map((d) => (
+                            <option key={d.user_id} value={d.user_id}>
+                                {d.full_name}
+                            </option>
+                            )))}
                         </select>) : 
                         (
                           <p>{patientName}</p>  
                         )}
-                    </div>
+                    </div> 
 
 
-                    <div className="form-row">
-                      <label>Date</label>
+                    {/* DATE SET */}
+                    <div className="flex justify-between">
+                      <label
+                        className='p-3 w-40 '
+                            >Date</label>
                       <input
+                        className='p-3 w-40 bg-[#F5F3EE] rounded-lg border border-solid text-end'
                         type="date"
                         value={createForm.date}
                         //min={getNowForDateTimeInput().date} redundant, and mismatching style. but may still be useful
@@ -178,19 +211,29 @@ export default function AppointmentForm({
                       />
                     </div>
 
-                    <div className="form-row">
-                      <label>Time</label>
+
+                    {/* TIME SET */}
+                    <div  className="flex justify-between">
+                      <label
+                        className='p-3 w-40 '
+                            >Time</label>
                       <input
+                        className='p-3 w-40 bg-[#F5F3EE] rounded-lg border border-solid text-end'
                         type="time"
                         value={createForm.time}
                         onChange={(e) => setCreateForm((f) => ({ ...f, time: e.target.value }))}
                         required
                       />
-                    </div>
+                    </div> 
 
-                    <div className="form-row">
-                      <label>Provider</label>
+
+                    {/* PROVIDER SELECT */}
+                    <div  className="flex justify-between">
+                      <label
+                        className='p-3 w-30 '
+                            >Provider</label>
                       <select
+                        className='p-3 w-full bg-[#F5F3EE] rounded-lg border border-solid text-end'
                         value={createForm.doctorId}
                         onChange={(e) =>
                           setCreateForm((f) => ({ ...f, doctorId: e.target.value }))
@@ -204,9 +247,14 @@ export default function AppointmentForm({
                       </select>
                     </div>
 
-                    <div className="form-row">
-                      <label>Visit type</label>
+
+                    {/* VISIT TYPE */}
+                    <div  className="flex justify-between">
+                      <label
+                        className='p-3 w-40 '
+                            >Visit type</label>
                       <select
+                        className='p-3 w-70 bg-[#F5F3EE] rounded-lg border border-solid text-end'
                         name="type"
                         value={createForm.type}
                         onChange={(e) => setCreateForm((f) => ({ ...f, type: e.target.value as AppointmentType, }))}
@@ -218,36 +266,68 @@ export default function AppointmentForm({
                         ))}
                       </select>
                     </div>
-                      
-                    
-                    { showClinicSelector ? (
-                    <div className="form-row">
-                      <label>Clinic</label> 
-                      <select 
-                        value={selectedClinic}
-                        onChange={(e) =>{
-                          setSelectedClinic( e.target.value ) }
-                        }
+
+
+                    {/* APPT STATUS */}
+                    <div  className="flex justify-between">
+                      <label
+                        className='p-3 w-70 '
+                            >Appointment Status</label>
+                      <select
+                        className='p-3 w-50 bg-[#F5F3EE] rounded-lg border border-solid text-end'
+                        name="type"
+                        value={createForm.appointment_status}
+                        onChange={(e) => setCreateForm((f) => ({ ...f, appointment_status: e.target.value as AppointmentType, }))}
                       >
-                        {clinicList.map((d) => (
-                          <option key={d.clinic_id} value={d.clinic_id}>
-                            {d.clinic_name}
+                        {apptStatusTypes.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
                           </option>
                         ))}
                       </select>
                     </div>
-                    ) : (<>
-                      <label>Clinic</label> 
-                      {clinicNameById}
-                      {}
+
+
+                    {/* Patient Note */}
+                    {nurse? (<></>):(<>
+                        <div  className="flex flex-col justify-between">
+                        <label
+                            className='p-3 w-70 '
+                                >Patient Note</label>
+                        <textarea
+                            className='p-3 w-full max-h-30 overflow-y-auto bg-[#F5F3EE] rounded-lg border border-solid text-end'
+                            name="type" 
+                            value={createForm.patient_note}
+                            onChange={(e) => setCreateForm((f) => ({ ...f, patient_note: e.target.value as AppointmentType, }))}
+                        > 
+                        </textarea>
+                        </div>
                     </>)}
 
+                    {/* Nurse Note */} 
+                    {nurse? (<>
+                        <div  className="flex flex-col justify-between">
+                        <label
+                            className='p-3 w-70 '
+                                >Nurse Note</label>
+                        <textarea
+                            className='p-3 w-full  text-wrap bg-[#F5F3EE] rounded-lg border border-solid '
+                            name="type" 
+                            value={createForm.nurse_note}
+                            onChange={(e) => setCreateForm((f) => ({ ...f, nurse_note: e.target.value as AppointmentType, }))}
+                        > 
+                        </textarea>
+                        </div>
+                    </>):(<></>)}
+                    
+                    
 
-                    <div className="form-actions">
-                      <button type="submit" className="btn-primary">
+
+                    <div className="flex form-actions justify-end">
+                      <Button type="submit" className="btn-primary bg-green-600">
                         Create
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
                         className="btn-secondary"
                         onClick={() => {
@@ -257,7 +337,7 @@ export default function AppointmentForm({
                         }}
                       >
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </form>
                 </div>

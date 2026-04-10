@@ -164,9 +164,9 @@ export default function AppointmentList({
       case "canceled":
         return "bg-slate-400 border-[#F5F3EE]"
       case "deserted":
-        return "bg-yellow-500 border-[#F5F3EE]"
+        return "bg-slate-400 border-[#F5F3EE]"
       case "active":
-        return "bg-green-500 border-[#F5F3EE]"
+        return "bg-green-600 border-[#F5F3EE]"
       case "completed":
         return "bg-[#7c86ff] border-[#F5F3EE]"
       default:

@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase.ts' 
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx';
-import type { reqAppointmentTypes, UserClinicRelationship, Appointment, AppointmentViewPrefs, AppointmentType, AppointmentFormType } from '@/features/appointment/types.ts';
+import type {  
+    UserClinicRelationship, 
+    Appointment, 
+    AppointmentViewPrefs, 
+    AppointmentType, 
+    CreateApptForm 
+} from '@/features/appointment/types.ts';
 import PatientSideBar from './PatientSideBar'
-import AppointmentForm from '@/features/appointment/ApptCreateModal.tsx';
-
+import ApptCreateModal from '@/features/appointment/ApptCreateModal.tsx';
+import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
 
 // clinicView is for adjusting what appointments can be seen 
 // clinic
@@ -17,12 +23,9 @@ export default function PatientAppointmentManager() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    //// COMPONENT RENDER VARIABLES - decides if a part of the page gets mounted
-    const [showScheduleForm, setShowScheduleForm] = useState(false) 
+    //// COMPONENT RENDER VARIABLES - decides if a part of the page gets mounted 
     // creation status 
-    type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
-    const [createStatus, setCreateStatus] = useState<AppointmentCreateStatus>('idle')
-    const [createMessage, setCreateMessage] = useState('')
+    type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed' 
     // stop showing appointments while new query is loading new appt list - MAY NEED BETTER PERFORMANCE
     const [appointmentsLoading, setAppointmentsLoading] = useState(false)
 
@@ -184,17 +187,83 @@ export default function PatientAppointmentManager() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     ///// C R U D !!! 
-    // The Form for creation 
-    const [scheduleForm, setScheduleForm] = useState<AppointmentFormType>({
+    // C: UI 
+    const [showCreateForm, setShowCreateForm] = useState<boolean>(false)
+    const [createForm, setCreateForm] = useState<CreateApptForm>({
+        appointmentId: '', 
         patientId: '',
+        doctorId: '',
         date: '',
         time: '',
-        doctorId: '',
         type: '',
+        appointment_status: '',
+        nurse_note: '',
+        patient_note: '' 
     })
+    const [createStatus, setCreateStatus] = useState<AppointmentCreateStatus>('idle')
+    const [createMessage, setCreateMessage] = useState('')
+    //// C: CREATE APPT REQUEST 
+    const createAppointment = async (clinicId: string) => { // I : clinicId  &&  Submission form 
+        if(debuglog == true){console.log('CREATEFORM SUBMITTED', createForm)} 
+
+
+        ////// SET UI 
+        setCreateStatus('loading')
+        setCreateMessage('')  
+  
+        ////// EXIT CASES 
+        // exit if form is incomplete. 
+        if (  !clinicId || !patientInfo?.id || !createForm || !createForm.date 
+        || !createForm.time || !createForm.doctorId || !createForm.type) {
+            setCreateStatus('failed')
+            setCreateMessage('Appointment creation failed. Please complete all fields.')
+            console.log('ERROR: APPOINTMENT CREATION FAILED')
+            return}
+        if (clinicId === 'all' ){
+            console.log('APPOINTMENT CREATION REQUIRES A CLINIC')
+            return}
+        // exit if appt time is before current time 
+        const selectedDateTime = new Date(`${createForm.date}T${createForm.time}`)
+        const now = new Date()
+        if (selectedDateTime < now) {
+            setCreateStatus('failed')
+            setCreateMessage('Appointment cannot be created in the past.')
+            return
+        }
+
+        // CREATE IT 
+        try {
+            const created = await apiCreateAppt(createForm, clinicId)
+            if(debuglog == true) console.log('CREATED:', created)
+            // TAIL UI CHANGES  
+            const patientName = patientInfo.full_name
+            const doctorName = practicionerList.find((d) => d.user_id === createForm.doctorId)?.full_name ?? 'Unknown provider' 
+            setCreateStatus('success')
+            setCreateMessage(`Appointment Requested for ${patientName} on ${createForm.date} at ${createForm.time} with ${doctorName}.`)
+            // since appt list changed, re-call readAppt
+            if(clinicView === clinicId) await readAppointments(clinicId, viewPrefs)
+        } catch (error) {
+            console.log('ERROR CREATE:', error)
+            // TAIL UI CHANGES  
+            setCreateStatus('failed')
+            setCreateMessage('Appointment request failed.') 
+        } finally {
+            // if(clinic) await readAppointments(clinic, viewPrefs)
+        }  
+    }
+    /// pass these to children 
+    // create an appointment 
+    const handleCreateAppointment = async () => {
+        if(!clinicView) return // exit if no clinic 
+        if (clinicView === 'all'){ 
+            if(clinicReq) createAppointment(clinicReq)
+            // if the patient is viewing all clinic appts, 
+            // we need to use the clinic selected in the form 
+        } else createAppointment(clinicView)
+            // else we can just use the clinic Id of the clinic they are viewing 
+    }
     // open the form modal * 
-    const handleNewAppointment = (start: Date) => {
-        // get current time 
+    const openCreateForm = (start: Date) => { 
         const now = new Date()
         if (start < now) {
             setCreateStatus('failed')
@@ -206,90 +275,17 @@ export default function PatientAppointmentManager() {
         const dd = String(start.getDate()).padStart(2, '0')
         const hh = String(start.getHours()).padStart(2, '0')
         const min = String(start.getMinutes()).padStart(2, '0')
-
-        // set form info with current time with appropriate format 
-        setScheduleForm((f: AppointmentFormType) => ({
+ 
+        setCreateForm((f: CreateApptForm) => ({     // prefill date and time 
             ...f,
             date: `${yyyy}-${mm}-${dd}`,
             time: `${hh}:${min}`,
         }))
-
+        setShowAptUpdateForm(false)     // make sure updateForm is not open 
         setCreateStatus('idle')     // for UI 
         setCreateMessage('')        // for UI 
-        setShowScheduleForm(true)   // Allow the user to edit the form 
+        setShowCreateForm(true)   // Allow the user to edit the form 
     } 
-    // : string // this should come from a selection in the child 
-    const handleCreateAppointment = async () => {
-        if(!clinicView) return // exit if no clinic 
-        if (clinicView === 'all'){ 
-            if(clinicReq) createAppointment(clinicReq)
-            // if the patient is viewing all clinic appts, 
-            // we need to use the clinic selected in the form 
-        } else createAppointment(clinicView)
-            // else we can just use the clinic Id of the clinic they are viewing 
-    }
-    //// C: CREATE APPT REQUEST 
-    const createAppointment = async (clinicId: string) => { // I : clinicId  &&  Submission form 
-        setCreateStatus('loading')
-        setCreateMessage('')  
-        if(debuglog == true){console.log('FORMSUBMITTED', scheduleForm)}
-        
-        // exit if form is incomplete. 
-        if (  !clinicId || !patientInfo?.id || !scheduleForm || !scheduleForm.date 
-        || !scheduleForm.time || !scheduleForm.doctorId || !scheduleForm.type) {
-            setCreateStatus('failed')
-            setCreateMessage('Appointment creation failed. Please complete all fields.')
-            console.log('ERROR: APPOINTMENT CREATION FAILED')
-            return}
-        if (clinicId === 'all' ){
-            console.log('APPOINTMENT CREATION REQUIRES A CLINIC')
-            return}
-
-        // exit if appt time is before current time 
-        const selectedDateTime = new Date(`${scheduleForm.date}T${scheduleForm.time}`)
-        const now = new Date()
-        if (selectedDateTime < now) {
-            setCreateStatus('failed')
-            setCreateMessage('Appointment cannot be created in the past.')
-            return
-        }
-
-        // CREATE IT 
-        let appointmentDate = `${scheduleForm.date} ${scheduleForm.time}:00`
-        const { data, error } = await supabase
-            .schema('public')
-            .from('appt_creation_requests')
-            .insert([
-                {
-                    appointment_date: appointmentDate,
-                    patient_id: patientInfo.id,
-                    clinic_id: clinicId,
-                    clinician_id: scheduleForm.doctorId,
-                    visit_type: scheduleForm.type,
-                    patient_notes: null, 
-                    nurse_notes: null, 
-                    request_status: 'unseen'
-                },
-            ])
-            .select('*')
-            .single()
-    
-        if (error || !data) {
-            setCreateStatus('failed')
-            setCreateMessage('Appointment creation failed.')
-            console.log('ERROR CREATE:', error)
-            return
-        }
-
-        const doctorName = practicionerList.find((d) => d.user_id === scheduleForm.doctorId)?.full_name ??
-        'Unknown provider'
-        setCreateStatus('success')
-        setCreateMessage(
-        `Appointment created for ${patientInfo.full_name} on ${scheduleForm.date} at ${scheduleForm.time} with ${doctorName}.`
-        )
-
-        await readAppointments(clinicId, viewPrefs)
-    }
 
 
 
@@ -513,14 +509,14 @@ export default function PatientAppointmentManager() {
 
     // Rerender components when these values are retrieved/updated 
     useEffect(() => {
-        if (practicionerList.length > 0 && scheduleForm.doctorId === '') {
-            setScheduleForm((f) => ({ ...f, doctorId: practicionerList[0].user_id }))
+        if (practicionerList.length > 0 && createForm.doctorId === '') {
+            setCreateForm((f) => ({ ...f, doctorId: practicionerList[0].user_id }))
         }
     }, [practicionerList])
 
     useEffect(() => {
         if (appointmentTypes.length > 0) {
-            setScheduleForm((f) => ({
+            setCreateForm((f) => ({
                 ...f,
                 type: f.type || appointmentTypes[0],
             }))
@@ -568,28 +564,28 @@ export default function PatientAppointmentManager() {
                             // functions to handle appointment CRUD actions 
                             onSelectAppointment={emptyf} 
                             onDeleteAppointment={emptyf}
-                            onSelectSlot={handleNewAppointment}
+                            onSelectSlot={openCreateForm}
                             // function to handle appointment view changes (changing query)
                             viewPrefs={viewPrefs}
                             totalPages = {totalPages}
                             onUpdateViewPrefs = {updateViewPrefs}
                             />
 
-                        <AppointmentForm
+                        <ApptCreateModal
                             showClinicSelector={showClinicSelector}
                             clinicList={clinicList} 
                             selectedClinic = {clinicReq || ''}
                             setSelectedClinic={setClinicReq}
 
-                            showScheduleForm={showScheduleForm}
-                            setShowScheduleForm={setShowScheduleForm}
-                            scheduleForm={scheduleForm}
-                            setScheduleForm={setScheduleForm}
+                            showCreateForm={showCreateForm}
+                            setShowCreateForm={setShowCreateForm}
+                            createForm={createForm}
+                            setCreateForm={setCreateForm}
                             createStatus={createStatus}
                             setCreateStatus={setCreateStatus}
                             createMessage={createMessage}
                             setCreateMessage={setCreateMessage}
-                            handleNewAppointment={handleNewAppointment}
+                            openCreateForm={openCreateForm}
                             createAppointment={handleCreateAppointment} // createAppointment
                             nurse={false}
                             patientList={[]}
