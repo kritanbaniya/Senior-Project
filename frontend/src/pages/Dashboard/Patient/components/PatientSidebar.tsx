@@ -6,9 +6,10 @@ import {
   MapPinned,
   CalendarClock,
   FileText,
-  Activity,
   Pill,
   LogOut,
+  FlaskConical,
+  NotebookPen,
 } from "lucide-react"
 import {
   Sidebar,
@@ -59,9 +60,14 @@ const healthItems: SidebarItem[] = [
     icon: FileText,
   },
   {
-    title: "Health Summary",
+    title: "Visit Summary Notes",
+    url: "/dashboard/patient/",
+    icon: NotebookPen,
+  },
+  {
+    title: "Lab Results",
     url: "/dashboard/patient",
-    icon: Activity,
+    icon: FlaskConical,
   },
   {
     title: "Prescriptions",
@@ -85,7 +91,7 @@ function SidebarLink({
           end={item.url === "/dashboard/patient"}
           className={({ isActive }) =>
             [
-              "flex items-center gap-3 px-3 py-2 font-medium transition-colors rounded-md",
+              "flex items-center gap-3 px-3 py-5 text-[16px] font-medium transition-colors rounded-md",
               isActive
                 ? "bg-white text-indigo-900 shadow-sm"
                 : "text-slate-700 hover:bg-white/60 hover:text-indigo-700",
