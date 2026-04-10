@@ -17,7 +17,7 @@ import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
 
 
 export default function PatientAppointmentManager() {
-    var debuglog : boolean = false
+    var debuglog : boolean = true
 
 
 
@@ -134,15 +134,7 @@ export default function PatientAppointmentManager() {
         }
     }
 
-    // temparory empty f 
-    function emptyf(): void {
-        return
-    }
-
-
-    
-    // const [patientName, setPatientName] = useState<UserClinicRelationship | undefined>(undefined)
-    // const [patientId, setPatientId] = useState<string>()
+ 
     type patientInfoType = {
         created_at : string, 
         email : string, 
@@ -180,6 +172,11 @@ export default function PatientAppointmentManager() {
         // - member list 
         
         // supabase. 
+    }
+
+    // temparory empty f 
+    function emptyf(): void {
+        return
     }
     
 
@@ -220,6 +217,8 @@ export default function PatientAppointmentManager() {
             console.log('ERROR: APPOINTMENT CREATION FAILED')
             return}
         if (clinicId === 'all' ){
+            setCreateStatus('failed')
+            setCreateMessage('Please select a clinic') 
             console.log('APPOINTMENT CREATION REQUIRES A CLINIC')
             return}
         // exit if appt time is before current time 
@@ -235,11 +234,11 @@ export default function PatientAppointmentManager() {
         try {
             const created = await apiCreateAppt(createForm, clinicId)
             if(debuglog == true) console.log('CREATED:', created)
-            // TAIL UI CHANGES  
-            const patientName = patientInfo.full_name
+            // TAIL UI CHANGES console.log('doctorId in form:', createForm.doctorId)
             const doctorName = practicionerList.find((d) => d.user_id === createForm.doctorId)?.full_name ?? 'Unknown provider' 
+            const clinicThis = clinicList.find((d) => d.clinic_id === clinicReq)?.clinic_name ?? 'Unknown Clinic' 
             setCreateStatus('success')
-            setCreateMessage(`Appointment Requested for ${patientName} on ${createForm.date} at ${createForm.time} with ${doctorName}.`)
+            setCreateMessage(`Appointment Requested for ${createForm.date} at ${clinicThis} with ${doctorName}.`)
             // since appt list changed, re-call readAppt
             if(clinicView === clinicId) await readAppointments(clinicId, viewPrefs)
         } catch (error) {
@@ -253,14 +252,9 @@ export default function PatientAppointmentManager() {
     }
     /// pass these to children 
     // create an appointment 
-    const handleCreateAppointment = async () => {
-        if(!clinicView) return // exit if no clinic 
-        if (clinicView === 'all'){ 
-            if(clinicReq) createAppointment(clinicReq)
-            // if the patient is viewing all clinic appts, 
-            // we need to use the clinic selected in the form 
-        } else createAppointment(clinicView)
-            // else we can just use the clinic Id of the clinic they are viewing 
+    const handleCreateAppointment = async () => { 
+        if(clinicReq) createAppointment(clinicReq) 
+        if(!clinicReq) if(!clinicView) createAppointment(clinicView as string)
     }
     // open the form modal * 
     const openCreateForm = (start: Date) => { 
@@ -275,13 +269,22 @@ export default function PatientAppointmentManager() {
         const dd = String(start.getDate()).padStart(2, '0')
         const hh = String(start.getHours()).padStart(2, '0')
         const min = String(start.getMinutes()).padStart(2, '0')
- 
+        
+        if(!patientInfo) {
+            setCreateStatus('failed')                           // for UI 
+            setCreateMessage('No valid user logged in')         // for UI 
+            setShowCreateForm(false)   // Allow the user to edit the form 
+            return}
+
+
         setCreateForm((f: CreateApptForm) => ({     // prefill date and time 
             ...f,
             date: `${yyyy}-${mm}-${dd}`,
-            time: `${hh}:${min}`,
+            time: `${hh}:${min}`,  
+            patientId: patientInfo.id,
+            appointment_status: 'requested' 
         }))
-        setShowAptUpdateForm(false)     // make sure updateForm is not open 
+        // setShowAptUpdateForm(false)     // make sure updateForm is not open 
         setCreateStatus('idle')     // for UI 
         setCreateMessage('')        // for UI 
         setShowCreateForm(true)   // Allow the user to edit the form 
@@ -478,10 +481,10 @@ export default function PatientAppointmentManager() {
 
     useEffect(() => { // Show Clinic Selector 
         if (!clinicView)  return 
-        if (clinicView === 'all') {
-            setShowClinicSelector(true)  
-            return }
-        setShowClinicSelector(false) 
+        // if (clinicView === 'all') {
+        //     setShowClinicSelector(true)  
+        //     return }
+        setShowClinicSelector(true) // should always show 
         setClinicReq(clinicView)
     }, [clinicView])
 
@@ -523,25 +526,17 @@ export default function PatientAppointmentManager() {
         }
     }, [appointmentTypes])
 
-    
-    if (debuglog != false){
-        useEffect(() => {
-            // if(debuglog === true ) console.log("Is it to be? or not to be?", showClinicSelector)
-            console.log("Is it to be? or not to be?", showClinicSelector)
-            console.log("WIZZARDDDD", clinicView)    
-            console.log("eetris", clinicList) 
-            
-        }, [ showClinicSelector ])
-    } 
 
-    return(
-        <>
+
+    return( <>
             <div className="pd-layout">
             {/* Left sidebar */}
             <PatientSideBar/> 
                     
                 <div className="pd-right">
                     <div className="info-box appointments-section">
+                        <div className='flex justify-between'>
+                        {/* SELECT CLINIC */}
                         <h1 className="info-box-title">
                             <select 
                                 className='m-2 p-2 font-bold border-2 border-solid rounded-lg' 
@@ -555,44 +550,54 @@ export default function PatientAppointmentManager() {
                             </select>
                             Appointment Scheduling
                         </h1>
+
+                        {/* FORM/MODALS */}
+                        {/* CREATION FORM */}
+                        <div className = "flex items-center">
+                            <ApptCreateModal
+                                showClinicSelector={showClinicSelector}
+                                clinicList={clinicList} 
+                                selectedClinic = {clinicReq || ''}
+                                setSelectedClinic={setClinicReq}
+
+                                showCreateForm={showCreateForm}
+                                setShowCreateForm={setShowCreateForm}
+                                createForm={createForm}
+                                setCreateForm={setCreateForm}
+                                createStatus={createStatus}
+                                setCreateStatus={setCreateStatus}
+                                createMessage={createMessage}
+                                setCreateMessage={setCreateMessage}
+                                openCreateForm={openCreateForm}
+                                createAppointment={handleCreateAppointment} // createAppointment
+                                nurse={false}
+                                patientList={[]}
+                                patientName={patientInfo?.full_name || 'Err Or'}
+                                practicionerList={practicionerList}
+                                appointmentTypes={appointmentTypes}
+                            /> 
+                        </div>
+                    </div> 
+
+
+
+                        
+                        
                         {(!clinicView || !viewPrefs) ? (<p>Loading clinic...</p>) 
                         : (<>
-                        {/* VIEWING APPOINTMENTS */}
-                        <AppointmentSwitch
-                            appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
-                            reqAppointments = {appointmentsLoading ? [] : reqAppointmentsList} 
-                            // functions to handle appointment CRUD actions 
-                            onSelectAppointment={emptyf} 
-                            onDeleteAppointment={emptyf}
-                            onSelectSlot={openCreateForm}
-                            // function to handle appointment view changes (changing query)
-                            viewPrefs={viewPrefs}
-                            totalPages = {totalPages}
-                            onUpdateViewPrefs = {updateViewPrefs}
-                            />
-
-                        <ApptCreateModal
-                            showClinicSelector={showClinicSelector}
-                            clinicList={clinicList} 
-                            selectedClinic = {clinicReq || ''}
-                            setSelectedClinic={setClinicReq}
-
-                            showCreateForm={showCreateForm}
-                            setShowCreateForm={setShowCreateForm}
-                            createForm={createForm}
-                            setCreateForm={setCreateForm}
-                            createStatus={createStatus}
-                            setCreateStatus={setCreateStatus}
-                            createMessage={createMessage}
-                            setCreateMessage={setCreateMessage}
-                            openCreateForm={openCreateForm}
-                            createAppointment={handleCreateAppointment} // createAppointment
-                            nurse={false}
-                            patientList={[]}
-                            patientName={patientInfo?.full_name || 'Err Or'}
-                            practicionerList={practicionerList}
-                            appointmentTypes={appointmentTypes}
-                            />
+                            {/* VIEWING APPOINTMENTS */}
+                            <AppointmentSwitch
+                                appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
+                                reqAppointments = {appointmentsLoading ? [] : reqAppointmentsList} 
+                                // functions to handle appointment CRUD actions 
+                                onSelectAppointment={emptyf} 
+                                onDeleteAppointment={emptyf}
+                                onSelectSlot={openCreateForm}
+                                // function to handle appointment view changes (changing query)
+                                viewPrefs={viewPrefs}
+                                totalPages = {totalPages}
+                                onUpdateViewPrefs = {updateViewPrefs}
+                                /> 
                             </>)}
                     </div>
                 </div>

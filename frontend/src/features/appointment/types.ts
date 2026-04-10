@@ -14,7 +14,7 @@ export type AppointmentType = ''
 export type viewRequestTypes = 
     'all' | 
     'pending'|  // patient needs to make changes 
-    'unseen'|   // nurse/clinic has not seen it 
+    'requested'|   // nurse/clinic has not seen it 
     'canceled'| // appointment was canceled 
     'deserted'|  // patient did not show up 
     'active'|   // active = APPOINTMENTS 

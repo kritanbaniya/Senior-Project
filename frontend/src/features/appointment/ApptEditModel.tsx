@@ -79,7 +79,7 @@ export default function ApptEditModal({
 
     const apptStatusTypes : any[] = [ 
         'pending',  // patient needs to make changes 
-        'unseen',   // nurse/clinic has not seen it 
+        'requested',   // nurse/clinic has not seen it 
         'canceled', // appointment was canceled 
         'deserted',  // patient did not show up 
         'active',   // active = APPOINTMENTS 
@@ -113,19 +113,9 @@ export default function ApptEditModal({
             ) : (
               <div className="form-overlay" onClick={handleClose}>
                 <div className="form-modal" onClick={e => e.stopPropagation()}> 
-                  {/* STATUS MESSAGE */}
-                  {updateStatus === 'idle' && (
-                    <p className="small-label font-bold">Edit Appointment Details</p>
-                  )}
-                  {updateStatus === 'loading' && (
-                    <p className="small-label">Editing appointment...</p>
-                  )}
-                  {updateStatus === 'success' && (
-                    <p className="success-message" style={{color: 'green' }}>{updateMessage}</p>
-                  )}
-                  {updateStatus === 'failed' && (
-                    <p className="error-message" style={{color: 'red' }}>{updateMessage}</p>
-                  )}
+                  <h2 className='font-bold'>Edit Appointment </h2>
+
+                  
                   
                   
                   {/* THE FORM */}
@@ -334,22 +324,39 @@ export default function ApptEditModal({
                         </div> 
                     </>)}
 
+                    <div className='flex justify-between'>
+                        <div>
+                            {/* STATUS MESSAGE */}
+                            {updateStatus === 'idle' && (
+                                <p className="small-label font-bold"> </p>
+                            )}
+                            {updateStatus === 'loading' && (
+                                <p className="small-label">Editing appointment...</p>
+                            )}
+                            {updateStatus === 'success' && (
+                                <p className="success-message" style={{color: 'green' }}>{updateMessage}</p>
+                            )}
+                            {updateStatus === 'failed' && (
+                                <p className="error-message" style={{color: 'red' }}>{updateMessage}</p>
+                            )}
+                        </div>
 
-                    <div className="flex form-actions justify-end">
-                      <Button type="submit" className="btn-primary bg-green-600">
-                        Save
-                      </Button>
-                      <Button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => {
-                          setShowAptUpdateForm(false)
-                          setUpdateStatus('idle')
-                          setUpdateMessage('')
-                        }}
-                      >
-                        Cancel
-                      </Button>
+                        <div className="flex form-actions justify-end">
+                            <Button type="submit" className="btn-primary bg-green-600">
+                                Save
+                            </Button>
+                            <Button
+                                type="button"
+                                className="btn-secondary"
+                                onClick={() => {
+                                setShowAptUpdateForm(false)
+                                setUpdateStatus('idle')
+                                setUpdateMessage('')
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                        </div>
                     </div>
                   </form>
                 </div>

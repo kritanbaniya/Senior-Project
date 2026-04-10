@@ -158,9 +158,9 @@ export default function AppointmentList({
     function getStatusColor(status: string): string {
     switch (status) {
       case "pending":
+        return "bg-slate-400 border-[#F5F3EE]"
+      case "requested":
         return "bg-yellow-600 border-[#F5F3EE]"
-      case "unseen":
-        return "bg-red-700 border-[#F5F3EE]"
       case "canceled":
         return "bg-slate-400 border-[#F5F3EE]"
       case "deserted":

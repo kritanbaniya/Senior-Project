@@ -579,12 +579,13 @@ export default function NurseAppointmentManager() {
                 appointmentTypes = {appointmentTypes} 
               />
             </div> 
-          </div> 
+        </div> 
+
 
           {/* EDITTING FORM */}
           <div className = "flex items-center">
             <ApptEditModal
-              showClinicSelector = {showClinicSelector} 
+                showClinicSelector = {showClinicSelector} 
                 // display and change selected clinic 
                 clinicList = {clinicList} 
                 selectedClinic = { clinic ? clinic : '' }
