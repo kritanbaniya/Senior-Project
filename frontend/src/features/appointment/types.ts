@@ -10,16 +10,6 @@ export type AppointmentType = ''
 
 
 
-// REQUEST TYPES - fixed 
-export type viewRequestTypes = 
-    'all' | 
-    'pending'|  // patient needs to make changes 
-    'requested'|   // nurse/clinic has not seen it 
-    'canceled'| // appointment was canceled 
-    'deserted'|  // patient did not show up 
-    'active'|   // active = APPOINTMENTS 
-    'completed' // Appointment successfully closed 
-
 
 
 
@@ -102,7 +92,17 @@ export type UserClinicRelationship = {
 ////////////////////////////////////////////////
 ////// SORTING TYPES 
 // Appointments span all of time, so it's important to define which appointments we want to find
-export type SearchBy = '' 
+// REQUEST TYPES - fixed 
+export type viewRequestTypes = 
+    'all' | 
+    'pending'|  // patient needs to make changes 
+    'requested'|   // nurse/clinic has not seen it 
+    'canceled'| // appointment was canceled 
+    'deserted'|  // patient did not show up 
+    'active'|   // active = APPOINTMENTS 
+    'completed' // Appointment successfully closed 
+
+export type SearchByType = '' 
     | 'date range' 
     | 'visit type' 
     | 'patient' 
@@ -120,15 +120,15 @@ export type AppointmentViewPrefs = {
     page: number
     rowsPerPage: number 
     sortRules: SortRule[]
-    showReqs: viewRequestTypes
+    searchBy: SearchByType
+    showReqs: viewRequestTypes[]
     showPast: boolean 
-    searchBy: SearchBy 
-    searchInput: string // for any search query
-    // only for search by date range
     rangeStart: string
     rangeEnd: string
 }
 
+    // searchInput: '', // for any search query
+    // // only for search by date range
 
 //// used by: ApptSwitch -> ApptCalendar && ApptList
 export type ApptProps = {// define the prop's types

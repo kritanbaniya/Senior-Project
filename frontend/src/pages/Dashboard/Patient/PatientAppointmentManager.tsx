@@ -12,58 +12,14 @@ import PatientSideBar from './PatientSideBar'
 import ApptCreateModal from '@/features/appointment/ApptCreateModal.tsx';
 import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
 
-// clinicView is for adjusting what appointments can be seen 
-// clinic
-
+ 
 
 export default function PatientAppointmentManager() {
-    var debuglog : boolean = true
-
-
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //// COMPONENT RENDER VARIABLES - decides if a part of the page gets mounted 
-    // creation status 
+    var debuglog : boolean = false
     type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed' 
-    // stop showing appointments while new query is loading new appt list - MAY NEED BETTER PERFORMANCE
-    const [appointmentsLoading, setAppointmentsLoading] = useState(false)
 
+ 
     
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    // VIEW PREFERENCES 
-    const [totalPages, setTotalPage] = useState<number>(0)
-    const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
-        mode: 'calendar',
-        page: 1,
-        rowsPerPage: 10, // user can edit the number of rows per page 
-        sortRules: [ // by default, sort by date 
-        { field: 'appointment_date', direction: 'asc' },
-        ], 
-        dateMode: 'upcoming',
-        rangeStart: '',
-        rangeEnd: '',
-        showReqs: 'Hide', 
-        showPast: true, 
-    }) 
-    const updateViewPrefs = (updates: Partial<AppointmentViewPrefs>) => {
-        setViewPrefs((prev) => {  // old object 
-        const next = {
-        ...prev,    // copy what remains the same 
-        ...updates, // overwrite with what changes 
-        }
-
-        if (
-            updates.rowsPerPage !== undefined &&
-            updates.rowsPerPage !== prev.rowsPerPage
-        ) {
-            next.page = 1
-        }
-        return next
-        })
-    }
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// HELPER FUNCTIONS: 
     // Retrieve Appointment Types  
@@ -84,12 +40,11 @@ export default function PatientAppointmentManager() {
         }
     }
     
-    // The Clinic Selected for creation  
+    // The CLINIC Selected for creation  
     const [ showClinicSelector, setShowClinicSelector ] = useState<boolean>(true) // decides if form needs to show clinic selector UI 
     const [ clinicReq, setClinicReq ] = useState<string>() // for the Form 
     const [clinicView, setClinicView] = useState<string>() // for the View 
-    const [clinicList, setClinicList] = useState<UserClinicRelationship[]>([])
-    // Retrieve clinic ID  
+    const [clinicList, setClinicList] = useState<UserClinicRelationship[]>([]) 
     const loadClinics = async () => {
         const { data: authData, error: authErr } = await supabase.auth.getUser()
         if (authErr || !authData.user) {
@@ -113,7 +68,7 @@ export default function PatientAppointmentManager() {
         setClinicView(data[0].clinic_id)  
     }
 
-    // Retrieve the Practicianers of selected clinic 
+    // Retrieve the PRACTICIANERS of selected clinic 
     const [practicionerList, setPracticionerList] = useState<UserClinicRelationship[]>([])
     const retrievePracticioners = async (clinicId: string) => {
         if(clinicId == 'all'){
@@ -134,7 +89,7 @@ export default function PatientAppointmentManager() {
         }
     }
 
- 
+    // Retrieve own info
     type patientInfoType = {
         created_at : string, 
         email : string, 
@@ -162,17 +117,11 @@ export default function PatientAppointmentManager() {
             return  
         }
         
-        setPatientInfo(data)
-        // console.log(data)
-        if (debuglog == true){ console.log("PROFILE INFO:", data) }
-
-        //IN:  pass in userID 
-        //OUT: 
-        // - retrieve PROFILE user information 
-        // - member list 
-        
-        // supabase. 
+        setPatientInfo(data) 
+        if (debuglog == true){ console.log("PROFILE INFO:", data) } 
     }
+
+
 
     // temparory empty f 
     function emptyf(): void {
@@ -293,7 +242,39 @@ export default function PatientAppointmentManager() {
 
 
 
-    //// R: READ APPOINTMENT
+    //// R: READ APPOINTMENT// VIEW PREFERENCES 
+    const [appointmentsLoading, setAppointmentsLoading] = useState(false)
+    const [totalPages, setTotalPage] = useState<number>(0)
+    const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
+        mode: 'calendar',
+        page: 1, 
+        rowsPerPage: 10, // user can edit the number of rows per page 
+        sortRules: [ // by default, sort by date 
+        { field: 'appointment_date', direction: 'asc' },
+        ], 
+        searchBy: '',
+        showReqs: 'all', 
+        showPast: false, 
+        rangeStart: '',
+        rangeEnd: '',
+    }) 
+    const updateViewPrefs = (updates: Partial<AppointmentViewPrefs>) => {
+        setViewPrefs((prev) => {  // old object 
+        const next = {
+        ...prev,    // copy what remains the same 
+        ...updates, // overwrite with what changes 
+        }
+
+        if (
+            updates.rowsPerPage !== undefined &&
+            updates.rowsPerPage !== prev.rowsPerPage
+        ) {
+            next.page = 1
+        }
+        return next
+        })
+    }
+
     const [appointmentsList, setAppointmentsList] = useState<Appointment[]>([])
     const readAppointments = async (
         clinicId: string,            // retrieve this clinic ID 

@@ -19,99 +19,100 @@ import {
 } from '@/features/appointment/appointment.api.ts';
 // import AppointmentR
 // import { Switch } from "radix-ui";
- import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
- 
+import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
+
 
 
 export default function NurseAppointmentManager() {
-  var debuglog: boolean = true
-  type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
+    type debuglogType = 'initial'| 'read' | 'create' | 'update' | 'delete' | 'lifecycle'
+    var debuglog: debuglogType[] = ['read']
+    type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
  
 
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////
-  //// HELPER FUNCTIONS:
-  // Retrieve Appointment Types 
-  const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
-  const retrieveAppointmentTypes = async () => {
-    const { data, error } = await supabase.rpc('get_appointment_types')
-    if (error) {
-      console.log('APPOINTMENT TYPES ERROR:', error)
-      setAppointmentTypes([])
-      return
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //// HELPER FUNCTIONS:
+    // Retrieve Appointment Types 
+    const [appointmentTypes, setAppointmentTypes] = useState<AppointmentType[]>([])
+    const retrieveAppointmentTypes = async () => {
+        const { data, error } = await supabase.rpc('get_appointment_types')
+        if (error) {
+        console.log('APPOINTMENT TYPES ERROR:', error)
+        setAppointmentTypes([])
+        return
+        }
+        const values = (data ?? []).map(
+        (row: { value: string }) => row.value as AppointmentType
+        )
+        setAppointmentTypes(values)
+        if(debuglog.includes('initial')){
+            console.log(appointmentTypes)
+        }
     }
-    const values = (data ?? []).map(
-      (row: { value: string }) => row.value as AppointmentType
-    )
-    setAppointmentTypes(values)
-      if(debuglog === true){
-        console.log(appointmentTypes)
-      }
-  }
   
-  // Retrieve clinic ID
-  const [ showClinicSelector ] = useState<boolean>(false) // will not change.
-  const [clinicList, setClinicList] = useState<UserClinicRelationship[]>([])
-  const [clinic, setClinic] = useState<string>()
-  const loadClinics = async () => { // set clinicList 
-    const { data: authData, error: authErr } = await supabase.auth.getUser()
-    if (authErr || !authData.user) {
-      console.log('AUTH ERROR:', authErr)
-      return null
-    } 
+    // Retrieve CLINIC ID
+    const [ showClinicSelector ] = useState<boolean>(false) // will not change.
+    const [clinicList, setClinicList] = useState<UserClinicRelationship[]>([])
+    const [clinic, setClinic] = useState<string>() 
+    const loadClinics = async () => { 
+        const { data: authData, error: authErr } = await supabase.auth.getUser()
+        if (authErr || !authData.user) {
+            console.log('AUTH ERROR:', authErr)
+            return null
+        } 
 
-    const { data, error } = await supabase
-      .schema('public')
-      .from('membernamerole')
-      .select('*')
-      .eq('user_id', authData.user.id)
+        const { data, error } = await supabase
+            .schema('public')
+            .from('membernamerole')
+            .select('*')
+            .eq('user_id', authData.user.id)
 
-    if (error || !data) {
-      console.log('CLINIC ERROR:', error)
-      return  
-    }
-    if (debuglog == true){ console.log(data) }
+        if (error || !data) {
+            console.log('CLINIC ERROR:', error)
+            return  
+        }
+        if (debuglog.includes('initial')){ console.log(data) }
 
-    setClinicList(data) 
-    setClinic(data[0].clinic_id) 
-  }
-
-  // Retrieve list of practicioner in this clinic
-  const [practicionerList, setPracticionerList] = useState<UserClinicRelationship[]>([])
-  const retrievePracticioners = async (clinicId: string) => {
-    const { data, error } = await supabase
-      .schema('public')
-      .from('membernamerole')
-      .select('*')
-      .eq('clinic_id', clinicId)
-      .eq('role', 'doctor')
-
-    if (error) {
-      console.log('DOCTORS ERROR:', error)
-      return
+        setClinicList(data) 
+        setClinic(data[0].clinic_id) 
     }
 
-    setPracticionerList(data ?? [])
-  }
+    // Retrieve list of PRACTICIANERS in this clinic
+    const [practicionerList, setPracticionerList] = useState<UserClinicRelationship[]>([])
+    const retrievePracticioners = async (clinicId: string) => {
+        const { data, error } = await supabase
+            .schema('public')
+            .from('membernamerole')
+            .select('*')
+            .eq('clinic_id', clinicId)
+            .eq('role', 'doctor')
 
-  // Retrieve Patients in this clinic
-  const [patientList, setPatientList] = useState<UserClinicRelationship[]>([])
-  const retrievePatients = async (clinicId: string) => {
-    const { data, error } = await supabase
-      .schema('public')
-      .from('membernamerole')
-      .select('*')
-      .eq('clinic_id', clinicId)
-      .eq('role', 'patient')
+        if (error) {
+            console.log('DOCTORS ERROR:', error)
+            return
+        }
 
-    if (error) {
-      console.log('PATIENTS ERROR:', error)
-      return
+        setPracticionerList(data ?? [])
     }
 
-    setPatientList(data ?? [])
-  }
+    // Retrieve Patients in this clinic
+    const [patientList, setPatientList] = useState<UserClinicRelationship[]>([])
+    const retrievePatients = async (clinicId: string) => {
+        const { data, error } = await supabase
+            .schema('public')
+            .from('membernamerole')
+            .select('*')
+            .eq('clinic_id', clinicId)
+            .eq('role', 'patient')
+
+        if (error) {
+            console.log('PATIENTS ERROR:', error)
+            return
+        }
+
+        setPatientList(data ?? [])
+    }
 
 
 
@@ -139,7 +140,7 @@ export default function NurseAppointmentManager() {
     const [createMessage, setCreateMessage] = useState('')
     //// C: CREATE NEW APPOINTMENT
     const createAppointment = async (clinicId: string) => {
-        if(debuglog == true){console.log('CREATEFORM SUBMITTED', createForm)} 
+        if(debuglog.includes('create')){console.log('CREATEFORM SUBMITTED', createForm)} 
 
 
         ////// SET UI 
@@ -172,7 +173,7 @@ export default function NurseAppointmentManager() {
         // CREATE IT  
         try {
             const created = await apiCreateAppt(createForm, clinicId)
-            if(debuglog == true) console.log('CREATED:', created)
+            if(debuglog.includes('create')) console.log('CREATED:', created)
             // TAIL UI CHANGES  
             const patientName = patientList.find((p) => p.user_id === createForm.patientId)?.full_name ?? 'Unknown patient'
             const doctorName = practicionerList.find((d) => d.user_id === createForm.doctorId)?.full_name ?? 'Unknown provider' 
@@ -227,64 +228,76 @@ export default function NurseAppointmentManager() {
 
 
 
-  /////////////////////////////////////////////////////
-  //// R: READ APPOINTMENT  // VIEW PREFERENCES 
-  const [totalPages, setTotalPage] = useState<number>(0)
-  const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
-    mode: 'calendar',
-    page: 1, 
-    rowsPerPage: 10, // user can edit the number of rows per page 
-    sortRules: [ // by default, sort by date 
-      { field: 'appointment_date', direction: 'asc' },
-    ], 
-    searchBy: 'upcoming',
-    rangeStart: '',
-    rangeEnd: '',
-    showReqs: 'all', 
-    showPast: false 
-  })
-  const updateViewPrefs = (updates: Partial<AppointmentViewPrefs>) => {
-    setViewPrefs((prev) => {  // old object 
-      const next = {
-      ...prev,    // copy what remains the same 
-      ...updates, // overwrite with what changes 
-      }
-      if (
-        updates.rowsPerPage !== undefined &&
-        updates.rowsPerPage !== prev.rowsPerPage
-      ) {
-        next.page = 1
-      }
-
-      if(debuglog === true){
-        console.log("PREFERENCES:", viewPrefs)
-      }
-      return next
+    /////////////////////////////////////////////////////
+    //// R: READ APPOINTMENT  // VIEW PREFERENCES 
+    const [totalPages, setTotalPage] = useState<number>(0)
+    const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
+        mode: 'calendar',
+        page: 1, 
+        rowsPerPage: 10, // user can edit the number of rows per page 
+        sortRules: [ // by default, sort by date 
+        { field: 'appointment_date', direction: 'asc' },
+        ], 
+        searchBy: '',
+        showReqs: [ 
+            'pending',
+            'requested',
+            'canceled',
+            'deserted',
+            'active',
+            'completed'  
+        ], 
+        showPast: false, 
+        rangeStart: '',
+        rangeEnd: '',
     })
-  }
- 
-  const [appointmentsLoading, setAppointmentsLoading] = useState(false)
-  const [appointmentsList, setAppointmentsList] = useState<Appointment[]>([])
-  const readAppointments = async (
-    clinicId: string,            // retrieve this clinic ID 
-    prefs: AppointmentViewPrefs  // query based on these preferences 
-  ) => {
-    setAppointmentsLoading(true)
+    const updateViewPrefs = (updates: Partial<AppointmentViewPrefs>) => {
+        setViewPrefs((prev) => {  // old object 
+        const next = {
+        ...prev,    // copy what remains the same 
+        ...updates, // overwrite with what changes 
+        }
+        if (
+            updates.rowsPerPage !== undefined &&
+            updates.rowsPerPage !== prev.rowsPerPage
+        ) {
+            next.page = 1
+        }
 
-    //   CREATE initial QUERY & ADD RULES 
+        if(debuglog.includes('read')){
+            console.log("PREFERENCES:", viewPrefs)
+        }
+        return next
+        })
+    } 
+    const [appointmentsLoading, setAppointmentsLoading] = useState(false)
+    const [appointmentsList, setAppointmentsList] = useState<Appointment[]>([])
+    const readAppointments = async (
+        clinicId: string,            // retrieve this clinic ID 
+        prefs: AppointmentViewPrefs  // query based on these preferences 
+    ) => {
+        setAppointmentsLoading(true)
+
+    // initial QUERY & ADD RULES 
     let query = supabase
-      .schema('public')
-      .from('appointmentlist_display')
-      .select('*', { count: prefs.mode === 'list' ? 'exact' : undefined })
-      .eq('clinic_id', clinicId)
+        .schema('public')
+        .from('appointmentlist_display')
+        .select('*', { count: prefs.mode === 'list' ? 'exact' : undefined })
+        .eq('clinic_id', clinicId)
 
     
-
-    //// BUILD QUERY 
-    // show Req
-    if (prefs.showReqs !== 'all') {
-      query = query.eq('appointment_status', prefs.showReqs)
+    /////////////////////////////////////////////////////////////////////////////
+    //// BUILD QUERY   
+    // Appointment Status Checklist 
+    if (debuglog.includes('read')) console.log('Appointment Status Checklist :', prefs.showReqs)
+    if (prefs.showReqs.length === 0) {
+        return
+    }
+    const filters = [] 
+    for (const status of prefs.showReqs) {
+        filters.push(`appointment_status.eq.${status}`)
     } 
+    query = query.or(filters.join(','))
 
 
     // CALENDAR MODE 
@@ -356,7 +369,7 @@ export default function NurseAppointmentManager() {
       setAppointmentsLoading(false)
       setTotalPage(count ? Math.ceil(count / viewPrefs.rowsPerPage) : 1) 
       
-      if(debuglog == true) {console.log("total pages", totalPages)} 
+      if(debuglog.includes('read')) {console.log("total pages", totalPages)} 
     } 
     setAppointmentsLoading(false)
   }
@@ -386,7 +399,7 @@ export default function NurseAppointmentManager() {
     const [updateMessage, setUpdateMessage] = useState('')
     //// U: UPDATE EXISTING APPOINTMENT
     const updateAppointments = async () => { // relies on updateForm data 
-        if(debuglog == true){console.log('UPDATEFORM SUBMITTED:', updateForm)}
+        if(debuglog.includes('update')){console.log('UPDATEFORM SUBMITTED:', updateForm)}
 
         ////// SET UI 
         setUpdateStatus('loading')
@@ -398,7 +411,7 @@ export default function NurseAppointmentManager() {
         // UPDATE IT 
         try {
             const updated = await apiUpdateAppt(updateForm)
-            if(debuglog == true) console.log('UPDATED:', updated)
+            if(debuglog.includes('update')) console.log('UPDATED:', updated)
             // TAIL UI CHANGES  
             const patientName = patientList.find((p) => p.user_id === updateForm.patientId)?.full_name ?? 'Unknown patient'
             const doctorName = practicionerList.find((d) => d.user_id === updateForm.doctorId)?.full_name ?? 'Unknown provider' 
@@ -419,7 +432,7 @@ export default function NurseAppointmentManager() {
     const openUpdateForm = async (apt: Appointment) => {
         try {
             const singleAppt = await apiFetchSpecificAppt(apt)
-            if(debuglog == true) console.log("UPDATE FORM PREFILLED", singleAppt) 
+            if(debuglog.includes('update')) console.log("UPDATE FORM PREFILLED", singleAppt) 
             // transform datetime data 
             const d = new Date(singleAppt.appointment_date)
             const yyyy = d.getFullYear()
@@ -458,7 +471,7 @@ export default function NurseAppointmentManager() {
       .eq('Appointment_id', aptid)
 
 
-    if(debuglog == true){console.log('DELETE DATA:', data)}
+    if(debuglog.includes('delete')){console.log('DELETE DATA:', data)}
     if (error) {
       console.log('DELETE ERROR:', error)
       return
@@ -491,7 +504,7 @@ export default function NurseAppointmentManager() {
   useEffect(() => {
     if (!clinic) return 
     if (viewPrefs.searchBy === "date range") updateViewPrefs({showPast : true})
-    if (debuglog === true) console.log("SHOW REQ", viewPrefs.showReqs)
+    if (debuglog.includes('lifecycle')) console.log("SHOW REQ", viewPrefs.showReqs)
     readAppointments(clinic, viewPrefs)
   }, [clinic, viewPrefs])
 

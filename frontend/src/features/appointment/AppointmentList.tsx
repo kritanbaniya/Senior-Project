@@ -1,5 +1,5 @@
 import { useMemo, useEffect,  useState } from "react";
-import type {  AppointmentType, Appointment, ApptProps, SearchBy } from "./types.ts"; 
+import type {  AppointmentType, Appointment, ApptProps, SearchByType } from "./types.ts"; 
 import { Button } from "@/components/ui/button.tsx";
 import { Switch } from "radix-ui";
 
@@ -49,7 +49,7 @@ export default function AppointmentList({
 
 
     //// SEARCH STATES 
-    const searchByTypes: { label: string; value: SearchBy }[] = [
+    const searchByTypes: { label: string; value: SearchByType }[] = [
         { label: 'Search by...', value: '' },
         { label: 'Date Range', value: 'date range' },
         { label: 'Visit Type', value: 'visit type' },
@@ -57,7 +57,7 @@ export default function AppointmentList({
         { label: 'Provider', value: 'provider' },
         { label: 'Clinic', value: 'clinic' }, // if nurse dont have 
     ]
-    const [ searchBy , setSearchBy ] = useState<SearchBy>('') 
+    const [ searchBy , setSearchBy ] = useState<SearchByType>('') 
     // remember input values 
     const [ searchValue , setSearchValue ] = useState<string>('') 
     const [ searchStart , setSearchStart ] = useState<string>('') 
@@ -147,7 +147,7 @@ export default function AppointmentList({
                     type="text"
                     disabled
                     value={searchValue}
-                    onChange={e => setSearchValue(e.target.value as SearchBy)}
+                    onChange={e => setSearchValue(e.target.value as SearchByType)}
                     placeholder="Search through Appointments" 
                 />   
         }
@@ -196,10 +196,10 @@ export default function AppointmentList({
         <> {renderSearchControl()} </>
         {/* SEARCHBY DROPDOWN */}
         <select
-          onChange={(e) => setSearchBy( e.target.value as SearchBy)}
+          onChange={(e) => setSearchBy( e.target.value as SearchByType)}
           className = "p-2 m-3 w-1/3 bg-white border  rounded-lg">
             {searchByTypes.map((d) => (
-              <option key={d.value+"-SearchBy"} value={d.value}>
+              <option key={d.value+"-SearchByType"} value={d.value}>
               {d.label}
               </option>
             ))} 
