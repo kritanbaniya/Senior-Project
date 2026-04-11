@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { supabase } from "../../../lib/supabase"
 import { useAuth } from "../../../context/AuthContext"
 import { SidebarProvider } from "@/components/ui/sidebar"
-import DoctorSidebar from "./DoctorSidebar"
+import DoctorSidebar from "./DoctorSideBar"
 
 type DoctorInfoRow = {
   id: string
