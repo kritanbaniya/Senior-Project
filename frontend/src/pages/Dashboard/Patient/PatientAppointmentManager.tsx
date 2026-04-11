@@ -264,6 +264,7 @@ export default function PatientAppointmentManager() {
         { field: 'appointment_date', direction: 'asc' },
         ], 
         searchBy: '',
+        searchValue: '',
         showReqs: [ 
             'pending',
             'requested',
@@ -367,7 +368,7 @@ export default function PatientAppointmentManager() {
             const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
         
             // show past 
-            if (prefs.showPast === false){ 
+            if (prefs.showPast === false && prefs.searchBy !== 'date range'){ 
                 query = query.gte('appointment_date', new Date().toISOString())
             } 
             
@@ -378,6 +379,19 @@ export default function PatientAppointmentManager() {
                 query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
                 query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
             } 
+            if (prefs.searchBy === 'visit type' && prefs.searchValue){
+                query = query.eq('visit_type', prefs.searchValue as AppointmentType)
+            } 
+            if (prefs.searchBy === 'patient' && prefs.searchValue){
+                query = query.ilike('patient_name', `%${prefs.searchValue}%`)
+            } 
+            if (prefs.searchBy === 'provider' && prefs.searchValue){
+                query = query.ilike('clinician_name', `%${prefs.searchValue}%`)
+            } 
+            if (prefs.searchBy === 'clinic' && prefs.searchValue){
+                query = query.ilike('clinic_name', `%${prefs.searchValue}%`)
+            } 
+
 
             for (const rule of prefs.sortRules) {
                 query = query.order(rule.field, {
@@ -521,6 +535,7 @@ export default function PatientAppointmentManager() {
                                 viewPrefs={viewPrefs}
                                 totalPages = {totalPages}
                                 onUpdateViewPrefs = {updateViewPrefs}
+                                nurse={false}
                                 /> 
                             </>)}
                     </div>

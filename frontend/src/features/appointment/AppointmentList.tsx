@@ -21,6 +21,7 @@ export default function AppointmentList({
   viewPrefs,
   totalPages,
   onUpdateViewPrefs,
+  nurse
 }: ApptProps) {  
     //// PAGE and ROW ADJUSTMENTS 
     // Validate that the number in the input box is an integer, and follows the min and max 
@@ -51,14 +52,29 @@ export default function AppointmentList({
 
 
     //// SEARCH STATES 
-    const searchByTypes: { label: string; value: SearchByType }[] = [
-        { label: 'Search by...', value: '' },
-        { label: 'Date Range', value: 'date range' },
-        { label: 'Visit Type', value: 'visit type' },
-        { label: 'Patient', value: 'patient' },
-        { label: 'Provider', value: 'provider' },
-        { label: 'Clinic', value: 'clinic' }, // if nurse dont have 
-    ]
+    const [ searchByTypes, setSearchByType] = useState<{ label: string; value: SearchByType }[]>([])
+    useEffect(()=>{
+        if(nurse === true){
+            setSearchByType([
+                { label: 'Search by...', value: '' },
+                { label: 'Date Range', value: 'date range' },
+                { label: 'Visit Type', value: 'visit type' },
+                { label: 'Patient', value: 'patient' },
+                { label: 'Provider', value: 'provider' }, 
+            ])
+        }else{
+            setSearchByType([
+                { label: 'Search by...', value: '' },
+                { label: 'Date Range', value: 'date range' },
+                { label: 'Visit Type', value: 'visit type' }, 
+                { label: 'Provider', value: 'provider' },
+                { label: 'Clinic', value: 'clinic' }, // if nurse dont have 
+            ])
+    }}, [])
+
+
+
+
     const [ searchBy , setSearchBy ] = useState<SearchByType>('') 
     // remember input values 
     const [ searchValue , setSearchValue ] = useState<string>('') 
@@ -103,6 +119,16 @@ export default function AppointmentList({
                     value={searchEnd}
                     onChange={e => setSearchEnd(e.target.value as string)} 
                 /> 
+                <Button
+                    className=""
+                    onClick={() =>
+                        onUpdateViewPrefs({ 
+                            rangeStart: searchStart,
+                            rangeEnd: searchEnd
+                        })
+                    }>
+                    search
+                </Button>
                 </div>
 
 
@@ -229,6 +255,7 @@ export default function AppointmentList({
     const [iterProvider, setIterProvider] = useState<number>(0)
     const [iterType, setIterType] = useState<number>(0)
     const [iterPatient, setIterPatient] = useState<number>(0)
+    const [iterClinic, setIterClinic] = useState<number>(0)
 
 
 
@@ -318,18 +345,32 @@ export default function AppointmentList({
                             : " 🠅"}
                         </button>
 
-
-                <button className = "text-black text-start"
-                    onClick={() => {
-                            const { nextState, newRules } = tristate('patient_name', iterPatient)
-                            setIterPatient(nextState)
-                            onUpdateViewPrefs({ sortRules: newRules })
-                        }}>Patient
-                            { iterPatient === 0 ? " ⮃"
-                            : iterPatient === 1 ? " 🠇"
-                            : " 🠅"}
+                
+                <>
+                    {nurse? (<>
+                        <button className = "text-black text-start"
+                            onClick={() => {
+                                    const { nextState, newRules } = tristate('patient_name', iterPatient)
+                                    setIterPatient(nextState)
+                                    onUpdateViewPrefs({ sortRules: newRules })
+                                }}>Patient
+                                    { iterPatient === 0 ? " ⮃"
+                                    : iterPatient === 1 ? " 🠇"
+                                    : " 🠅"}
                         </button>
-
+                    </>):(<>
+                        <button className = "text-black text-start"
+                            onClick={() => {
+                                    const { nextState, newRules } = tristate('clinic_name', iterClinic)
+                                    setIterClinic(nextState)
+                                    onUpdateViewPrefs({ sortRules: newRules })
+                                }}>Clinics
+                                    { iterClinic === 0 ? " ⮃"
+                                    : iterClinic === 1 ? " 🠇"
+                                    : " 🠅"}
+                        </button>
+                    </>)}
+                </>
 
 
                 <span className = "text-black text-start">Actions</span>
@@ -338,50 +379,77 @@ export default function AppointmentList({
             {appointments.map((apt) => {
                 // Convert timestamp from SQL to human readable local time  
                 const dt = new Date(apt.appointment_date)
-                const dateText = Number.isNaN(dt.getTime())
-                ? apt.appointment_date
-                : dt.toLocaleDateString()
-                const timeText = Number.isNaN(dt.getTime())
-                ? ''
-                : dt.toLocaleTimeString([], {
+                const dateText = Number.isNaN(dt.getTime()) ? apt.appointment_date : dt.toLocaleDateString()
+                const timeText = Number.isNaN(dt.getTime()) ? '' : dt.toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
-                    })
+                })
                 return (
                 <li
                     key={apt.Appointment_id}
                     className="bg-[#F5F3EE] grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm text-slate-700"
                 > 
-                    <div className="flex"> {/* justify-center*/}
-                    <span className={`inline-block h-3 w-3 rounded-full border border-solid ${getStatusColor(apt.appointment_status)}`} />
-                    </div>
-                    <span className = "font-bold">{dateText}</span>
-                    <span>{timeText}</span>
-                    <span>{apt.clinician_name}</span>
-                    <span>{apt.visit_type}</span>
-                    <span>{apt.patient_name}</span>
-                    {/* ACTIONS TO EACH APPOINTMENT ROW */}
-                    <span className="flex gap-2 justify-between">
-                    {onSelectAppointment && (
-                        <button
-                        type="button"
-                        className="btn-small"
-                        onClick={() => onSelectAppointment(apt)}
-                        >
-                        Edit
-                        </button>
-                    )}
-                    {onDeleteAppointment && (
-                        <button
-                        type="button"
-                        className="btn-small"
-                        onClick={() => onDeleteAppointment(apt)}
-                        >
-                        Delete
-                        </button>
-                    )}
-
-                    </span>
+                    {nurse? (<>
+                        <div className="flex"> {/* justify-center*/}
+                        <span className={`inline-block h-3 w-3 rounded-full border border-solid ${getStatusColor(apt.appointment_status)}`} />
+                        </div>
+                        <span className = "font-bold">{dateText}</span>
+                        <span>{timeText}</span>
+                        <span>{apt.clinician_name}</span>
+                        <span>{apt.visit_type}</span>
+                        <span>{apt.patient_name}</span>
+                        {/* ACTIONS TO EACH APPOINTMENT ROW */}
+                        <span className="flex gap-2 justify-around">
+                            {onSelectAppointment && (
+                                <button
+                                type="button"
+                                className="btn-small"
+                                onClick={() => onSelectAppointment(apt)}
+                                >
+                                Edit
+                                </button>
+                            )}
+                            {onDeleteAppointment && (
+                                <button
+                                type="button"
+                                className="btn-small"
+                                onClick={() => onDeleteAppointment(apt)}
+                                >
+                                Delete
+                                </button>
+                            )}
+                        </span>
+                    </>):(<>
+                        <div className="flex"> {/* justify-center*/}
+                        <span className={`inline-block h-3 w-3 rounded-full border border-solid ${getStatusColor(apt.appointment_status)}`} />
+                        </div>
+                        <span className = "font-bold">{dateText}</span>
+                        <span>{timeText}</span>
+                        <span>{apt.clinician_name}</span>
+                        <span>{apt.visit_type}</span>
+                        <span>{apt.clinic_name}</span>
+                        {/* ACTIONS TO EACH APPOINTMENT ROW */}
+                        <span className="flex gap-2 justify-around">
+                            {onSelectAppointment && (
+                                <button
+                                type="button"
+                                className="btn-small"
+                                onClick={() => onSelectAppointment(apt)}
+                                >
+                                Edit
+                                </button>
+                            )}
+                            {onDeleteAppointment && (
+                                <button
+                                type="button"
+                                className="btn-small"
+                                onClick={() => onDeleteAppointment(apt)}
+                                >
+                                Delete
+                                </button>
+                            )}
+                        </span> 
+                    </>)}
                 </li>
                 )
             })}

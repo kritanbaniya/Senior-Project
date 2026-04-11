@@ -334,10 +334,12 @@ export default function NurseAppointmentManager() {
         const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
 
         // show past 
-        if (prefs.showPast === false){ 
+
+        if (prefs.showPast === false && prefs.searchBy !== 'date range'){ 
             query = query.gte('appointment_date', new Date().toISOString())
         } 
         
+        console.log(prefs)
         // search by date range 
         if (prefs.searchBy === 'date range' &&
         prefs.rangeStart &&
@@ -383,7 +385,7 @@ export default function NurseAppointmentManager() {
         if(debuglog.includes('read')) {console.log("total pages", totalPages)} 
     } 
     setAppointmentsLoading(false)
-}
+    }
  
 
 
@@ -494,56 +496,55 @@ export default function NurseAppointmentManager() {
 
 
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////
-  //// REACT HOOKS !
-  useEffect(() => {
-    loadClinics()
-  }, [])
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    //// REACT HOOKS !
+    useEffect(() => {
+        loadClinics()
+    }, [])
 
 
-  // only load patient and doctor data when the clinic information is retrieved 
-  useEffect(() => {
-    if (!clinic) return 
-    retrieveAppointmentTypes()    // may depend on clinics in the future 
-    retrievePracticioners(clinic) // depend on clinics
-    retrievePatients(clinic)      // depend on clinics 
-    if(viewPrefs){setViewPrefs((prev) => ({...prev, page: 1}))}
-  }, [clinic])
+    // only load patient and doctor data when the clinic information is retrieved 
+    useEffect(() => {
+        if (!clinic) return 
+        retrieveAppointmentTypes()    // may depend on clinics in the future 
+        retrievePracticioners(clinic) // depend on clinics
+        retrievePatients(clinic)      // depend on clinics 
+        if(viewPrefs){setViewPrefs((prev) => ({...prev, page: 1}))}
+    }, [clinic])
 
-  // load the subset of appointments when we have the clinic 
-  //    OR when the viewPreferences are updated 
-  useEffect(() => {
-    if (!clinic) return 
-    if (viewPrefs.searchBy === "date range") updateViewPrefs({showPast : true})
-    if (debuglog.includes('lifecycle')) console.log("SHOW REQ", viewPrefs.showReqs)
-    readAppointments(clinic, viewPrefs)
-  }, [clinic, viewPrefs])
+    // load the subset of appointments when we have the clinic 
+    //    OR when the viewPreferences are updated 
+    useEffect(() => {
+        if (!clinic) return  
+        if (debuglog.includes('lifecycle')) console.log("SHOW REQ", viewPrefs.showReqs)
+        readAppointments(clinic, viewPrefs)
+    }, [clinic, viewPrefs])
 
 
-  // Rerender components when these values are retrieved/updated 
-  useEffect(() => {
-    if (patientList.length > 0 && createForm.patientId === '') {
-      setCreateForm((f) => ({ ...f, patientId: patientList[0].user_id }))
-    }
-  }, [patientList])
-  useEffect(() => {
-    if (practicionerList.length > 0 && createForm.doctorId === '') {
-      setCreateForm((f) => ({ ...f, doctorId: practicionerList[0].user_id }))
-    }
-  }, [practicionerList])
-  useEffect(() => {
-    if (appointmentTypes.length > 0) {
-      setCreateForm((f) => ({
-        ...f,
-        type: f.type || appointmentTypes[0],
-      }))
+    // Rerender components when these values are retrieved/updated 
+    useEffect(() => {
+        if (patientList.length > 0 && createForm.patientId === '') {
+        setCreateForm((f) => ({ ...f, patientId: patientList[0].user_id }))
+        }
+    }, [patientList])
+    useEffect(() => {
+        if (practicionerList.length > 0 && createForm.doctorId === '') {
+        setCreateForm((f) => ({ ...f, doctorId: practicionerList[0].user_id }))
+        }
+    }, [practicionerList])
+    useEffect(() => {
+        if (appointmentTypes.length > 0) {
+        setCreateForm((f) => ({
+            ...f,
+            type: f.type || appointmentTypes[0],
+        }))
 
-      setUpdateForm((f) => ({
-        ...f,
-        type: f.type || appointmentTypes[0],
-      }))
-    }
-  }, [appointmentTypes])
+        setUpdateForm((f) => ({
+            ...f,
+            type: f.type || appointmentTypes[0],
+        }))
+        }
+    }, [appointmentTypes])
   
 
 
@@ -642,18 +643,19 @@ export default function NurseAppointmentManager() {
           {/* VIEWING APPOINTMENTS */}
           {(!clinic || !viewPrefs) ? (<p>Loading clinic...</p>) : (<>
             <AppointmentSwitch 
-              appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
-              // reqAppointmentsList={reqAppointmentsList? reqAppointmentsList : []}
-              // functions to handle appointment CRUD actions 
-              onSelectAppointment={openUpdateForm} 
-              onDeleteAppointment={(apt) =>
-                deleteAppointments(apt.Appointment_id, clinic)
-              }
-              onSelectSlot={openCreateForm}
-              // function to handle appointment view changes (changing query)
-              viewPrefs={viewPrefs}
-              totalPages = {totalPages}
-              onUpdateViewPrefs = {updateViewPrefs}
+                appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
+                // reqAppointmentsList={reqAppointmentsList? reqAppointmentsList : []}
+                // functions to handle appointment CRUD actions 
+                onSelectAppointment={openUpdateForm} 
+                onDeleteAppointment={(apt) =>
+                    deleteAppointments(apt.Appointment_id, clinic)
+                }
+                onSelectSlot={openCreateForm}
+                // function to handle appointment view changes (changing query)
+                viewPrefs={viewPrefs}
+                totalPages = {totalPages}
+                onUpdateViewPrefs = {updateViewPrefs}
+                nurse = {true}
             />
           </>)}
 

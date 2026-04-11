@@ -108,7 +108,7 @@ export type SearchByType = ''
     | 'patient' 
     | 'provider' 
     | 'clinic'
-export type SortField = 'appointment_date' | 'clinician_name' | 'patient_name' | 'visit_type' | 'appointment_status' 
+export type SortField = 'appointment_date' | 'clinician_name' | 'patient_name' | 'clinic_name' | 'visit_type' | 'appointment_status'  
 export type SortDirection = 'asc' | 'desc' 
 type SortRule = {
   field: SortField
@@ -140,6 +140,7 @@ export type ApptProps = {// define the prop's types
     viewPrefs: AppointmentViewPrefs
     totalPages?: number
     onUpdateViewPrefs: (updates: Partial<AppointmentViewPrefs>) => void
+    nurse : boolean
 }
 
 
