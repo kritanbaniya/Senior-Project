@@ -12,7 +12,6 @@ import { Switch } from "radix-ui";
 
 // NEXT THING TO DO: 
 // search for in query   
-// sort by controllers 
 
 
 export default function AppointmentList({
@@ -89,22 +88,20 @@ export default function AppointmentList({
                 <p className = "">
                     From: </p>
                 <input
-                    className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg text-gray-400" 
+                    className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg" 
                     id="start-date"
                     type="date" 
                     value={searchStart}
                     onChange={e => setSearchStart(e.target.value as string)}
-                    placeholder="search by ..." 
                 /> 
                 <p className=""> 
                     to </p>
                 <input
-                    className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg text-gray-400"
+                    className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg"
                     id="end-date"
                     type="date" 
                     value={searchEnd}
-                    onChange={e => setSearchEnd(e.target.value as string)}
-                    placeholder="search by ..." 
+                    onChange={e => setSearchEnd(e.target.value as string)} 
                 /> 
                 </div>
 
@@ -113,9 +110,15 @@ export default function AppointmentList({
             case 'visit type':
             return <select 
             value={searchApptType}
-            onChange={e => setSearchApptType(e.target.value as AppointmentType)} 
-            className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg text-gray-400">
-                {ApptTypeList.map((d) => (<option value={d.value} key={(d.value)+'visit'}>
+            onChange={(e) => {
+                // setSearchValue(e.target.value as AppointmentType)
+                onUpdateViewPrefs({ searchValue: e.target.value as AppointmentType})
+                setSearchApptType(e.target.value as AppointmentType)
+                // console.log(viewPrefs)
+            }}  
+            className = "p-2 m-3 w-full rounded-lg border">
+                {ApptTypeList.map((d) => (
+                <option value={d.value} key={(d.value)+'visit'}>
                     {d.label} 
                 </option>))}
             </select>
@@ -124,22 +127,40 @@ export default function AppointmentList({
             // PATIENT NAME 
             case 'patient':
             return <input type="text" 
-                className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg text-gray-400"
-                placeholder="Patient name" />
+                className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg "
+                placeholder="Patient name" 
+                value={searchValue}
+                onChange={(e) => {
+                    setSearchValue(e.target.value.toLowerCase() as string)
+                    onUpdateViewPrefs({ searchValue: e.target.value.toLowerCase() as string})
+                    // console.log(viewPrefs)
+                }} />
 
 
             // PROVIDER NAME 
             case 'provider':
             return <input type="text" 
                 className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg"
-                placeholder="Provider name" />
+                placeholder="Provider name" 
+                value={searchValue}
+                onChange={(e) => {
+                    setSearchValue(e.target.value.toLowerCase() as string)
+                    onUpdateViewPrefs({ searchValue: e.target.value.toLowerCase() as string})
+                    // console.log(viewPrefs)
+                }} />
 
             
             // PROVIDER NAME 
             case 'clinic':
             return <input type="text" 
                 className = "p-2 m-3 w-full bg-[#F5F3EE] rounded-lg"
-                placeholder="Clinic name" />
+                placeholder="Clinic name" 
+                value={searchValue}
+                onChange={(e) => {
+                    setSearchValue(e.target.value.toLowerCase() as string)
+                    onUpdateViewPrefs({ searchValue: e.target.value.toLowerCase() as string})
+                    // console.log(viewPrefs)
+                }} />
 
 
             // default
@@ -148,9 +169,7 @@ export default function AppointmentList({
                     className = "p-2 m-3 w-full bg-white rounded-lg"
                     id="search-disabled"
                     type="text"
-                    disabled
-                    value={searchValue}
-                    onChange={e => setSearchValue(e.target.value as SearchByType)}
+                    disabled 
                     placeholder="Search through Appointments" 
                 />   
         }
@@ -223,11 +242,19 @@ export default function AppointmentList({
             <> {renderSearchControl()} </>
             {/* SEARCHBY DROPDOWN */}
             <select
-            onChange={(e) => setSearchBy( e.target.value as SearchByType)}
+            onChange={(e) => {
+                onUpdateViewPrefs({ searchBy: e.target.value as SearchByType})
+                setSearchBy( e.target.value as SearchByType)
+
+                onUpdateViewPrefs({ searchValue: '' as any})
+                setSearchValue('' as any)
+            }}
             className = "p-2 m-3 w-1/3 bg-white border  rounded-lg">
                 {searchByTypes.map((d) => (
-                <option key={d.value+"-SearchByType"} value={d.value}>
-                {d.label}
+                <option 
+                key={d.value+"-SearchByType"} 
+                value={d.value}>
+                    {d.label}
                 </option>
                 ))} 
             </select>

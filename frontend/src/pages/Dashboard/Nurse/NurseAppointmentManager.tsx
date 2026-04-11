@@ -238,6 +238,7 @@ export default function NurseAppointmentManager() {
         { field: 'appointment_date', direction: 'asc' },
         ], 
         searchBy: '',
+        searchValue: '',
         showReqs: [ 
             'pending',
             'requested',
@@ -339,11 +340,25 @@ export default function NurseAppointmentManager() {
         
         // search by date range 
         if (prefs.searchBy === 'date range' &&
-            prefs.rangeStart &&
-            prefs.rangeEnd) {
+        prefs.rangeStart &&
+        prefs.rangeEnd) {
             query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
             query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
         } 
+        if (prefs.searchBy === 'visit type' && prefs.searchValue){
+            query = query.eq('visit_type', prefs.searchValue as AppointmentType)
+        } 
+        if (prefs.searchBy === 'patient' && prefs.searchValue){
+            query = query.ilike('patient_name', `%${prefs.searchValue}%`)
+        } 
+        if (prefs.searchBy === 'provider' && prefs.searchValue){
+            query = query.ilike('clinician_name', `%${prefs.searchValue}%`)
+        } 
+        if (prefs.searchBy === 'clinic' && prefs.searchValue){
+            query = query.ilike('clinic_name', `%${prefs.searchValue}%`)
+        } 
+
+ 
 
         // sorting list !! 
         for (const rule of prefs.sortRules) { // first to last , 

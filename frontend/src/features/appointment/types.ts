@@ -121,6 +121,7 @@ export type AppointmentViewPrefs = {
     rowsPerPage: number 
     sortRules: SortRule[]
     searchBy: SearchByType
+    searchValue: string
     showReqs: viewRequestTypes[]
     showPast: boolean 
     rangeStart: string
