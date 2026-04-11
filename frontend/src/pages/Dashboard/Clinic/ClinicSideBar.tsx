@@ -54,10 +54,10 @@ function SidebarLink({ item }: { item: SidebarItem }) {
           end={item.url === "/dashboard/clinic"}
           className={({ isActive }) =>
             [
-              "flex items-center gap-3 px-3 py-5 text-[16px] font-medium transition-colors rounded-md",
+              "flex items-center gap-3 px-3 py-5 text-[16px] bg-white border border-slate-300 font-medium transition-colors rounded-lg",
               isActive
                 ? "bg-white text-indigo-900 shadow-sm"
-                : "text-slate-700 hover:bg-white/60 hover:text-indigo-700",
+                : "text-slate-700 hover:bg-indigo-200 hover:text-indigo-700",
             ].join(" ")
           }
         >
@@ -76,9 +76,9 @@ export default function ClinicSideBar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="top-[60px] h-[calc(100vh-60px)] border-r border-slate-200 bg-[#d8eef7] text-slate-900"
+      className="top-[115px] h-[calc(100vh-500px)] bg-white rounded-2xl"
     >
-      <SidebarHeader className="border-b border-slate-300/70 bg-[#d8eef7] px-3 py-4">
+      <SidebarHeader className="border bg-white rounded-xl border-slate-300 px-3 py-4">
         <div className="flex items-start justify-between gap-3 group-data-[collapsible=icon]:justify-center">
           <div className="flex min-w-0 items-center gap-3 group-data-[collapsible=icon]:hidden">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
@@ -116,7 +116,7 @@ export default function ClinicSideBar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="bg-[#d8eef7]">
+      <SidebarContent className="">
         <SidebarGroup>
           <SidebarGroupLabel className="text-[11px] font-bold uppercase tracking-wide text-slate-600">
             Clinic
@@ -130,8 +130,8 @@ export default function ClinicSideBar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-slate-300/70 bg-[#d8eef7] p-3 pb-4">
-        <div className="rounded-xl bg-white/80 p-3 group-data-[collapsible=icon]:hidden">
+      <SidebarFooter className="border rounded-xl border-slate-300/70 p-3 pb-4">
+        <div className="rounded-xl bg-white p-3 group-data-[collapsible=icon]:hidden">
           <button
             type="button"
             onClick={() => void logout()}
