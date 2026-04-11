@@ -97,7 +97,7 @@ export default function DoctorSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="top-[115px] h-[calc(100vh-500px)] rounded-2xl bg-white"
+      className="top-[115px] h-[calc(100vh-120px)] rounded-2xl bg-white"
     >
       <SidebarHeader className="rounded-xl border border-slate-300 bg-white px-3 py-4">
         <div className="flex items-start justify-between gap-3 group-data-[collapsible=icon]:justify-center">
