@@ -8,9 +8,10 @@ import type {
     AppointmentType, 
     CreateApptForm 
 } from '@/features/appointment/types.ts';
-import PatientSideBar from './PatientSideBar'
+import PatientSidebar from './components/PatientSidebar.tsx'
 import ApptCreateModal from '@/features/appointment/ApptCreateModal.tsx';
 import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
+import { SidebarProvider } from '@/components/ui/sidebar'
 
  
 
@@ -468,9 +469,9 @@ export default function PatientAppointmentManager() {
 
 
     return( <>
-            <div className="pd-layout">
+            <SidebarProvider defaultOpen>
             {/* Left sidebar */}
-            <PatientSideBar/> 
+            <PatientSidebar/> 
                     
                 <div className="pd-right">
                     <div className="info-box appointments-section">
@@ -540,7 +541,7 @@ export default function PatientAppointmentManager() {
                             </>)}
                     </div>
                 </div>
-            </div>
+            </SidebarProvider>
         </>
     );
 } 

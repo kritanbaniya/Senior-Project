@@ -12,6 +12,7 @@ import type {
 import ApptCreateModal from '@/features/appointment/ApptCreateModal.tsx';
 import ApptEditModal from '@/features/appointment/ApptEditModel.tsx';
 import NurseSideBar from './NurseSideBar';  
+import { SidebarProvider } from '@/components/ui/sidebar.tsx';
 import { 
     // UPDATE API THINGS 
     apiUpdateAppt, 
@@ -547,15 +548,11 @@ export default function NurseAppointmentManager() {
     }, [appointmentTypes])
   
 
-
-
-
-
-
-  return ( <> 
-    <div className="pd-layout">
+return (
+  <>
+    <SidebarProvider>
       {/* Left sidebar */}
-      <NurseSideBar/> 
+      <NurseSideBar />
 
       <div className="pd-right">
         <div className="info-box appointments-section">
@@ -662,6 +659,6 @@ export default function NurseAppointmentManager() {
 
         </div>
       </div>
-    </div>
+    </SidebarProvider>
   </> )
 }

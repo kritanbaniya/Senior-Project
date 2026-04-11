@@ -5,6 +5,7 @@ import InProgressQueuePanel from '../../../features/queue/components/InProgressQ
 import PendingQueuePanel from '../../../features/queue/components/PendingQueuePanel'
 import { useNurseQueue } from '../../../features/queue/useNurseQueue'
 import NurseSideBar from './NurseSideBar'
+import { SidebarProvider } from "@/components/ui/sidebar"
 
 export default function NurseQueueManagement() {
   const { selectedClinicId } = useClinicContext()
@@ -25,7 +26,7 @@ export default function NurseQueueManagement() {
   } = useNurseQueue(selectedClinicId)
 
   return (
-    <div className="pd-layout">
+    <SidebarProvider>
       <NurseSideBar />
 
       <div className="pd-right">
@@ -84,6 +85,6 @@ export default function NurseQueueManagement() {
           {error && <p className="no-queue">{error}</p>}
         </main>
       </div>
-    </div>
+    </SidebarProvider>
   )
 }
