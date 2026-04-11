@@ -19,17 +19,16 @@ import {
 } from '@/features/appointment/appointment.api.ts';
 // import AppointmentR
 // import { Switch } from "radix-ui";
-import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
+import { apiCreateAppt } from '@/features/appointment/appointment.api.ts'; 
 
 
 
 export default function NurseAppointmentManager() {
-    type debuglogType = 'initial'| 'read' | 'create' | 'update' | 'delete' | 'lifecycle'
-    var debuglog: debuglogType[] = ['create']
+    type debuglogType = 'initial'| 'read' | 'create' | 'update' | 'delete' | 'lifecycle' | 'this'
+    var debuglog: debuglogType[] = ['this', ]
     type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
- 
-
+  
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// HELPER FUNCTIONS:
@@ -346,10 +345,10 @@ export default function NurseAppointmentManager() {
             query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
         } 
 
-        for (const rule of prefs.sortRules) {
-            query = query.order(rule.field, {
-            ascending: rule.direction === 'asc',
-            })
+        // sorting list !! 
+        for (const rule of prefs.sortRules) { // first to last , 
+            query = query.order(rule.field, {ascending: rule.direction === 'asc'})
+            if (debuglog.includes('read')) console.log('QUERY AFTER SORTS', query)
         } // add more sort rules 
 
 

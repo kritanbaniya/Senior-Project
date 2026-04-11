@@ -108,8 +108,8 @@ export type SearchByType = ''
     | 'patient' 
     | 'provider' 
     | 'clinic'
-type SortField = 'appointment_date' | 'clinician_name' | 'patient_name' | 'visit_type' 
-type SortDirection = 'asc' | 'desc' 
+export type SortField = 'appointment_date' | 'clinician_name' | 'patient_name' | 'visit_type' | 'appointment_status' 
+export type SortDirection = 'asc' | 'desc' 
 type SortRule = {
   field: SortField
   direction: SortDirection

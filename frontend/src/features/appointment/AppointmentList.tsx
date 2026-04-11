@@ -1,13 +1,18 @@
-import { useMemo, useEffect,  useState } from "react";
-import type {  AppointmentType, Appointment, ApptProps, SearchByType } from "./types.ts"; 
+import { useEffect,  useState } from "react";
+import type {  
+    AppointmentType, 
+    ApptProps, 
+    SearchByType,
+    SortField, 
+} from "./types.ts"; 
 import { Button } from "@/components/ui/button.tsx";
 import { Switch } from "radix-ui";
 
 
 
 // NEXT THING TO DO: 
-// VIEW PAST APPOINTMENTS 
-// ADVANCED SEARCHES 
+// search for in query   
+// sort by controllers 
 
 
 export default function AppointmentList({
@@ -26,26 +31,24 @@ export default function AppointmentList({
     const commitRowsPerPage = () => {
         const parsed = Number(rowsInput)
         if ((Number.isInteger(parsed)) && (parsed > 0) && (parsed < 201)) {
-        onUpdateViewPrefs({ rowsPerPage: parsed })
-        return
+            onUpdateViewPrefs({ rowsPerPage: parsed })
+            return
         } else { 
-        setRowsInput(viewPrefs.rowsPerPage)
-        console.log("ROW SETTING ERROR")
+            setRowsInput(viewPrefs.rowsPerPage)
+            console.log("ROW SETTING ERROR")
         }
     }
     const [pageNum, setPageNum] = useState(Number(viewPrefs.page))
     const CommitPageNumber = () => {
         const parsed = Number(pageNum)
-        if ((Number.isInteger(parsed)) && (parsed > 0) && (parsed <= safeTotalPages)) {
-        onUpdateViewPrefs({ page: parsed })
+            if ((Number.isInteger(parsed)) && (parsed > 0) && (parsed <= safeTotalPages)) {
+            onUpdateViewPrefs({ page: parsed })
         return
         } else { 
-        setPageNum(viewPrefs.page)
-        console.log("PAGE SETTING ERROR")
+            setPageNum(viewPrefs.page)
+            console.log("PAGE SETTING ERROR")
         }
     }
-
-
 
 
     //// SEARCH STATES 
@@ -156,23 +159,23 @@ export default function AppointmentList({
 
 
     function getStatusColor(status: string): string {
-    switch (status) {
-      case "pending":
-        return "bg-slate-400 border-[#F5F3EE]"
-      case "requested":
-        return "bg-yellow-600 border-[#F5F3EE]"
-      case "canceled":
-        return "bg-slate-400 border-[#F5F3EE]"
-      case "deserted":
-        return "bg-slate-400 border-[#F5F3EE]"
-      case "active":
-        return "bg-green-600 border-[#F5F3EE]"
-      case "completed":
-        return "bg-[#7c86ff] border-[#F5F3EE]"
-      default:
-        return "bg-slate-300 border-[#F5F3EE]"
+        switch (status) {
+        case "pending":
+            return "bg-slate-400 border-[#F5F3EE]"
+        case "requested":
+            return "bg-yellow-600 border-[#F5F3EE]"
+        case "canceled":
+            return "bg-slate-400 border-[#F5F3EE]"
+        case "deserted":
+            return "bg-slate-400 border-[#F5F3EE]"
+        case "active":
+            return "bg-green-600 border-[#F5F3EE]"
+        case "completed":
+            return "bg-[#7c86ff] border-[#F5F3EE]"
+        default:
+            return "bg-slate-300 border-[#F5F3EE]"
+        }
     }
-  }
 
 
 
@@ -186,184 +189,266 @@ export default function AppointmentList({
   
 
 
-  return (
-    <div className="nurse-appointment-list border border-[var(--border)] p-2 rounded-lg">
-      
-      {/* <p className="small-label">Appointments</p> */}
-      {/* SEARCH SETTINGS */}
-      <div className="flex">
-        {/* SEARCHBAR */}
-        <> {renderSearchControl()} </>
-        {/* SEARCHBY DROPDOWN */}
-        <select
-          onChange={(e) => setSearchBy( e.target.value as SearchByType)}
-          className = "p-2 m-3 w-1/3 bg-white border  rounded-lg">
-            {searchByTypes.map((d) => (
-              <option key={d.value+"-SearchByType"} value={d.value}>
-              {d.label}
-              </option>
-            ))} 
-        </select>
-        {/* search button? */}
+
+    
+    function tristate(fie: SortField, i: number) {
+        let nextState = 0
+        let newRules = viewPrefs.sortRules.filter(d => d.field !== fie)
+        if (i === 0) {
+            newRules.unshift({ field: fie, direction: "asc" })
+            nextState = 1
+        } else if (i === 1) {
+            newRules.unshift({ field: fie, direction: "desc" })
+            nextState = 2
+        } else {
+            nextState = 0
+        }
+        return { nextState, newRules }
+    }
+    const [iterStatus, setIterStatus] = useState<number>(0)
+    const [iterDate, setIterDate] = useState<number>(1)
+    const [iterProvider, setIterProvider] = useState<number>(0)
+    const [iterType, setIterType] = useState<number>(0)
+    const [iterPatient, setIterPatient] = useState<number>(0)
+
+
+
+    return (
+        <div className="nurse-appointment-list border border-[var(--border)] p-2 rounded-lg">
+        
+        {/* <p className="small-label">Appointments</p> */}
+        {/* SEARCH SETTINGS */}
+        <div className="flex">
+            {/* SEARCHBAR */}
+            <> {renderSearchControl()} </>
+            {/* SEARCHBY DROPDOWN */}
+            <select
+            onChange={(e) => setSearchBy( e.target.value as SearchByType)}
+            className = "p-2 m-3 w-1/3 bg-white border  rounded-lg">
+                {searchByTypes.map((d) => (
+                <option key={d.value+"-SearchByType"} value={d.value}>
+                {d.label}
+                </option>
+                ))} 
+            </select>
+            {/* search button? */}
+            <div>
+            </div>
+        </div>
+
+        {/* THE LIST ITSELF */}
+        <div className="overflow-x-auto rounded-md m-3">
+            <ul className="appointment-list min-w-[760px]">
+            {/* header */}
+            <div className="bg-[#90a1b9] grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm font-semibold text-slate-500">
+                <button className = "text-black text-start"
+                    onClick={() => {
+                            const { nextState, newRules } = tristate('appointment_status', iterStatus)
+                            setIterStatus(nextState)
+                            onUpdateViewPrefs({ sortRules: newRules })
+                        }}> 
+                            { iterStatus === 0 ? " ⮃"
+                            : iterStatus === 1 ? " 🠇"
+                            : " 🠅"}
+                        </button>
+
+
+                <button className = "text-black text-start"
+                    onClick={() => {
+                            const { nextState, newRules } = tristate('appointment_date', iterDate)
+                            setIterDate(nextState)
+                            onUpdateViewPrefs({ sortRules: newRules })
+                        }}>Date
+                            { iterDate === 0 ? " ⮃"
+                            : iterDate === 1 ? " 🠇"
+                            : " 🠅"}
+                        </button>
+                <span className = "text-black text-start">Time</span>
+
+
+
+                <button className = "text-black text-start"
+                    onClick={() => {
+                            const { nextState, newRules } = tristate('clinician_name', iterProvider)
+                            setIterProvider(nextState)
+                            onUpdateViewPrefs({ sortRules: newRules })
+                        }}>Provider
+                            { iterProvider === 0 ? " ⮃"
+                            : iterProvider === 1 ? " 🠇"
+                            : " 🠅"}
+                        </button>
+
+
+
+                <button className = "text-black text-start" 
+                    onClick={() => {
+                            const { nextState, newRules } = tristate('visit_type', iterType)
+                            setIterType(nextState)
+                            onUpdateViewPrefs({ sortRules: newRules })
+                        }}>Type
+                            { iterType === 0 ? " ⮃"
+                            : iterType === 1 ? " 🠇"
+                            : " 🠅"}
+                        </button>
+
+
+                <button className = "text-black text-start"
+                    onClick={() => {
+                            const { nextState, newRules } = tristate('patient_name', iterPatient)
+                            setIterPatient(nextState)
+                            onUpdateViewPrefs({ sortRules: newRules })
+                        }}>Patient
+                            { iterPatient === 0 ? " ⮃"
+                            : iterPatient === 1 ? " 🠇"
+                            : " 🠅"}
+                        </button>
+
+
+
+                <span className = "text-black text-start">Actions</span>
+            </div>
+            {/* rows */}
+            {appointments.map((apt) => {
+                // Convert timestamp from SQL to human readable local time  
+                const dt = new Date(apt.appointment_date)
+                const dateText = Number.isNaN(dt.getTime())
+                ? apt.appointment_date
+                : dt.toLocaleDateString()
+                const timeText = Number.isNaN(dt.getTime())
+                ? ''
+                : dt.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    })
+                return (
+                <li
+                    key={apt.Appointment_id}
+                    className="bg-[#F5F3EE] grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm text-slate-700"
+                > 
+                    <div className="flex"> {/* justify-center*/}
+                    <span className={`inline-block h-3 w-3 rounded-full border border-solid ${getStatusColor(apt.appointment_status)}`} />
+                    </div>
+                    <span className = "font-bold">{dateText}</span>
+                    <span>{timeText}</span>
+                    <span>{apt.clinician_name}</span>
+                    <span>{apt.visit_type}</span>
+                    <span>{apt.patient_name}</span>
+                    {/* ACTIONS TO EACH APPOINTMENT ROW */}
+                    <span className="flex gap-2 justify-between">
+                    {onSelectAppointment && (
+                        <button
+                        type="button"
+                        className="btn-small"
+                        onClick={() => onSelectAppointment(apt)}
+                        >
+                        Edit
+                        </button>
+                    )}
+                    {onDeleteAppointment && (
+                        <button
+                        type="button"
+                        className="btn-small"
+                        onClick={() => onDeleteAppointment(apt)}
+                        >
+                        Delete
+                        </button>
+                    )}
+
+                    </span>
+                </li>
+                )
+            })}
+            </ul>
+        </div>
+    
+        <hr className="m-5 border-2 border-solid rad rounded-xl"></hr>
+        {/* SET VIEW PREFERENCES */}
         <div>
-        </div>
-      </div>
-
-      {/* THE LIST ITSELF */}
-      <div className="overflow-x-auto rounded-md m-3">
-        <ul className="appointment-list min-w-[760px]">
-          {/* header */}
-          <div className="bg-[#90a1b9] grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm font-semibold text-slate-500">
-            <button className = "text-black text-start"> </button>
-            <button className = "text-black text-start">Date</button>
-            <button className = "text-black text-start">Time</button>
-            <button className = "text-black text-start">Provider</button>
-            <button className = "text-black text-start">Type</button>
-            <button className = "text-black text-start">Patient</button>
-            <button className = "text-black text-start">Actions</button>
-          </div>
-          {/* rows */}
-          {appointments.map((apt) => {
-            // Convert timestamp from SQL to human readable local time  
-            const dt = new Date(apt.appointment_date)
-            const dateText = Number.isNaN(dt.getTime())
-              ? apt.appointment_date
-              : dt.toLocaleDateString()
-            const timeText = Number.isNaN(dt.getTime())
-              ? ''
-              : dt.toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-            return (
-              <li
-                key={apt.Appointment_id}
-                className="bg-[#F5F3EE] grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm text-slate-700"
-              > 
-                <div className="flex"> {/* justify-center*/}
-                  <span className={`inline-block h-3 w-3 rounded-full border border-solid ${getStatusColor(apt.appointment_status)}`} />
-                </div>
-                <span className = "font-bold">{dateText}</span>
-                <span>{timeText}</span>
-                <span>{apt.clinician_name}</span>
-                <span>{apt.visit_type}</span>
-                <span>{apt.patient_name}</span>
-                {/* ACTIONS TO EACH APPOINTMENT ROW */}
-                <span className="flex gap-2 justify-between">
-                  {onSelectAppointment && (
-                    <button
-                      type="button"
-                      className="btn-small"
-                      onClick={() => onSelectAppointment(apt)}
-                    >
-                      Edit
-                    </button>
-                  )}
-                  {onDeleteAppointment && (
-                    <button
-                      type="button"
-                      className="btn-small"
-                      onClick={() => onDeleteAppointment(apt)}
-                    >
-                      Delete
-                    </button>
-                  )}
-
-                </span>
-              </li>
-            )
-          })}
-        </ul>
-      </div>
- 
-      <hr className="m-5 border-2 border-solid rad rounded-xl"></hr>
-      {/* SET VIEW PREFERENCES */}
-      <div>
-        <label className="flex items-center gap-2 justify-between">
-          {/* Display Past Switch */}
-          <div  className="flex items-center">  
-            <Switch.Root 
-              checked={viewPrefs.showPast}
-              onCheckedChange={(checked) =>
-                onUpdateViewPrefs({ showPast: checked })
-              }
-              className="w-10 h-6 bg-gray-300 rounded-full data-[state=checked]:bg-[#7c86ff]"
-              >
-              <Switch.Thumb className="block w-4 h-4 bg-white rounded-full translate-x-1 data-[state=checked]:translate-x-5 transition" />
-            </Switch.Root>
-            <span className = "m-2">show past appointments</span>
-          </div>
-          {/* Rows per page */}
-          <div>
-            <span className = "m-2">Rows per page</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={rowsInput}
-              onChange={(e) => {
-                const value = e.target.value
-                if (/^\d*$/.test(value)) {
-                  setRowsInput(Number(value))
+            <label className="flex items-center gap-2 justify-between">
+            {/* Display Past Switch */}
+            <div  className="flex items-center">  
+                <Switch.Root 
+                checked={viewPrefs.showPast}
+                onCheckedChange={(checked) =>
+                    onUpdateViewPrefs({ showPast: checked })
                 }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  commitRowsPerPage()
-                }}} onBlur={commitRowsPerPage}
-              className="w-15 rounded-md border px-2 py-1"
-            />
-          </div>
-        </label>
+                className="w-10 h-6 bg-gray-300 rounded-full data-[state=checked]:bg-[#7c86ff]"
+                >
+                <Switch.Thumb className="block w-4 h-4 bg-white rounded-full translate-x-1 data-[state=checked]:translate-x-5 transition" />
+                </Switch.Root>
+                <span className = "m-2">show past appointments</span>
+            </div>
+            {/* Rows per page */}
+            <div>
+                <span className = "m-2">Rows per page</span>
+                <input
+                type="text"
+                inputMode="numeric"
+                value={rowsInput}
+                onChange={(e) => {
+                    const value = e.target.value
+                    if (/^\d*$/.test(value)) {
+                    setRowsInput(Number(value))
+                    }
+                }}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                    e.preventDefault()
+                    commitRowsPerPage()
+                    }}} onBlur={commitRowsPerPage}
+                className="w-15 rounded-md border px-2 py-1"
+                />
+            </div>
+            </label>
 
 
 
-        <div className="form-actions flex justify-between" style={{ marginTop: "5px" }}>
-          {/* PREV PAGE BUTTON */}
-          <Button
-            type="button"
-            className="btn-secondary"
-            onClick={() => onUpdateViewPrefs({ page: viewPrefs.page - 1 })}
-            disabled={page === 1}
-          >
-            Previous
-          </Button>
+            <div className="form-actions flex justify-between" style={{ marginTop: "5px" }}>
+            {/* PREV PAGE BUTTON */}
+            <Button
+                type="button"
+                className="btn-secondary"
+                onClick={() => onUpdateViewPrefs({ page: viewPrefs.page - 1 })}
+                disabled={page === 1}
+            >
+                Previous
+            </Button>
 
-          <span style={{ alignSelf: "center" }}>
-            Page 
-          <input 
-              type="text"
-              inputMode="numeric"
-              value={pageNum}
-              onChange={(e) => {
-                const value = e.target.value
-                if (/^\d*$/.test(value)) {
-                  setPageNum(Number(value))
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  CommitPageNumber() 
-                }}} onBlur={CommitPageNumber}
-              className="m-2 w-15 rounded border px-2 py-1"
-            />
-            
-            
-            of {safeTotalPages}
-          </span>
+            <span style={{ alignSelf: "center" }}>
+                Page 
+            <input 
+                type="text"
+                inputMode="numeric"
+                value={pageNum}
+                onChange={(e) => {
+                    const value = e.target.value
+                    if (/^\d*$/.test(value)) {
+                    setPageNum(Number(value))
+                    }
+                }}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                    e.preventDefault()
+                    CommitPageNumber() 
+                    }}} onBlur={CommitPageNumber}
+                className="m-2 w-15 rounded border px-2 py-1"
+                />
+                
+                
+                of {safeTotalPages}
+            </span>
 
-          {/* NEXT PAGE BUTTON */}
-          <Button
-            type="button"
-            className="btn-secondary"
-            onClick={() => onUpdateViewPrefs({ page: viewPrefs.page + 1 })}
-            disabled={page === safeTotalPages}
-          >
-            Next
-          </Button>
+            {/* NEXT PAGE BUTTON */}
+            <Button
+                type="button"
+                className="btn-secondary"
+                onClick={() => onUpdateViewPrefs({ page: viewPrefs.page + 1 })}
+                disabled={page === safeTotalPages}
+            >
+                Next
+            </Button>
+            </div>
         </div>
-      </div>
-    </div>
-  )
+        </div>
+    )
 }

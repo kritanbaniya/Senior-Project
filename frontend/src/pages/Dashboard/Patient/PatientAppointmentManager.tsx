@@ -14,9 +14,13 @@ import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
 
  
 
+// CAN ONLY EDIT REQUESTS OR PENDING 
+
+
+
 export default function PatientAppointmentManager() {
     type debuglogType = 'initial'| 'read' | 'create' | 'update' | 'delete' | 'lifecycle'
-    var debuglog: debuglogType[] = ['read']
+    var debuglog: debuglogType[] = []
     type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed' 
 
  
