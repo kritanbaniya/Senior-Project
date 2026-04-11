@@ -47,7 +47,7 @@ export default function AppointmentCalendar({
   onSelectAppointment, // function passed in (can be nurse/patient)
   // onDeleteAppointment,
   onSelectSlot,// 
-  viewPrefs,
+  // viewPrefs,
   onUpdateViewPrefs,
 }: ApptProps) {
   const [currentView, setCurrentView] = useState<View>(Views.MONTH)

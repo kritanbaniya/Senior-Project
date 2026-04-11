@@ -1,7 +1,7 @@
 import { useState , useEffect } from "react";
 import AppointmentCalendar from "./AppointmentCalendar.tsx";
 import AppointmentList from "./AppointmentList.tsx";
-import type { ApptProps, viewRequestTypes } from "./types.ts"; 
+import type { ApptProps } from "./types.ts"; 
 import { Button } from "@/components/ui/button.tsx";
 // import { Switch } from "radix-ui"; 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
