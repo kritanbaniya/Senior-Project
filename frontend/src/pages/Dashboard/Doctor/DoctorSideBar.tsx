@@ -2,8 +2,11 @@ import { NavLink } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 import {
   LayoutDashboard,
+  UserRound,
   Building2,
-  UsersRound,
+  FileText,
+  Stethoscope,
+  ClipboardList,
   LogOut,
 } from "lucide-react"
 import {
@@ -25,21 +28,39 @@ type SidebarItem = {
   icon: React.ComponentType<{ className?: string }>
 }
 
-const clinicItems: SidebarItem[] = [
+const mainItems: SidebarItem[] = [
   {
-    title: "Overview",
-    url: "/dashboard/clinic",
+    title: "Dashboard",
+    url: "/dashboard/doctor",
     icon: LayoutDashboard,
   },
   {
-    title: "My Clinic",
-    url: "/dashboard/clinic/my-clinic",
-    icon: Building2,
+    title: "My Profile",
+    url: "/dashboard/doctor/information",
+    icon: UserRound,
   },
   {
-    title: "Manage Staff",
-    url: "/dashboard/clinic/manage-staff",
-    icon: UsersRound,
+    title: "Clinic Info",
+    url: "/clinic",
+    icon: Building2,
+  },
+]
+
+const doctorItems: SidebarItem[] = [
+  {
+    title: "Patient Notes",
+    url: "/dashboard/doctor",
+    icon: FileText,
+  },
+  {
+    title: "Consultations",
+    url: "/dashboard/doctor",
+    icon: Stethoscope,
+  },
+  {
+    title: "Records",
+    url: "/dashboard/doctor",
+    icon: ClipboardList,
   },
 ]
 
@@ -51,7 +72,7 @@ function SidebarLink({ item }: { item: SidebarItem }) {
       <SidebarMenuButton asChild tooltip={item.title}>
         <NavLink
           to={item.url}
-          end={item.url === "/dashboard/clinic"}
+          end={item.url === "/dashboard/doctor"}
           className={({ isActive }) =>
             [
               "flex items-center gap-3 px-3 py-5 text-[16px] bg-white border border-slate-300 font-medium transition-colors rounded-lg",
@@ -69,16 +90,16 @@ function SidebarLink({ item }: { item: SidebarItem }) {
   )
 }
 
-export default function ClinicSideBar() {
+export default function DoctorSidebar() {
   const { profile, logout } = useAuth()
-  const displayName = profile?.full_name?.trim() || "Clinic Admin"
+  const displayName = profile?.full_name?.trim() || "Doctor"
 
   return (
     <Sidebar
       collapsible="icon"
-      className="top-[115px] h-[calc(100vh-500px)] bg-white rounded-2xl"
+      className="top-[115px] h-[calc(100vh-500px)] rounded-2xl bg-white"
     >
-      <SidebarHeader className="border bg-white rounded-xl border-slate-300 px-3 py-4">
+      <SidebarHeader className="rounded-xl border border-slate-300 bg-white px-3 py-4">
         <div className="flex items-start justify-between gap-3 group-data-[collapsible=icon]:justify-center">
           <div className="flex min-w-0 items-center gap-3 group-data-[collapsible=icon]:hidden">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
@@ -95,7 +116,7 @@ export default function ClinicSideBar() {
               </p>
 
               <p className="truncate text-xs font-semibold text-slate-600">
-                Clinic Portal
+                Doctor Portal
               </p>
             </div>
           </div>
@@ -116,26 +137,38 @@ export default function ClinicSideBar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="">
+      <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-[11px] font-bold uppercase tracking-wide text-slate-600">
-            Clinic
+            Main
           </SidebarGroupLabel>
 
           <SidebarMenu>
-            {clinicItems.map((item) => (
+            {mainItems.map((item) => (
+              <SidebarLink key={item.title} item={item} />
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-[11px] font-bold uppercase tracking-wide text-slate-600">
+            Doctor Tools
+          </SidebarGroupLabel>
+
+          <SidebarMenu>
+            {doctorItems.map((item) => (
               <SidebarLink key={item.title} item={item} />
             ))}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border rounded-xl border-slate-300/70 p-3 pb-4">
+      <SidebarFooter className="rounded-xl border border-slate-300/70 p-3 pb-4">
         <div className="rounded-xl bg-white p-3 group-data-[collapsible=icon]:hidden">
           <button
             type="button"
             onClick={() => void logout()}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-600"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-500 py-2 text-sm font-medium text-white transition hover:bg-indigo-600"
           >
             <LogOut className="h-4 w-4" />
             Log Out
