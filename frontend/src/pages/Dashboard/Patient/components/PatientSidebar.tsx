@@ -113,7 +113,7 @@ export default function PatientSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="top-[115px] h-[calc(100vh-500px)] bg-white rounded-2xl text-yellow-600"
+      className="top-[115px] h-[calc(100vh-500px)] bg-white rounded-2xl"
     >
       <SidebarHeader className="border bg-white rounded-xl border-slate-300 px-3 py-4">
         <div className="flex items-start justify-between gap-3 group-data-[collapsible=icon]:justify-center">
