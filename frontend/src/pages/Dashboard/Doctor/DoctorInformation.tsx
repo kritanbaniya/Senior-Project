@@ -178,7 +178,14 @@ export default function DoctorInformation() {
   }
 
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider defaultOpen
+      style={
+        {
+          "--sidebar-width": "15rem",
+          "--sidebar-width-mobile": "10rem",
+        } as React.CSSProperties
+      }
+    >
       <DoctorSidebar />
 
       <div className="pd-right">

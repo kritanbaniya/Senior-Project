@@ -379,7 +379,14 @@ export default function ClinicADashBoard() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider  defaultOpen
+      style={
+        {
+          "--sidebar-width": "15rem",
+          "--sidebar-width-mobile": "10rem",
+        } as React.CSSProperties
+      }
+    >
       <ClinicSideBar />
 
       <SidebarInset className="min-h-[calc(100vh-60px)]">

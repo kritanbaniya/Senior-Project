@@ -91,7 +91,15 @@ export default function NurseDashBoard() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen
+      style={
+        {
+          "--sidebar-width": "15rem",
+          "--sidebar-width-mobile": "10rem",
+    } as React.CSSProperties
+      }
+    
+    >
       <NurseSideBar />
 
       <div className="pd-right">
