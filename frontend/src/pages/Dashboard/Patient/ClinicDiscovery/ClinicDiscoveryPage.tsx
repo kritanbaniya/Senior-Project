@@ -62,6 +62,7 @@ export default function ClinicDiscoveryPage() {
             minZoom: 9.7,
             maxZoom: 16,
             maxBounds: NYC_BOUNDS,
+            attributionControl: false,
         })
         mapRef.current.on('error', (evt) => {
             console.error('maplibre style or tile load error', evt.error)
