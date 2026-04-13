@@ -15,6 +15,7 @@
 import { useState, useEffect } from 'react'
 import { Link, Outlet, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
+import { geocodeClinicAddress } from '../../../lib/maptilerGeocode'
 import { useAuth } from '../../../context/AuthContext'
 import ClinicSideBar from './ClinicSideBar'
 import type { ClinicFormData } from './ClinicCreation'
@@ -50,6 +51,9 @@ export type ClinicRow = {
   description: string | null
   approved: boolean
   created_at: string
+  latitude: number | null
+  longitude: number | null
+  geocode_status: string | null
 }
 
 export const SPECIALTIES = [
@@ -96,6 +100,20 @@ export type ClinicDashboardContext = {
 
 export function useClinicDashboard() {
   return useOutletContext<ClinicDashboardContext>()
+}
+
+function clinicAddressMatchesForm(row: ClinicRow, form: ClinicFormData): boolean {
+  return (
+    (form.address_line1.trim() || '') === (row.address_line1?.trim() ?? '') &&
+    (form.address_line2.trim() || '') === (row.address_line2?.trim() ?? '') &&
+    (form.city.trim() || '') === (row.city?.trim() ?? '') &&
+    (form.state || '') === (row.state ?? '') &&
+    (form.zip_code.trim() || '') === (row.zip_code?.trim() ?? '')
+  )
+}
+
+function coordsGeocodedOk(row: ClinicRow): boolean {
+  return row.latitude != null && row.longitude != null && row.geocode_status === 'ok'
 }
 
 export default function ClinicADashBoard() {
@@ -277,6 +295,18 @@ export default function ClinicADashBoard() {
 
     setSaving(true)
 
+    let coords: { latitude: number; longitude: number }
+    try {
+      coords = await geocodeClinicAddress(form)
+    } catch (e) {
+      setSaving(false)
+      setMessage({
+        type: 'error',
+        text: e instanceof Error ? e.message : 'could not verify address',
+      })
+      return
+    }
+
     const { data: insertedClinic, error: insertError } = await supabase
       .from('clinics')
       .insert({
@@ -292,6 +322,9 @@ export default function ClinicADashBoard() {
         zip_code: form.zip_code.trim() || null,
         website: form.website.trim() || null,
         description: form.description.trim() || null,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        geocode_status: 'ok',
       })
       .select()
       .single()
@@ -333,23 +366,75 @@ export default function ClinicADashBoard() {
       return
     }
 
+    if (!clinicRow) {
+      setMessage({ type: 'error', text: 'no clinic loaded' })
+      return
+    }
+
+    const needGeocode = !clinicAddressMatchesForm(clinicRow, form) || !coordsGeocodedOk(clinicRow)
+
+    if (needGeocode) {
+      if (!form.address_line1.trim()) {
+        setMessage({ type: 'error', text: 'address is required' })
+        return
+      }
+      if (!form.city.trim()) {
+        setMessage({ type: 'error', text: 'city is required' })
+        return
+      }
+      if (!form.state) {
+        setMessage({ type: 'error', text: 'state is required' })
+        return
+      }
+      if (!form.zip_code.trim()) {
+        setMessage({ type: 'error', text: 'zip code is required' })
+        return
+      }
+    }
+
     setSaving(true)
+
+    let coords: { latitude: number; longitude: number } | undefined
+    if (needGeocode) {
+      try {
+        coords = await geocodeClinicAddress(form)
+      } catch (e) {
+        setSaving(false)
+        setMessage({
+          type: 'error',
+          text: e instanceof Error ? e.message : 'could not verify address',
+        })
+        return
+      }
+    }
+
+    const baseUpdate = {
+      clinic_name: form.clinic_name.trim(),
+      specialty: form.specialty || null,
+      phone: form.phone.trim() || null,
+      email: form.email.trim() || null,
+      address_line1: form.address_line1.trim() || null,
+      address_line2: form.address_line2.trim() || null,
+      city: form.city.trim() || null,
+      state: form.state || null,
+      zip_code: form.zip_code.trim() || null,
+      website: form.website.trim() || null,
+      description: form.description.trim() || null,
+    }
+
+    const payload =
+      coords !== undefined
+        ? {
+            ...baseUpdate,
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            geocode_status: 'ok',
+          }
+        : baseUpdate
 
     const { data: updatedClinic, error } = await supabase
       .from('clinics')
-      .update({
-        clinic_name: form.clinic_name.trim(),
-        specialty: form.specialty || null,
-        phone: form.phone.trim() || null,
-        email: form.email.trim() || null,
-        address_line1: form.address_line1.trim() || null,
-        address_line2: form.address_line2.trim() || null,
-        city: form.city.trim() || null,
-        state: form.state || null,
-        zip_code: form.zip_code.trim() || null,
-        website: form.website.trim() || null,
-        description: form.description.trim() || null,
-      })
+      .update(payload)
       .eq('admin_id', user.id)
       .select()
       .single()
