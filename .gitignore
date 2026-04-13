@@ -30,12 +30,10 @@ dist-ssr
 *.sln
 *.sw?
 
-/sql
+/sql/
 /sql/queue
 .txt
 *.txt
-.sql
-*.sql
 
 # Windows Junk
 Thumbs.db
