@@ -47,6 +47,78 @@ const users = [
     full_name: 'Victor Han',
     role: 'clinic',
   },
+  {
+    email: 'patient1@test.com',
+    password: 'pass',
+    full_name: 'p1 test',
+    role: 'patient',
+  },
+  {
+    email: 'patient2@test.com',
+    password: 'pass',
+    full_name: 'p2 test',
+    role: 'patient',
+  },
+  {
+    email: 'patient3@test.com',
+    password: 'pass',
+    full_name: 'p3 test',
+    role: 'patient',
+  },
+  {
+    email: 'nurse1@test.com',
+    password: 'pass',
+    full_name: 'n1 test',
+    role: 'nurse',
+  },
+  {
+    email: 'nurse2@test.com',
+    password: 'pass',
+    full_name: 'n2 test',
+    role: 'nurse',
+  },
+  {
+    email: 'nurse3@test.com',
+    password: 'pass',
+    full_name: 'n3 test',
+    role: 'nurse',
+  },
+  {
+    email: 'doctor1@test.com',
+    password: 'pass',
+    full_name: 'd1 test',
+    role: 'doctor',
+  },
+  {
+    email: 'doctor2@test.com',
+    password: 'pass',
+    full_name: 'd2 test',
+    role: 'doctor',
+  },
+  {
+    email: 'doctor3@test.com',
+    password: 'pass',
+    full_name: 'd3 test',
+    role: 'doctor',
+  },
+  {
+    email: 'admin1@test.com',
+    password: 'pass',
+    full_name: 'a1 test',
+    role: 'clinic',
+  },
+  {
+    email: 'admin2@test.com',
+    password: 'pass',
+    full_name: 'a2 test',
+    role: 'clinic',
+  },
+  {
+    email: 'admin3@test.com',
+    password: 'pass',
+    full_name: 'a3 test',
+    role: 'clinic',
+  },
 ]
 
 async function findUserByEmail(email) {
