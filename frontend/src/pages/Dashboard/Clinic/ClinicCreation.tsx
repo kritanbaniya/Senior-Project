@@ -14,7 +14,7 @@
 //   2. updates public.clinic_admin.clinic_created to true
 //   3. transitions the dashboard to state 3 (ClinicManagement)
 //
-// imports SPECIALTIES and US_STATES from the orchestrator for the dropdown options.
+// imports SPECIALTIES from the orchestrator for the dropdown options.
 //
 // props received from ClinicADashBoard:
 //   saving  - disables the submit button while the orchestrator is writing
@@ -22,24 +22,14 @@
 //   onSubmit - callback that receives the ClinicFormData for the orchestrator to persist
 
 import { useState } from 'react'
-import { SPECIALTIES, US_STATES } from './ClinicADashBoard'
+import { SPECIALTIES } from './ClinicADashBoard'
+import ClinicAddressAutocompleteSection from './ClinicAddressAutocompleteSection'
+import type { ClinicFormData } from './clinicFormTypes'
 
 // shape of the form data passed to the orchestrator's handleClinicCreateSubmit.
 // maps to the insertable columns of public.clinics (minus admin_id, clinic_id,
 // approved, and created_at which are set by the orchestrator or supabase defaults).
-export type ClinicFormData = {
-  clinic_name: string
-  specialty: string
-  phone: string
-  email: string
-  address_line1: string
-  address_line2: string
-  city: string
-  state: string
-  zip_code: string
-  website: string
-  description: string
-}
+export type { ClinicFormData } from './clinicFormTypes'
 
 interface ClinicCreationProps {
   saving: boolean
@@ -59,7 +49,7 @@ export default function ClinicCreation({ saving, message, onSubmit }: ClinicCrea
     address_line1: '',
     address_line2: '',
     city: '',
-    state: '',
+    state: 'NY',
     zip_code: '',
     website: '',
     description: '',
@@ -124,63 +114,7 @@ export default function ClinicCreation({ saving, message, onSubmit }: ClinicCrea
             placeholder="contact@yourclinic.com"
           />
         </div>
-        <div className="pd-form-row">
-          <label htmlFor="cl-addr1">Address line 1</label>
-          <input
-            id="cl-addr1"
-            type="text"
-            value={form.address_line1}
-            onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))}
-            placeholder="Street address"
-            required
-          />
-        </div>
-        <div className="pd-form-row">
-          <label htmlFor="cl-addr2">Address line 2</label>
-          <input
-            id="cl-addr2"
-            type="text"
-            value={form.address_line2}
-            onChange={(e) => setForm((f) => ({ ...f, address_line2: e.target.value }))}
-            placeholder="Suite, floor, unit (optional)"
-          />
-        </div>
-        <div className="pd-form-row">
-          <label htmlFor="cl-city">City</label>
-          <input
-            id="cl-city"
-            type="text"
-            value={form.city}
-            onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-            placeholder="City"
-            required
-          />
-        </div>
-        <div className="pd-form-row">
-          <label htmlFor="cl-state">State</label>
-          <select
-            id="cl-state"
-            value={form.state}
-            onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-            required
-          >
-            <option value="">Select state</option>
-            {US_STATES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-        <div className="pd-form-row">
-          <label htmlFor="cl-zip">Zip code</label>
-          <input
-            id="cl-zip"
-            type="text"
-            value={form.zip_code}
-            onChange={(e) => setForm((f) => ({ ...f, zip_code: e.target.value }))}
-            placeholder="Zip code"
-            required
-          />
-        </div>
+        <ClinicAddressAutocompleteSection form={form} setForm={setForm} disabled={saving} />
         <div className="pd-form-row">
           <label htmlFor="cl-website">Website</label>
           <input

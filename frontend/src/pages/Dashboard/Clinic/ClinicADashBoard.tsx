@@ -18,7 +18,7 @@ import { supabase } from '../../../lib/supabase'
 import { geocodeClinicAddress } from '../../../lib/maptilerGeocode'
 import { useAuth } from '../../../context/AuthContext'
 import ClinicSideBar from './ClinicSideBar'
-import type { ClinicFormData } from './ClinicCreation'
+import type { ClinicFormData } from './clinicFormTypes'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 export type AdminFormData = {
@@ -94,8 +94,8 @@ export type ClinicDashboardContext = {
   setMessage: (m: { type: 'success' | 'error'; text: string } | null) => void
   handleAdminProfileSubmit: (form: AdminFormData) => Promise<void>
   handleAdminProfileUpdate: (form: AdminFormData) => Promise<void>
-  handleClinicCreateSubmit: (form: ClinicFormData) => Promise<void>
-  handleClinicUpdate: (form: ClinicFormData) => Promise<void>
+  handleClinicCreateSubmit: (form: ClinicFormData) => Promise<boolean>
+  handleClinicUpdate: (form: ClinicFormData) => Promise<boolean>
 }
 
 export function useClinicDashboard() {
@@ -255,42 +255,42 @@ export default function ClinicADashBoard() {
     setMessage({ type: 'success', text: 'profile updated' })
   }
 
-  const handleClinicCreateSubmit = async (form: ClinicFormData) => {
+  const handleClinicCreateSubmit = async (form: ClinicFormData): Promise<boolean> => {
     setMessage(null)
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       setMessage({ type: 'error', text: 'not logged in' })
-      return
+      return false
     }
 
     if (!form.clinic_name.trim()) {
       setMessage({ type: 'error', text: 'clinic name is required' })
-      return
+      return false
     }
     if (!form.specialty) {
       setMessage({ type: 'error', text: 'specialty is required' })
-      return
+      return false
     }
     if (!form.phone.trim()) {
       setMessage({ type: 'error', text: 'clinic phone is required' })
-      return
+      return false
     }
     if (!form.address_line1.trim()) {
       setMessage({ type: 'error', text: 'address is required' })
-      return
+      return false
     }
     if (!form.city.trim()) {
       setMessage({ type: 'error', text: 'city is required' })
-      return
+      return false
     }
     if (!form.state) {
       setMessage({ type: 'error', text: 'state is required' })
-      return
+      return false
     }
     if (!form.zip_code.trim()) {
       setMessage({ type: 'error', text: 'zip code is required' })
-      return
+      return false
     }
 
     setSaving(true)
@@ -304,7 +304,7 @@ export default function ClinicADashBoard() {
         type: 'error',
         text: e instanceof Error ? e.message : 'could not verify address',
       })
-      return
+      return false
     }
 
     const { data: insertedClinic, error: insertError } = await supabase
@@ -332,7 +332,7 @@ export default function ClinicADashBoard() {
     if (insertError) {
       setSaving(false)
       setMessage({ type: 'error', text: insertError.message })
-      return
+      return false
     }
 
     const { error: updateError } = await supabase
@@ -344,31 +344,32 @@ export default function ClinicADashBoard() {
 
     if (updateError) {
       setMessage({ type: 'error', text: updateError.message })
-      return
+      return false
     }
 
     setClinicRow(insertedClinic as ClinicRow)
     setAdminRow((prev) => (prev ? { ...prev, clinic_created: true } : prev))
     setMessage({ type: 'success', text: 'clinic created successfully' })
+    return true
   }
 
-  const handleClinicUpdate = async (form: ClinicFormData) => {
+  const handleClinicUpdate = async (form: ClinicFormData): Promise<boolean> => {
     setMessage(null)
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       setMessage({ type: 'error', text: 'not logged in' })
-      return
+      return false
     }
 
     if (!form.clinic_name.trim()) {
       setMessage({ type: 'error', text: 'clinic name is required' })
-      return
+      return false
     }
 
     if (!clinicRow) {
       setMessage({ type: 'error', text: 'no clinic loaded' })
-      return
+      return false
     }
 
     const needGeocode = !clinicAddressMatchesForm(clinicRow, form) || !coordsGeocodedOk(clinicRow)
@@ -376,19 +377,19 @@ export default function ClinicADashBoard() {
     if (needGeocode) {
       if (!form.address_line1.trim()) {
         setMessage({ type: 'error', text: 'address is required' })
-        return
+        return false
       }
       if (!form.city.trim()) {
         setMessage({ type: 'error', text: 'city is required' })
-        return
+        return false
       }
       if (!form.state) {
         setMessage({ type: 'error', text: 'state is required' })
-        return
+        return false
       }
       if (!form.zip_code.trim()) {
         setMessage({ type: 'error', text: 'zip code is required' })
-        return
+        return false
       }
     }
 
@@ -404,7 +405,7 @@ export default function ClinicADashBoard() {
           type: 'error',
           text: e instanceof Error ? e.message : 'could not verify address',
         })
-        return
+        return false
       }
     }
 
@@ -443,11 +444,12 @@ export default function ClinicADashBoard() {
 
     if (error) {
       setMessage({ type: 'error', text: error.message })
-      return
+      return false
     }
 
     setClinicRow(updatedClinic as ClinicRow)
     setMessage({ type: 'success', text: 'clinic updated' })
+    return true
   }
 
   const ctx: ClinicDashboardContext = {
