@@ -1,9 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { ClinicFormData } from './clinicFormTypes'
 import {
-    fetchAddressSuggestions,
-    type AddressSuggestion,
-} from '../../../lib/maptilerGeocode'
+    createGoogleAutocompleteSessionToken,
+    fetchGoogleAddressSuggestions,
+    fetchGooglePlaceAddressDetails,
+    loadGooglePlacesLibrary,
+    type GoogleAddressSuggestion,
+} from '../../../lib/googlePlaces'
 import { US_STATES } from './ClinicADashBoard'
 
 const DEBOUNCE_MS = 300
@@ -17,9 +20,10 @@ type Props = {
 export default function ClinicAddressAutocompleteSection({ form, setForm, disabled }: Props) {
     const uid = useId()
     const wrapRef = useRef<HTMLDivElement | null>(null)
+    const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null)
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
-    const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([])
+    const [suggestions, setSuggestions] = useState<GoogleAddressSuggestion[]>([])
     const [activeIndex, setActiveIndex] = useState(-1)
 
     useEffect(() => {
@@ -35,6 +39,7 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
     useEffect(() => {
         const q = form.address_line1.trim()
         if (q.length < 3 || disabled) {
+            sessionTokenRef.current = null
             setSuggestions([])
             setOpen(false)
             setLoading(false)
@@ -45,10 +50,17 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
         const t = window.setTimeout(() => {
             void (async () => {
                 try {
-                    const list = await fetchAddressSuggestions(q)
+                    await loadGooglePlacesLibrary()
+                    if (!sessionTokenRef.current) {
+                        sessionTokenRef.current = createGoogleAutocompleteSessionToken()
+                    }
+                    const list = await fetchGoogleAddressSuggestions(q, sessionTokenRef.current)
                     setSuggestions(list)
                     setOpen(list.length > 0)
                     setActiveIndex(-1)
+                } catch {
+                    setSuggestions([])
+                    setOpen(false)
                 } finally {
                     setLoading(false)
                 }
@@ -58,16 +70,30 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
         return () => window.clearTimeout(t)
     }, [form.address_line1, disabled])
 
-    const applySuggestion = (s: AddressSuggestion) => {
-        setForm((f) => ({
-            ...f,
-            address_line1: s.patch.address_line1?.trim() ?? f.address_line1,
-            city: s.patch.city?.trim() ?? f.city,
-            zip_code: s.patch.zip_code?.trim() ?? f.zip_code,
-            state: 'NY',
-        }))
-        setOpen(false)
-        setSuggestions([])
+    const applySuggestion = async (s: GoogleAddressSuggestion) => {
+        if (disabled) {
+            return
+        }
+        setLoading(true)
+        try {
+            const details = await fetchGooglePlaceAddressDetails(s.placeId, sessionTokenRef.current)
+            setForm((f) => ({
+                ...f,
+                address_line1: details.patch.address_line1?.trim() ?? f.address_line1,
+                city: details.patch.city?.trim() ?? f.city,
+                zip_code: details.patch.zip_code?.trim() ?? f.zip_code,
+                state: details.patch.state?.trim() || 'NY',
+            }))
+            setOpen(false)
+            setSuggestions([])
+            setActiveIndex(-1)
+            sessionTokenRef.current = null
+        } catch {
+            setOpen(false)
+            setSuggestions([])
+        } finally {
+            setLoading(false)
+        }
     }
 
     const preventSubmitOnEnter = (e: React.KeyboardEvent) => {
@@ -96,7 +122,7 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
             e.preventDefault()
             if (open && suggestions.length > 0) {
                 const idx = activeIndex >= 0 ? activeIndex : 0
-                applySuggestion(suggestions[idx])
+                void applySuggestion(suggestions[idx])
             }
             return
         }
@@ -134,7 +160,9 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
                                         type="button"
                                         className={i === activeIndex ? 'caa-item is-active' : 'caa-item'}
                                         onMouseDown={(e) => e.preventDefault()}
-                                        onClick={() => applySuggestion(s)}
+                                        onClick={() => {
+                                            void applySuggestion(s)
+                                        }}
                                     >
                                         {s.label}
                                     </button>

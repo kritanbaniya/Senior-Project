@@ -25,16 +25,6 @@ type GeocodeResponse = {
     features?: GeocodeFeature[]
 }
 
-export type AddressSuggestionPatch = Partial<
-    Pick<ClinicFormData, 'address_line1' | 'city' | 'state' | 'zip_code'>
->
-
-export type AddressSuggestion = {
-    id: string
-    label: string
-    patch: AddressSuggestionPatch
-}
-
 function pointInsideNycBbox(lng: number, lat: number): boolean {
     return lng >= -74.2591 && lng <= -73.7002 && lat >= 40.4774 && lat <= 40.9176
 }
@@ -50,39 +40,6 @@ function isStrongSaveFeature(f: GeocodeFeature): boolean {
         return true
     }
     return false
-}
-
-export function mapGeocodeFeatureToAddressFields(feature: GeocodeFeature): AddressSuggestionPatch {
-    const ctx = feature.context ?? []
-    const byPrefix = (prefix: string) => ctx.find((c) => c.id?.startsWith(prefix))
-
-    const postcode = byPrefix('postcode')
-    const place = byPrefix('place') ?? byPrefix('locality')
-    const region = byPrefix('region')
-
-    const num = feature.address?.trim() ?? ''
-    const street = (feature.text ?? '').trim()
-    const line1 =
-        [num, street].filter(Boolean).join(' ').trim() ||
-        (feature.place_name ?? '').split(',')[0]?.trim() ||
-        ''
-
-    let state = ''
-    if (region?.short_code) {
-        state = region.short_code.replace(/^US-/i, '').toUpperCase()
-    } else if (region?.text && region.text.length === 2) {
-        state = region.text.toUpperCase()
-    }
-
-    const zipRaw = postcode?.text?.trim() ?? ''
-    const zip = zipRaw.split(/\s+/)[0] ?? ''
-
-    return {
-        address_line1: line1,
-        city: place?.text?.trim() ?? '',
-        state,
-        zip_code: zip,
-    }
 }
 
 function pickBestFeatureForSave(features: GeocodeFeature[]): GeocodeFeature | null {
@@ -173,85 +130,4 @@ export async function geocodeClinicAddress(form: ClinicFormData): Promise<{ lati
     }
 
     return { latitude: lat, longitude: lng }
-}
-
-const SUGGEST_MIN_QUERY_LEN = 2
-const SUGGEST_MIN_RELEVANCE = 0.12
-
-function suggestionTypeOk(types: string[]): boolean {
-    return types.some((t) => t === 'address' || t === 'road' || t === 'poi')
-}
-
-/**
- * debounced callers should pass trimmed query; returns [] if query too short or key missing.
- * uses proximity + client-side nyc filter (no bbox on api) so partial street queries still rank well.
- */
-export async function fetchAddressSuggestions(query: string): Promise<AddressSuggestion[]> {
-    const key = import.meta.env.VITE_MAPTILER_KEY?.trim()
-    if (!key || query.length < SUGGEST_MIN_QUERY_LEN) {
-        return []
-    }
-
-    const base = `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json`
-    const params = new URLSearchParams({
-        key,
-        autocomplete: 'true',
-        limit: '12',
-        country: 'us',
-        fuzzyMatch: 'true',
-        proximity: NYC_PROXIMITY,
-    })
-
-    const res = await fetch(`${base}?${params.toString()}`)
-    if (!res.ok) {
-        return []
-    }
-
-    const data = (await res.json()) as GeocodeResponse
-    const scored = (data.features ?? [])
-        .map((f) => ({ f, rel: f.relevance ?? 0 }))
-        .filter(({ f, rel }) => {
-            if (rel < SUGGEST_MIN_RELEVANCE) {
-                return false
-            }
-            const c = f.center
-            if (!c || c.length < 2) {
-                return false
-            }
-            if (!pointInsideNycBbox(c[0], c[1])) {
-                return false
-            }
-            const types = f.place_type ?? []
-            if (!suggestionTypeOk(types)) {
-                return false
-            }
-            return true
-        })
-        .sort((a, b) => b.rel - a.rel)
-
-    const out: AddressSuggestion[] = []
-
-    for (const { f } of scored) {
-        const basePatch = mapGeocodeFeatureToAddressFields(f)
-        let line1 = basePatch.address_line1?.trim() ?? ''
-        if (!line1 && (f.place_name ?? '').trim()) {
-            line1 = (f.place_name ?? '').split(',')[0]?.trim() ?? ''
-        }
-        if (!line1) {
-            continue
-        }
-        const patch: AddressSuggestionPatch = {
-            ...basePatch,
-            address_line1: line1,
-        }
-
-        const id = f.id ?? `${line1}-${out.length}`
-        const label = f.place_name ?? line1
-        out.push({ id, label, patch })
-        if (out.length >= 10) {
-            break
-        }
-    }
-
-    return out
 }
