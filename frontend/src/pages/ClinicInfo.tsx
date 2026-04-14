@@ -24,7 +24,7 @@ export default function ClinicInfo() {
         <div className="clinic-info-actions">
           <Link to="/clinic-discovery" className="back-link">← Back to Clinic Discovery</Link>
           <Link to="/clinic-nearby" className="back-link">← Back to Clinics Nearby</Link>
-          <Link to="/" className="back-link">← Back to Home</Link>
+          <Link to="/clinic-discovery" className="back-link">← Back</Link>
         </div>
       </div>
     )
@@ -69,7 +69,7 @@ export default function ClinicInfo() {
         </div>
       </div>
 
-      <Link to="/" className="back-link">← Back to Home</Link>
+      <Link to="/clinic-discovery" className="back-link">← Back</Link>
     </div>
   )
 }

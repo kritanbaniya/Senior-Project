@@ -1257,13 +1257,16 @@ button:focus-visible {
 }
 /* map pins + popups (maplibre marker / popup content) */
 .clinic-discovery-map .cd-map-pin {
-  width: 28px;
-  height: 28px;
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
-  background: linear-gradient(145deg, #ffbc04, #f08a06);
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  user-select: none;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.28);
   cursor: pointer;
 }
 .clinic-discovery-map .cd-map-pin:focus-visible {
@@ -1560,6 +1563,10 @@ button:focus-visible {
   border: 1px solid rgba(0,0,0,0.12);
   box-shadow: 0 4px 14px rgba(0,0,0,0.12);
 }
+.clinic-discovery-map .cd-back-floating.is-panel-open {
+  left: auto;
+  right: 1rem;
+}
 @media (max-width: 768px) {
   .clinic-discovery-map {
     min-height: calc(100vh - 6rem);
@@ -1597,6 +1604,9 @@ button:focus-visible {
     left: auto;
     right: 0.8rem;
     bottom: 0.5rem;
+  }
+  .clinic-discovery-map .cd-back-floating.is-panel-open {
+    right: 0.8rem;
   }
 }
 

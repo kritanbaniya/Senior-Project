@@ -202,6 +202,7 @@ export default function ClinicDiscoveryPage() {
             const lat = clinic.latitude as number
             const el = document.createElement('div')
             el.className = 'cd-map-pin'
+            el.textContent = '📍'
             el.tabIndex = 0
             el.setAttribute('role', 'button')
             el.setAttribute('aria-label', `Open details for ${clinic.clinic_name ?? 'clinic'}`)
@@ -384,7 +385,12 @@ export default function ClinicDiscoveryPage() {
                     Show clinics
                 </button>
             )}
-            <Link to="/" className="cd-back cd-back-floating">← Back to Home</Link>
+            <Link
+                to="/dashboard/patient"
+                className={`cd-back cd-back-floating ${isPanelOpen ? 'is-panel-open' : ''}`}
+            >
+                ← Back to Dashboard
+            </Link>
         </div>
     )
 }
