@@ -5,6 +5,7 @@ export type ClinicFormData = {
   specialty: string
   phone: string
   email: string
+  google_place_id: string
   address_line1: string
   address_line2: string
   city: string

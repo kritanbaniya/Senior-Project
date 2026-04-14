@@ -15,7 +15,7 @@
 import { useState, useEffect } from 'react'
 import { Link, Outlet, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
-import { geocodeClinicAddress } from '../../../lib/maptilerGeocode'
+import { fetchGooglePlaceAddressDetails } from '../../../lib/googlePlaces'
 import { useAuth } from '../../../context/AuthContext'
 import ClinicSideBar from './ClinicSideBar'
 import type { ClinicFormData } from './clinicFormTypes'
@@ -51,6 +51,7 @@ export type ClinicRow = {
   description: string | null
   approved: boolean
   created_at: string
+  google_place_id: string | null
   latitude: number | null
   longitude: number | null
   geocode_status: string | null
@@ -113,7 +114,12 @@ function clinicAddressMatchesForm(row: ClinicRow, form: ClinicFormData): boolean
 }
 
 function coordsGeocodedOk(row: ClinicRow): boolean {
-  return row.latitude != null && row.longitude != null && row.geocode_status === 'ok'
+  return (
+    row.latitude != null &&
+    row.longitude != null &&
+    row.geocode_status === 'ok' &&
+    !!row.google_place_id?.trim()
+  )
 }
 
 export default function ClinicADashBoard() {
@@ -127,6 +133,21 @@ export default function ClinicADashBoard() {
 
   const [adminRow, setAdminRow] = useState<ClinicAdminRow | null>(null)
   const [clinicRow, setClinicRow] = useState<ClinicRow | null>(null)
+
+  const resolveGooglePlaceCoords = async (placeId: string) => {
+    try {
+      return await fetchGooglePlaceAddressDetails(placeId)
+    } catch (e) {
+      const text = e instanceof Error ? e.message : ''
+      if (text.includes('within new york city')) {
+        throw new Error('currently only serving nyc area only')
+      }
+      if (text.includes('full new york city street address')) {
+        throw new Error('entered address is invalid. please select a full street address from suggestions.')
+      }
+      throw new Error('entered address is invalid. please select a full street address from suggestions.')
+    }
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -292,12 +313,16 @@ export default function ClinicADashBoard() {
       setMessage({ type: 'error', text: 'zip code is required' })
       return false
     }
+    if (!form.google_place_id.trim()) {
+      setMessage({ type: 'error', text: 'please choose an address from the dropdown suggestions.' })
+      return false
+    }
 
     setSaving(true)
 
-    let coords: { latitude: number; longitude: number }
+    let details: Awaited<ReturnType<typeof fetchGooglePlaceAddressDetails>>
     try {
-      coords = await geocodeClinicAddress(form)
+      details = await resolveGooglePlaceCoords(form.google_place_id)
     } catch (e) {
       setSaving(false)
       setMessage({
@@ -320,10 +345,11 @@ export default function ClinicADashBoard() {
         city: form.city.trim() || null,
         state: form.state || null,
         zip_code: form.zip_code.trim() || null,
+        google_place_id: details.placeId,
         website: form.website.trim() || null,
         description: form.description.trim() || null,
-        latitude: coords.latitude,
-        longitude: coords.longitude,
+        latitude: details.latitude,
+        longitude: details.longitude,
         geocode_status: 'ok',
       })
       .select()
@@ -392,24 +418,26 @@ export default function ClinicADashBoard() {
         return false
       }
     }
+    if (!form.google_place_id.trim()) {
+      setMessage({ type: 'error', text: 'please choose an address from the dropdown suggestions.' })
+      return false
+    }
 
     setSaving(true)
 
-    let coords: { latitude: number; longitude: number } | undefined
-    if (needGeocode) {
-      try {
-        coords = await geocodeClinicAddress(form)
-      } catch (e) {
-        setSaving(false)
-        setMessage({
-          type: 'error',
-          text: e instanceof Error ? e.message : 'could not verify address',
-        })
-        return false
-      }
+    let details: Awaited<ReturnType<typeof fetchGooglePlaceAddressDetails>>
+    try {
+      details = await resolveGooglePlaceCoords(form.google_place_id)
+    } catch (e) {
+      setSaving(false)
+      setMessage({
+        type: 'error',
+        text: e instanceof Error ? e.message : 'could not verify address',
+      })
+      return false
     }
 
-    const baseUpdate = {
+    const payload = {
       clinic_name: form.clinic_name.trim(),
       specialty: form.specialty || null,
       phone: form.phone.trim() || null,
@@ -419,19 +447,13 @@ export default function ClinicADashBoard() {
       city: form.city.trim() || null,
       state: form.state || null,
       zip_code: form.zip_code.trim() || null,
+      google_place_id: details.placeId,
       website: form.website.trim() || null,
       description: form.description.trim() || null,
+      latitude: details.latitude,
+      longitude: details.longitude,
+      geocode_status: 'ok',
     }
-
-    const payload =
-      coords !== undefined
-        ? {
-            ...baseUpdate,
-            latitude: coords.latitude,
-            longitude: coords.longitude,
-            geocode_status: 'ok',
-          }
-        : baseUpdate
 
     const { data: updatedClinic, error } = await supabase
       .from('clinics')

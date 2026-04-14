@@ -81,6 +81,13 @@ function mapAddressComponentsToPatch(components: google.maps.GeocoderAddressComp
     }
 }
 
+function hasAddressComponent(
+    components: google.maps.GeocoderAddressComponent[],
+    type: string,
+): boolean {
+    return components.some((c) => c.types.includes(type))
+}
+
 export function createGoogleAutocompleteSessionToken(): google.maps.places.AutocompleteSessionToken | null {
     if (!window.google?.maps?.places?.AutocompleteSessionToken) {
         return null
@@ -217,6 +224,20 @@ export async function fetchGooglePlaceAddressDetails(
     }
 
     const patch = mapAddressComponentsToPatch(details.address_components)
+    const country = componentByType(details.address_components, 'country')?.short_name?.trim().toUpperCase() ?? ''
+    const hasStreetNumber = hasAddressComponent(details.address_components, 'street_number')
+    const hasRoute = hasAddressComponent(details.address_components, 'route')
+    const hasCity =
+        hasAddressComponent(details.address_components, 'locality') ||
+        hasAddressComponent(details.address_components, 'sublocality') ||
+        hasAddressComponent(details.address_components, 'sublocality_level_1')
+
+    if (country !== 'US') {
+        throw new Error('entered address is invalid. please select a full street address from suggestions.')
+    }
+    if (!hasStreetNumber || !hasRoute || !hasCity || !patch.zip_code) {
+        throw new Error('entered address is invalid. please select a full street address from suggestions.')
+    }
     if (!patch.address_line1 || patch.state !== 'NY') {
         throw new Error('please select a full new york city street address.')
     }

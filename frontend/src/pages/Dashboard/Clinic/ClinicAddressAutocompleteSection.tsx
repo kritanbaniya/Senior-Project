@@ -89,6 +89,7 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
             const details = await fetchGooglePlaceAddressDetails(s.placeId, sessionTokenRef.current)
             setForm((f) => ({
                 ...f,
+                google_place_id: details.placeId,
                 address_line1: details.patch.address_line1?.trim() ?? f.address_line1,
                 city: details.patch.city?.trim() ?? f.city,
                 zip_code: details.patch.zip_code?.trim() ?? f.zip_code,
@@ -154,7 +155,7 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
             <div className="pd-form-row">
                 <label htmlFor={`${uid}-addr1`}>Address line 1</label>
                 <p className="caa-hint">
-                  type your street address and pick a suggestion, or finish the fields and use save below. enter will not submit the form from these fields (new york city only).
+                  type your street address and pick a suggestion. only selected nyc addresses can be saved.
                 </p>
                 <div className="caa-wrap" ref={wrapRef}>
                     <input
@@ -162,7 +163,13 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
                         type="text"
                         autoComplete="off"
                         value={form.address_line1}
-                        onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))}
+                        onChange={(e) =>
+                            setForm((f) => ({
+                                ...f,
+                                google_place_id: '',
+                                address_line1: e.target.value,
+                            }))
+                        }
                         onFocus={() => suggestions.length > 0 && setOpen(true)}
                         onKeyDown={onAddr1KeyDown}
                         placeholder="Street number and name"
@@ -212,7 +219,13 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
                     id={`${uid}-city`}
                     type="text"
                     value={form.city}
-                    onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                    onChange={(e) =>
+                        setForm((f) => ({
+                            ...f,
+                            google_place_id: '',
+                            city: e.target.value,
+                        }))
+                    }
                     onKeyDown={preventSubmitOnEnter}
                     placeholder="City"
                     required
@@ -224,7 +237,13 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
                 <select
                     id={`${uid}-state`}
                     value={form.state}
-                    onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
+                    onChange={(e) =>
+                        setForm((f) => ({
+                            ...f,
+                            google_place_id: '',
+                            state: e.target.value,
+                        }))
+                    }
                     required
                     disabled={disabled}
                 >
@@ -240,7 +259,13 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
                     id={`${uid}-zip`}
                     type="text"
                     value={form.zip_code}
-                    onChange={(e) => setForm((f) => ({ ...f, zip_code: e.target.value }))}
+                    onChange={(e) =>
+                        setForm((f) => ({
+                            ...f,
+                            google_place_id: '',
+                            zip_code: e.target.value,
+                        }))
+                    }
                     onKeyDown={preventSubmitOnEnter}
                     placeholder="Zip code"
                     required

@@ -46,6 +46,7 @@ export default function ClinicCreation({ saving, message, onSubmit }: ClinicCrea
     specialty: '',
     phone: '',
     email: '',
+    google_place_id: '',
     address_line1: '',
     address_line2: '',
     city: '',
