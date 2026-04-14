@@ -114,6 +114,31 @@ export default function ClinicDiscoveryPage() {
     const [isPanelOpen, setIsPanelOpen] = useState(true)
     const [searchText, setSearchText] = useState('')
 
+    const focusClinicOnMap = (clinic: ClinicRow) => {
+        const map = mapRef.current
+        if (
+            !map ||
+            clinic.latitude == null ||
+            clinic.longitude == null ||
+            !Number.isFinite(clinic.latitude) ||
+            !Number.isFinite(clinic.longitude)
+        ) {
+            return
+        }
+
+        const isMobile = window.innerWidth <= 768
+        const padding = isMobile
+            ? { top: 24, right: 24, bottom: isPanelOpen ? 340 : 24, left: 24 }
+            : { top: 24, right: 24, bottom: 24, left: isPanelOpen ? 440 : 24 }
+
+        map.easeTo({
+            center: [clinic.longitude, clinic.latitude],
+            zoom: Math.max(map.getZoom(), 13),
+            duration: 700,
+            padding,
+        })
+    }
+
     useEffect(() => {
         const loadClinics = async () => {
             const { data, error } = await supabase
@@ -300,7 +325,26 @@ export default function ClinicDiscoveryPage() {
                         <>
                             <ul className="cd-list">
                                 {clinicsOnPage.map((clinic) => (
-                                    <li key={clinic.clinic_id} className="cd-card">
+                                    <li
+                                        key={clinic.clinic_id}
+                                        className="cd-card"
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-label={`Center map on ${clinic.clinic_name ?? 'clinic'}`}
+                                        onClick={(e) => {
+                                            const target = e.target as HTMLElement
+                                            if (target.closest('button, a')) {
+                                                return
+                                            }
+                                            focusClinicOnMap(clinic)
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault()
+                                                focusClinicOnMap(clinic)
+                                            }
+                                        }}
+                                    >
                                         <h2 className="cd-card-name">{clinic.clinic_name ?? 'Clinic'}</h2>
                                         {clinic.specialty && (
                                             <span className="cd-card-specialty">{clinic.specialty}</span>
