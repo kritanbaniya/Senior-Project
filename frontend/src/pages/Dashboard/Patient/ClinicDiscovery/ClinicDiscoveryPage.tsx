@@ -110,9 +110,12 @@ export default function ClinicDiscoveryPage() {
     const [mapReady, setMapReady] = useState(false)
     const [clinics, setClinics] = useState<ClinicRow[]>([])
     const [loading, setLoading] = useState(true)
+    const [searchLoading, setSearchLoading] = useState(false)
+    const [searchResults, setSearchResults] = useState<ClinicRow[] | null>(null)
     const [currentPage, setCurrentPage] = useState(1)
     const [isPanelOpen, setIsPanelOpen] = useState(true)
     const [searchText, setSearchText] = useState('')
+    const searchReqRef = useRef(0)
 
     const focusClinicOnMap = (clinic: ClinicRow) => {
         const map = mapRef.current
@@ -155,6 +158,38 @@ export default function ClinicDiscoveryPage() {
     }, [])
 
     useEffect(() => {
+        setCurrentPage(1)
+        const query = searchText.trim()
+        if (!query) {
+            setSearchResults(null)
+            setSearchLoading(false)
+            return
+        }
+
+        setSearchLoading(true)
+        const reqId = ++searchReqRef.current
+        const t = window.setTimeout(() => {
+            void (async () => {
+                const { data, error } = await supabase.rpc('search_clinics_by_name', {
+                    q: query,
+                    limit_count: 50,
+                })
+                if (reqId !== searchReqRef.current) {
+                    return
+                }
+                if (error) {
+                    setSearchResults([])
+                } else {
+                    setSearchResults((data ?? []) as ClinicRow[])
+                }
+                setSearchLoading(false)
+            })()
+        }, 300)
+
+        return () => window.clearTimeout(t)
+    }, [searchText])
+
+    useEffect(() => {
         if (!mapContainerRef.current || mapRef.current) {
             return
         }
@@ -191,16 +226,23 @@ export default function ClinicDiscoveryPage() {
         }
     }, [])
 
+    const displayedClinics = useMemo(() => {
+        if (searchText.trim()) {
+            return searchResults ?? []
+        }
+        return clinics
+    }, [searchResults, clinics, searchText])
+
     const clinicsWithCoords = useMemo(
         () =>
-            clinics.filter(
+            displayedClinics.filter(
                 (c) =>
                     c.latitude != null &&
                     c.longitude != null &&
                     Number.isFinite(c.latitude) &&
                     Number.isFinite(c.longitude),
             ),
-        [clinics],
+        [displayedClinics],
     )
 
     useEffect(() => {
@@ -281,9 +323,9 @@ export default function ClinicDiscoveryPage() {
 
     const formatAddress = (c: ClinicRow) => formatClinicAddressLine(c)
 
-    const totalPages = Math.max(1, Math.ceil(clinics.length / PAGE_SIZE))
+    const totalPages = Math.max(1, Math.ceil(displayedClinics.length / PAGE_SIZE))
     const start = (currentPage - 1) * PAGE_SIZE
-    const clinicsOnPage = clinics.slice(start, start + PAGE_SIZE)
+    const clinicsOnPage = displayedClinics.slice(start, start + PAGE_SIZE)
 
     return (
         <div className="clinic-discovery clinic-discovery-map">
@@ -312,15 +354,20 @@ export default function ClinicDiscoveryPage() {
                             value={searchText}
                             onChange={(e) => setSearchText(e.target.value)}
                             className="cd-search-input"
-                            placeholder="Search coming soon"
+                            placeholder="Search clinic name"
                         />
-                        <p className="cd-search-note">Search will be enabled when backend fuzzy search is added.</p>
                     </div>
 
                     {loading ? (
                         <p className="cd-loading cd-loading-dots">Loading</p>
-                    ) : clinics.length === 0 ? (
-                        <p className="cd-empty">No clinics available.</p>
+                    ) : searchLoading ? (
+                        <p className="cd-loading cd-loading-dots">Searching</p>
+                    ) : displayedClinics.length === 0 ? (
+                        searchText.trim() ? (
+                            <p className="cd-empty">No clinics matched "{searchText.trim()}".</p>
+                        ) : (
+                            <p className="cd-empty">No clinics available.</p>
+                        )
                     ) : (
                         <>
                             <ul className="cd-list">
