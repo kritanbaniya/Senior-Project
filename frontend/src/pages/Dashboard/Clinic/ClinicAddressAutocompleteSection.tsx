@@ -21,10 +21,12 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
     const uid = useId()
     const wrapRef = useRef<HTMLDivElement | null>(null)
     const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null)
+    const noticeTimerRef = useRef<number | null>(null)
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [suggestions, setSuggestions] = useState<GoogleAddressSuggestion[]>([])
     const [activeIndex, setActiveIndex] = useState(-1)
+    const [transientNotice, setTransientNotice] = useState('')
 
     useEffect(() => {
         const onDocDown = (e: MouseEvent) => {
@@ -34,6 +36,14 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
         }
         document.addEventListener('mousedown', onDocDown)
         return () => document.removeEventListener('mousedown', onDocDown)
+    }, [])
+
+    useEffect(() => {
+        return () => {
+            if (noticeTimerRef.current != null) {
+                window.clearTimeout(noticeTimerRef.current)
+            }
+        }
     }, [])
 
     useEffect(() => {
@@ -88,7 +98,18 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
             setSuggestions([])
             setActiveIndex(-1)
             sessionTokenRef.current = null
-        } catch {
+            setTransientNotice('')
+        } catch (e) {
+            const text = e instanceof Error ? e.message : ''
+            if (text.includes('within new york city')) {
+                setTransientNotice('currently only serving nyc area only')
+                if (noticeTimerRef.current != null) {
+                    window.clearTimeout(noticeTimerRef.current)
+                }
+                noticeTimerRef.current = window.setTimeout(() => {
+                    setTransientNotice('')
+                }, 1800)
+            }
             setOpen(false)
             setSuggestions([])
         } finally {
@@ -152,6 +173,7 @@ export default function ClinicAddressAutocompleteSection({ form, setForm, disabl
                         aria-controls={`${uid}-addr-suggest`}
                     />
                     {loading && <span className="caa-loading">searching…</span>}
+                    {transientNotice && <p className="caa-notice">{transientNotice}</p>}
                     {open && suggestions.length > 0 && (
                         <ul id={`${uid}-addr-suggest`} className="caa-list" role="listbox">
                             {suggestions.map((s, i) => (

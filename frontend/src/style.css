@@ -941,6 +941,11 @@ button:focus-visible {
   font-size: 0.8rem;
   color: #64748b;
 }
+.caa-notice {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: #92400e;
+}
 .caa-list {
   position: absolute;
   left: 0;
