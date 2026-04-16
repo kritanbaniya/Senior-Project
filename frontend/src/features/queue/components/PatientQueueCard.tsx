@@ -113,7 +113,7 @@ export default function PatientQueueCard({
           <button type="button" className="pd-btn pd-btn-primary" onClick={onJoin}>
             join queue
           </button>
-          <Link to="/dashboard/patient/pdf-upload" state={{ clinicId: clinicid }} className="pd-btn pd-btn-primary">
+          <Link to="/dashboard/patient/pdf-upload" state={{ clinicId: clinicid ?? '' }} className="pd-btn pd-btn-primary">
             upload form
           </Link>
         </>
