@@ -1,12 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { Menu } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClinicContext } from '../../../context/ClinicContext'
 import { usePatientQueue } from '../../../features/queue/usePatientQueue'
 import PatientQueueCard from '../../../features/queue/components/PatientQueueCard'
-import PatientSideBar from './PatientSideBar'
+import PatientSidebar from './components/PatientSidebar'
+import { SidebarProvider } from '@/components/ui/sidebar'
+import { useAuth } from '../../../context/AuthContext'
 
-type AppointmentStatus = 'scheduled' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled'
+type AppointmentStatus =
+  | 'pending'
+  | 'unseen'
+  | 'canceled'
+  | 'deserted'
+  | 'active'
+  | 'completed'
+
 type Appointment = {
   id: string
   date: string
@@ -21,70 +31,22 @@ type VisitRecord = {
   date: string
   doctor: string
   summary: string
-  testResults: { name: string; value: string; unit?: string; status?: string }[]
 }
 
-type Medication = { id: string; name: string; dosage: string; schedule: string }
-type Vital = { label: string; value: string; unit: string; status?: 'normal' | 'warning' }
-type LabPoint = { label: string; value: number; max: number } // for simple bar chart
-
-// Mock data – replace with Supabase/API
-const MOCK_DOCTORS = ['Dr. Smith', 'Dr. Lee', 'Dr. Johnson']
-const MOCK_APPOINTMENT_TYPES = ['General Check-up', 'Follow-up', 'Consultation', 'Vaccination', 'Lab Work']
-
-const MOCK_PATIENT = {
-  name: 'Mock Patient',
-  age: 42,
-  gender: 'Female',
-  patientId: 'MRN-8842',
-  status: 'Active',
+type Medication = {
+  id: string
+  name: string
+  dosage: string
+  schedule: string
 }
 
-const MOCK_RECORDS: VisitRecord[] = [
-  {
-    id: 'r1',
-    date: '2025-02-01',
-    doctor: 'Dr. Smith',
-    summary: 'Annual physical. Vital signs normal. Discussed diet and exercise. No acute concerns.',
-    testResults: [
-      { name: 'Blood Pressure', value: '118/76', unit: 'mmHg', status: 'Normal' },
-      { name: 'Heart Rate', value: '72', unit: 'bpm', status: 'Normal' },
-    ],
-  },
-  {
-    id: 'r2',
-    date: '2025-01-15',
-    doctor: 'Dr. Lee',
-    summary: 'Follow-up for seasonal allergies. Prescription refill provided.',
-    testResults: [{ name: 'Allergy Panel', value: 'Negative', status: 'Normal' }],
-  },
-]
+type LabPoint = {
+  label: string
+  value: number
+  max: number
+}
 
-const MOCK_MEDICATIONS: Medication[] = [
-  { id: 'm1', name: 'Lisinopril', dosage: '10 mg', schedule: 'Once daily, morning' },
-  { id: 'm2', name: 'Vitamin D3', dosage: '2000 IU', schedule: 'Once daily' },
-  { id: 'm3', name: 'Cetirizine', dosage: '10 mg', schedule: 'As needed for allergies' },
-]
-
-const MOCK_VITALS: Vital[] = [
-  { label: 'Heart rate', value: '72', unit: 'bpm', status: 'normal' },
-  { label: 'Blood pressure', value: '118/76', unit: 'mmHg', status: 'normal' },
-  { label: 'Temperature', value: '98.6', unit: '°F', status: 'normal' },
-]
-
-const MOCK_LAB_CHART: LabPoint[] = [
-  { label: 'Glucose', value: 95, max: 140 },
-  { label: 'Cholesterol', value: 178, max: 200 },
-  { label: 'HbA1c', value: 5.4, max: 6 },
-  { label: 'WBC', value: 6.2, max: 11 },
-]
-
-const MOCK_ALERTS = [
-  { id: 'a1', text: 'Annual flu shot due this month', severity: 'info' as const },
-  { id: 'a2', text: 'Follow-up lab work requested by Dr. Smith', severity: 'warning' as const },
-]
-
-export type PatientInfo = {
+type PatientInfo = {
   id: string
   age: number | null
   gender: string | null
@@ -93,30 +55,161 @@ export type PatientInfo = {
   name: string | null
 }
 
+type AppointmentDisplayRow = {
+  Appointment_id: string
+  appointment_date: string | null
+  clinician_name: string | null
+  visit_type: string | null
+  appointment_status: AppointmentStatus | null
+  patient_id: string
+  clinic_id: string | null
+}
+
+type MedicalHistoryRow = {
+  id: string
+  visit_date: string
+  diagnosis: string
+  symptoms: string | null
+  observations: string | null
+  treatment_plan: string | null
+  prescriptions: string | null
+  follow_up_notes: string | null
+  doctor_name: string
+  patient_id: string
+}
+
+type DoctorOption = {
+  id: string
+  full_name: string | null
+}
+
+type MemberNameRoleRow = {
+  clinic_id: string
+  user_id: string
+  full_name: string | null
+  role: string | null
+  clinic_name: string | null
+}
+
+const APPOINTMENT_TYPES = [
+  'General Check-up',
+  'Follow-up',
+  'Consultation',
+  'Vaccination',
+  'Lab Work',
+]
+
+function DashboardPanel({
+  title,
+  id,
+  children,
+  className = '',
+}: {
+  title: string
+  id?: string
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <section
+      id={id}
+      className={[
+        'w-full overflow-hidden rounded-2xl border border-slate-200/70 bg-white/95',
+        'shadow-[0px_4px_14px_rgba(15,23,42,0.08)]',
+        'transition-all duration-300 ease-out motion-reduce:transition-none',
+        'hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0px_20px_40px_rgba(15,23,42,0.14)]',
+        'backdrop-blur-sm',
+        className,
+      ].join(' ')}
+    >
+      <div className="border-b border-slate-200/80 px-6 py-5">
+        <h2 className="text-xl font-semibold text-slate-800">{title}</h2>
+      </div>
+      <div className="px-6 py-5">{children}</div>
+    </section>
+  )
+}
+
+function buildMedicalSummary(row: MedicalHistoryRow) {
+  const parts = [
+    row.diagnosis && `Diagnosis: ${row.diagnosis}`,
+    row.symptoms && `Symptoms: ${row.symptoms}`,
+    row.observations && `Observations: ${row.observations}`,
+    row.treatment_plan && `Plan: ${row.treatment_plan}`,
+    row.prescriptions && `Prescriptions: ${row.prescriptions}`,
+    row.follow_up_notes && `Follow-up: ${row.follow_up_notes}`,
+  ].filter(Boolean)
+
+  return parts.length > 0 ? parts.join(' • ') : 'No visit summary available yet.'
+}
+
+function getAppointmentBadgeClasses(status: AppointmentStatus) {
+  switch (status) {
+    case 'completed':
+      return 'bg-emerald-100 text-emerald-700'
+    case 'active':
+      return 'bg-sky-100 text-sky-700'
+    case 'pending':
+    case 'unseen':
+      return 'bg-indigo-100 text-indigo-700'
+    case 'canceled':
+    case 'deserted':
+      return 'bg-rose-100 text-rose-700'
+    default:
+      return 'bg-slate-100 text-slate-700'
+  }
+}
+
+function formatAppointmentStatus(status: AppointmentStatus) {
+  switch (status) {
+    case 'unseen':
+      return 'scheduled'
+    case 'active':
+      return 'checked in'
+    case 'canceled':
+      return 'cancelled'
+    default:
+      return status.replace('_', ' ')
+  }
+}
+
 export default function PatientDashboard() {
   const location = useLocation()
-  const { selectedClinicId, selectedClinicName, setSelectedClinicId, setSelectedClinicName } = useClinicContext()
-  const locationClinicId = (location.state as { clinicId?: string } | null)?.clinicId ?? null
+  const { profile, logout } = useAuth()
+  const {
+    selectedClinicId,
+    selectedClinicName,
+    setSelectedClinicId,
+    setSelectedClinicName,
+  } = useClinicContext()
 
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    { id: '1', date: '2025-02-15', time: '10:00', doctor: 'Dr. Smith', type: 'General Check-up', status: 'confirmed' },
-    { id: '2', date: '2025-02-22', time: '14:30', doctor: 'Dr. Lee', type: 'Follow-up', status: 'confirmed' },
-  ])
-  const [intakeComplete, setIntakeComplete] = useState(false)
-  const [consentComplete, setConsentComplete] = useState(false)
+  const locationClinicId =
+    (location.state as { clinicId?: string } | null)?.clinicId ?? null
+
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [loadingDashboard, setLoadingDashboard] = useState(true)
+
+  const [info, setInfo] = useState<PatientInfo | null>(null)
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [records, setRecords] = useState<VisitRecord[]>([])
+  const [medications] = useState<Medication[]>([])
+  const [labs] = useState<LabPoint[]>([])
+  const [doctorOptions, setDoctorOptions] = useState<DoctorOption[]>([])
+  const [appointmentRequestNotice, setAppointmentRequestNotice] = useState<string | null>(null)
+
   const [showScheduleForm, setShowScheduleForm] = useState(false)
-  const [showIntakeForm, setShowIntakeForm] = useState(false)
-  const [showConsentForm, setShowConsentForm] = useState(false)
+
   const [scheduleForm, setScheduleForm] = useState({
     date: '',
     time: '',
-    doctor: MOCK_DOCTORS[0],
-    type: MOCK_APPOINTMENT_TYPES[0],
+    doctorId: '',
+    type: APPOINTMENT_TYPES[0],
     reason: '',
   })
-  const [profileOpen, setProfileOpen] = useState(false) 
-  const [info, setInfo] = useState<PatientInfo | null>(null)
+
   const activeClinicId = selectedClinicId
+
   const {
     loading: queueLoading,
     error: queueError,
@@ -135,352 +228,677 @@ export default function PatientDashboard() {
   }, [locationClinicId, setSelectedClinicId])
 
   useEffect(() => {
-    const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+    const loadDashboard = async () => {
+      setLoadingDashboard(true)
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
       if (!user) {
+        setLoadingDashboard(false)
         return
       }
-      const { data, error } = await supabase
+
+      const patientInfoPromise = supabase
         .from('patient_info')
         .select('id, name, birthday, gender, age, blood_type')
         .eq('id', user.id)
         .maybeSingle()
 
-      if (!error && data) {
-        setInfo(data)
+      const appointmentsPromise = supabase
+        .from('appointmentlist_display')
+        .select(
+          'Appointment_id, appointment_date, clinician_name, visit_type, appointment_status, patient_id, clinic_id',
+        )
+        .eq('patient_id', user.id)
+        .order('appointment_date', { ascending: true })
+
+      const recordsPromise = supabase
+        .from('medical_history')
+        .select(
+          'id, visit_date, diagnosis, symptoms, observations, treatment_plan, prescriptions, follow_up_notes, doctor_name, patient_id',
+        )
+        .eq('patient_id', user.id)
+        .order('visit_date', { ascending: false })
+        .limit(5)
+
+      const doctorsPromise = activeClinicId
+        ? supabase
+            .from('membernamerole')
+            .select('clinic_id, user_id, full_name, role, clinic_name')
+            .eq('clinic_id', activeClinicId)
+            .eq('role', 'doctor')
+        : Promise.resolve({ data: [], error: null })
+
+      const [patientInfoRes, appointmentsRes, recordsRes, doctorsRes] =
+        await Promise.all([
+          patientInfoPromise,
+          appointmentsPromise,
+          recordsPromise,
+          doctorsPromise,
+        ])
+
+      if (!patientInfoRes.error) {
+        setInfo((patientInfoRes.data as PatientInfo | null) ?? null)
       } else {
         setInfo(null)
       }
+
+      if (!appointmentsRes.error && appointmentsRes.data) {
+        const mappedAppointments: Appointment[] = (
+          appointmentsRes.data as AppointmentDisplayRow[]
+        )
+          .filter((row) => row.appointment_date)
+          .map((row) => {
+            const dt = new Date(row.appointment_date as string)
+
+            return {
+              id: String(row.Appointment_id),
+              date: dt.toISOString().slice(0, 10),
+              time: dt.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              doctor: row.clinician_name ?? 'Clinic Staff',
+              type: row.visit_type ?? 'Appointment',
+              status: (row.appointment_status ?? 'unseen') as AppointmentStatus,
+            }
+          })
+
+        setAppointments(mappedAppointments)
+      } else {
+        setAppointments([])
+      }
+
+      if (!recordsRes.error && recordsRes.data) {
+        const mappedRecords: VisitRecord[] = (
+          recordsRes.data as MedicalHistoryRow[]
+        ).map((row) => ({
+          id: String(row.id),
+          date: row.visit_date,
+          doctor: row.doctor_name ?? 'Clinic Staff',
+          summary: buildMedicalSummary(row),
+        }))
+
+        setRecords(mappedRecords)
+      } else {
+        setRecords([])
+      }
+
+      if (!doctorsRes.error && doctorsRes.data) {
+        const mappedDoctors: DoctorOption[] = (
+          doctorsRes.data as MemberNameRoleRow[]
+        ).map((row) => ({
+          id: row.user_id,
+          full_name: row.full_name ?? 'Doctor',
+        }))
+
+        setDoctorOptions(mappedDoctors)
+        setScheduleForm((prev) => ({
+          ...prev,
+          doctorId: prev.doctorId || mappedDoctors[0]?.id || '',
+        }))
+      } else {
+        setDoctorOptions([])
+      }
+
+      setLoadingDashboard(false)
     }
-    void load()
-  }, [])
-  const displayName = info?.name?.trim() || MOCK_PATIENT.name
+
+    void loadDashboard()
+  }, [activeClinicId])
+
+  const displayName =
+    info?.name?.trim() || profile?.full_name?.trim() || 'New Patient'
+
   const todayStr = new Date().toISOString().slice(0, 10)
 
-  const handleScheduleSubmit = (e: React.FormEvent) => {
+  const upcomingAppointments = useMemo(
+    () =>
+      appointments.filter((a) =>
+        ['pending', 'unseen', 'active'].includes(a.status),
+      ),
+    [appointments],
+  )
+
+  const recentRecords = useMemo(() => records.slice(0, 2), [records])
+
+  const showWelcomeAlert =
+    appointments.length === 0 &&
+    records.length === 0 &&
+    medications.length === 0 &&
+    labs.length === 0
+
+  const handleScheduleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const newApt: Appointment = {
-      id: String(Date.now()),
-      date: scheduleForm.date,
-      time: scheduleForm.time,
-      doctor: scheduleForm.doctor,
-      type: scheduleForm.type,
-      status: 'scheduled',
+    setAppointmentRequestNotice(null)
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user || !activeClinicId || !scheduleForm.doctorId) return
+
+    const appointmentDate = `${scheduleForm.date}T${scheduleForm.time}:00`
+
+    const { error } = await supabase.from('appt_creation_requests').insert({
+      appointment_date: appointmentDate,
+      patient_id: user.id,
+      clinic_id: activeClinicId,
+      clinician_id: scheduleForm.doctorId,
+      visit_type: scheduleForm.type,
+      patient_notes: scheduleForm.reason || null,
+    })
+
+    if (error) {
+      setAppointmentRequestNotice(error.message)
+      return
     }
-    setAppointments((prev) => [...prev, newApt].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)))
-    setScheduleForm({ date: '', time: '', doctor: MOCK_DOCTORS[0], type: MOCK_APPOINTMENT_TYPES[0], reason: '' })
+
+    setAppointmentRequestNotice('Appointment request submitted successfully.')
+    setScheduleForm({
+      date: '',
+      time: '',
+      doctorId: doctorOptions[0]?.id ?? '',
+      type: APPOINTMENT_TYPES[0],
+      reason: '',
+    })
     setShowScheduleForm(false)
   }
 
-  const handleIntakeSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIntakeComplete(true)
-    setShowIntakeForm(false)
-  }
-
-  const handleConsentSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setConsentComplete(true)
-    setShowConsentForm(false)
-  }
-
-  const upcomingAppointments = appointments.filter((a) => ['scheduled', 'confirmed', 'checked_in'].includes(a.status))
-  const recentRecords = MOCK_RECORDS.slice(0, 2)
-  /*if (!true) {
-    return (
-      <div className="pd-layout pd-login-required">
-        <div className="pd-login-required-content">
-          <p className="pd-login-required-text">Please log in first</p>
-          <p className="pd-login-required-hint">Log in to use the patient portal — view appointments, queue status, and medical records.</p>
-          <button type="button" className="pd-btn pd-btn-primary pd-login-required-btn" onClick={onOpenLogin}>
-            Log in
-          </button>
-        </div>
-      </div>
-    )
-  }*/
   return (
-    <div className="pd-layout">
-      {/* Left sidebar */}
-      <PatientSideBar/> 
-      {/* <aside className={`pd-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
-        <div className="pd-sidebar-header">
-          <Link to="/" className="pd-sidebar-logo"><span>ClinicIQ</span></Link>
-          <button type="button" className="pd-sidebar-toggle" onClick={() => setSidebarCollapsed((c) => !c)} aria-label="Toggle sidebar">
-            {sidebarCollapsed ? '→' : '←'}
-          </button>
-        </div>
-        <nav className="pd-nav">
-          <a href="#overview" className="pd-nav-item active">Overview</a>
-          <a href="/dashboard/patient/appointments" className="pd-nav-item">Appointments</a>
-          <a href="#records" className="pd-nav-item">Records</a>
-          <a href="#medications" className="pd-nav-item">Medications</a>
-          <a href="#vitals" className="pd-nav-item">Vitals</a>
-          <a href="#lab" className="pd-nav-item">Lab results</a>
-          <Link to="/dashboard/patient/information" className="pd-nav-item">Your information</Link>
-          <Link to="/clinic" className="pd-nav-item">Clinic info</Link>
-        </nav>
-      </aside> */}
+    <SidebarProvider defaultOpen
+      style={
+        {
+          "--sidebar-width": "15rem",
+      "--sidebar-width-mobile": "10rem",
+    } as React.CSSProperties
+      }
+    
+    >
+      <PatientSidebar 
+        mobileOpen={mobileSidebarOpen}
+        onMobileClose={() => setMobileSidebarOpen(false)}
+      />
 
       <div className="pd-right">
-        {/* Top header */}
         <header className="pd-header">
           <div className="pd-header-left">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-indigo-400/70 text-slate-700 shadow-sm transition hover:bg-slate-100 md:hidden"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
             <h1 className="pd-header-title">Patient Dashboard</h1>
             <span className="pd-header-patient">{displayName}</span>
           </div>
+
           <div className="pd-header-actions">
             <div className="pd-search-wrap">
-              <span className="pd-search-icon" aria-hidden>🔍</span>
-              <input type="search" className="pd-search" placeholder="Search..." aria-label="Search" />
+              <span className="pd-search-icon" aria-hidden>
+                🔍
+              </span>
+              <input
+                type="search"
+                className="pd-search"
+                placeholder="Search..."
+                aria-label="Search"
+              />
             </div>
-            <button type="button" className="pd-icon-btn" aria-label="Notifications">
+
+            <button
+              type="button"
+              className="pd-icon-btn"
+              aria-label="Notifications"
+            >
               <span className="pd-bell">🔔</span>
-              {MOCK_ALERTS.length > 0 && <span className="pd-badge">{MOCK_ALERTS.length}</span>}
+              {showWelcomeAlert && <span className="pd-badge">1</span>}
             </button>
+
             <div className="pd-profile-wrap">
-              <button type="button" className="pd-profile-btn" onClick={() => setProfileOpen((o) => !o)} aria-expanded={profileOpen} aria-haspopup="true">
-                <span className="pd-avatar">{displayName.slice(0, 2).toUpperCase()}</span>
+              <button
+                type="button"
+                className="pd-profile-btn"
+                onClick={() => setProfileOpen((o) => !o)}
+                aria-expanded={profileOpen}
+                aria-haspopup="true"
+              >
+                <span className="pd-avatar">
+                  {displayName.slice(0, 2).toUpperCase()}
+                </span>
                 <span className="pd-profile-name">{displayName}</span>
                 <span className="pd-chevron">▼</span>
               </button>
+
               {profileOpen && (
                 <div className="pd-dropdown" role="menu">
-                  <Link to="/" className="pd-dropdown-item">Home</Link>
-                  <button type="button" className="pd-dropdown-item" onClick={() => setProfileOpen(false)}>Sign out</button>
+                  <Link to="/" className="pd-dropdown-item">
+                    Home
+                  </Link>
+                  <button
+                    type="button"
+                    className="pd-dropdown-item"
+                    onClick={() => void logout()}
+                  >
+                    Sign out
+                  </button>
                 </div>
               )}
             </div>
           </div>
         </header>
 
-        {/* Main content – card grid */}
         <main className="pd-main">
-          {/* Alerts – soft red, top priority */}
-          {MOCK_ALERTS.length > 0 && (
-            <section className="pd-alerts" id="alerts">
-              {MOCK_ALERTS.map((a) => (
-                <div key={a.id} className={`pd-alert pd-alert-${a.severity}`}>
-                  <span className="pd-alert-icon">⚠</span>
-                  <span>{a.text}</span>
-                </div>
-              ))}
-            </section>
+          {showWelcomeAlert && (
+            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Welcome to ClinicIQ. Your dashboard is ready. Appointment history,
+              records, and other patient data will appear here as it becomes available.
+            </div>
           )}
 
-          <div className="pd-grid">
-            {/* Patient overview card */}
-            <section className="pd-card pd-card-overview" id="overview">
-              <h2 className="pd-card-title">Patient overview</h2>
-              <div className="pd-overview-grid">
-                <div className="pd-overview-item">
-                  <span className="pd-overview-label">Age</span>
-                  <span className="pd-overview-value">{info?info.age:"-"}</span>
-                </div>
-                <div className="pd-overview-item">
-                  <span className="pd-overview-label">Gender</span>
-                  <span className="pd-overview-value">{info?info.gender:"-"}</span>
-                </div>
-                <div className="pd-overview-item">
-                  <span className="pd-overview-label">Patient ID</span>
-                  <span className="pd-overview-value pd-mono">{"-"}</span>
-                </div>
-                <div className="pd-overview-item">
-                  <span className="pd-overview-label">Blood Type</span>
-                  <span className="pd-overview-value pd-mono">{info?info.blood_type:"-"}</span>
-                </div>
-                <div className="pd-overview-item">
-                  <span className="pd-overview-label">Birthday</span>
-                  <span className="pd-overview-value pd-mono">{info?info.birthday:"-"}</span>
-                </div>
-                <div className="pd-overview-item">
-                  <span className="pd-overview-label">Status</span>
-                  <span className="pd-overview-value pd-status-badge">{info?"active" : "diactive"}</span>
-                </div>
-              </div>
-            </section>
+          <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2 2xl:grid-cols-4">
+            <div>
+              <DashboardPanel
+                title="Patient overview"
+                id="overview"
+                className="min-h-[400px]"
+              >
+                <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Age
+                    </span>
+                    <span className="text-base font-semibold text-slate-800">
+                      {info?.age ?? '-'}
+                    </span>
+                  </div>
 
-            <PatientQueueCard
-              clinicSelected={Boolean(activeClinicId)}
-              clinicid={ activeClinicId}
-              selectedClinicName={selectedClinicName}
-              loading={queueLoading}
-              row={queueRow}
-              activePosition={activePosition}
-              peopleAhead={peopleAhead}
-              exitState={exitState}
-              onJoin={join}
-              onLeave={leave}
-              onClearClinic={() => {
-                setSelectedClinicId(null)
-                setSelectedClinicName(null)
-              }}
-            />
-            {queueError && <p className="pd-empty">{queueError}</p>}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Gender
+                    </span>
+                    <span className="text-base font-semibold text-slate-800">
+                      {info?.gender ?? '-'}
+                    </span>
+                  </div>
 
-            {/* Upcoming appointments */}
-            <section className="pd-card pd-card-appointments" id="appointments">
-              <h2 className="pd-card-title">Upcoming appointments</h2>
-              {upcomingAppointments.length === 0 ? (
-                <p className="pd-empty">No upcoming appointments.</p>
-              ) : (
-                <ul className="pd-list pd-apt-list">
-                  {upcomingAppointments.map((apt) => (
-                    <li key={apt.id} className="pd-apt-item">
-                      <span className="pd-apt-date">{apt.date}</span>
-                      <span className="pd-apt-time">{apt.time}</span>
-                      <span className="pd-apt-doctor">{apt.doctor}</span>
-                      <span className="pd-apt-type">{apt.type}</span>
-                      <span className={`pd-apt-status pd-status-${apt.status}`}>{apt.status.replace('_', ' ')}</span>
-                    </li>
-                  ))}
-                </ul>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Patient ID
+                    </span>
+                    <span className="font-mono text-base font-semibold text-slate-800">
+                      {info?.id ?? '-'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Blood Type
+                    </span>
+                    <span className="font-mono text-base font-semibold text-slate-800">
+                      {info?.blood_type ?? '-'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Date of Birth
+                    </span>
+                    <span className="font-mono text-base font-semibold text-slate-800">
+                      {info?.birthday ?? '-'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Status
+                    </span>
+                    <span className="inline-flex w-fit rounded-md bg-emerald-100 px-2.5 py-1 text-sm font-semibold text-emerald-700">
+                      active
+                    </span>
+                  </div>
+                </div>
+              </DashboardPanel>
+            </div>
+
+            <div>
+              <PatientQueueCard
+                clinicSelected={Boolean(activeClinicId && selectedClinicName?.trim())}
+                selectedClinicName={selectedClinicName}
+                loading={queueLoading}
+                row={queueRow}
+                activePosition={activePosition}
+                peopleAhead={peopleAhead}
+                exitState={exitState}
+                onJoin={join}
+                onLeave={leave}
+                onClearClinic={() => {
+                  setSelectedClinicId(null)
+                  setSelectedClinicName(null)
+                }}
+              />
+              {queueError && (
+                <p className="mt-3 text-sm text-slate-500">{queueError}</p>
               )}
-              {!showScheduleForm ? (
-                <button type="button" className="pd-btn pd-btn-secondary pd-btn-sm" onClick={() => setShowScheduleForm(true)}>Book appointment</button>
-              ) : (
-                <form className="pd-form" onSubmit={handleScheduleSubmit}>
-                  <div className="pd-form-row">
-                    <label>Date</label>
-                    <input type="date" value={scheduleForm.date} onChange={(e) => setScheduleForm((f) => ({ ...f, date: e.target.value }))} min={todayStr} required />
-                  </div>
-                  <div className="pd-form-row">
-                    <label>Time</label>
-                    <input type="time" value={scheduleForm.time} onChange={(e) => setScheduleForm((f) => ({ ...f, time: e.target.value }))} required />
-                  </div>
-                  <div className="pd-form-row">
-                    <label>Provider</label>
-                    <select value={scheduleForm.doctor} onChange={(e) => setScheduleForm((f) => ({ ...f, doctor: e.target.value }))}>
-                      {MOCK_DOCTORS.map((d) => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                  </div>
-                  <div className="pd-form-row">
-                    <label>Visit type</label>
-                    <select value={scheduleForm.type} onChange={(e) => setScheduleForm((f) => ({ ...f, type: e.target.value }))}>
-                      {MOCK_APPOINTMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                  <div className="pd-form-actions">
-                    <button type="submit" className="pd-btn pd-btn-primary">Confirm</button>
-                    <button type="button" className="pd-btn pd-btn-secondary" onClick={() => setShowScheduleForm(false)}>Cancel</button>
-                  </div>
-                </form>
-              )}
-            </section>
+            </div>
 
-            {/* Recent medical records */}
-            <section className="pd-card pd-card-records" id="records">
-              <h2 className="pd-card-title">Recent medical records</h2>
-              {recentRecords.length === 0 ? (
-                <p className="pd-empty">No recent records.</p>
-              ) : (
-                <ul className="pd-list pd-records-list">
-                  {recentRecords.map((rec) => (
-                    <li key={rec.id} className="pd-record-item">
-                      <div className="pd-record-meta">
-                        <span className="pd-record-date">{rec.date}</span>
-                        <span className="pd-record-doctor">{rec.doctor}</span>
-                      </div>
-                      <p className="pd-record-summary">{rec.summary}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Link to="/dashboard/patient#records" className="pd-link">View all records</Link>
-            </section>
-
-            {/* Lab results summary with chart */}
-            <section className="pd-card pd-card-lab" id="lab">
-              <h2 className="pd-card-title">Lab results summary</h2>
-              <div className="pd-lab-chart">
-                {MOCK_LAB_CHART.map((point) => (
-                  <div key={point.label} className="pd-lab-bar-wrap">
-                    <span className="pd-lab-label">{point.label}</span>
-                    <div className="pd-lab-bar-bg">
-                      <div className="pd-lab-bar-fill" style={{ width: `${Math.min(100, (point.value / point.max) * 100)}%` }} />
-                    </div>
-                    <span className="pd-lab-value">{point.value}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="pd-card-note">Values within reference range. Last updated Feb 2025.</p>
-            </section>
-
-            {/* Medications */}
-            <section className="pd-card pd-card-meds" id="medications">
-              <h2 className="pd-card-title">Medications</h2>
-              <ul className="pd-list pd-med-list">
-                {MOCK_MEDICATIONS.map((m) => (
-                  <li key={m.id} className="pd-med-item">
-                    <span className="pd-med-name">{m.name}</span>
-                    <span className="pd-med-dosage">{m.dosage}</span>
-                    <span className="pd-med-schedule">{m.schedule}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            {/* Vital signs */}
-            <section className="pd-card pd-card-vitals" id="vitals">
-              <h2 className="pd-card-title">Vital signs</h2>
-              <div className="pd-vitals-grid">
-                {MOCK_VITALS.map((v) => (
-                  <div key={v.label} className="pd-vital-item">
-                    <span className="pd-vital-label">{v.label}</span>
-                    <span className="pd-vital-value">{v.value} <span className="pd-vital-unit">{v.unit}</span></span>
-                    {v.status && <span className={`pd-vital-status pd-vital-${v.status}`}>{v.status}</span>}
-                  </div>
-                ))}
-              </div>
-              <p className="pd-card-note">Last recorded at your most recent visit.</p>
-            </section>
-
-            {/* Digital intake & consent – compact card */}
-            <section className="pd-card pd-card-forms" id="forms">
-              <h2 className="pd-card-title">Digital intake & consent</h2>
-              <p className="pd-card-desc">Complete before your visit to reduce paperwork.</p>
-              <div className="pd-form-status-list">
-                <div className="pd-form-status">
-                  <span>Intake form</span>
-                  {intakeComplete ? <span className="pd-status-done">Done</span> : (
-                    !showIntakeForm ? (
-                      <button type="button" className="pd-btn pd-btn-sm" onClick={() => setShowIntakeForm(true)}>Complete</button>
-                    ) : (
-                      <form className="pd-form compact" onSubmit={handleIntakeSubmit}>
-                        <div className="pd-form-row"><label>Allergies</label><input type="text" placeholder="List any" /></div>
-                        <div className="pd-form-row"><label>Medications</label><input type="text" placeholder="Current meds" /></div>
-                        <div className="pd-form-row"><label>Emergency contact</label><input type="text" placeholder="Name, phone" /></div>
-                        <div className="pd-form-actions">
-                          <button type="submit" className="pd-btn pd-btn-primary">Submit</button>
-                          <button type="button" className="pd-btn pd-btn-secondary" onClick={() => setShowIntakeForm(false)}>Cancel</button>
+            <div>
+              <DashboardPanel
+                title="Upcoming appointments"
+                id="appointments"
+                className="min-h-[400px]"
+              >
+                {loadingDashboard ? (
+                  <p className="text-sm text-slate-500">
+                    Loading appointments...
+                  </p>
+                ) : upcomingAppointments.length === 0 ? (
+                  <p className="text-sm text-slate-500">
+                    No appointments scheduled.
+                  </p>
+                ) : (
+                  <ul className="flex flex-col gap-3">
+                    {upcomingAppointments.map((apt) => (
+                      <li
+                        key={apt.id}
+                        className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-semibold text-slate-800">
+                            {apt.date}
+                          </span>
+                          <span
+                            className={[
+                              'rounded-md px-2 py-1 text-xs font-semibold',
+                              getAppointmentBadgeClasses(apt.status),
+                            ].join(' ')}
+                          >
+                            {formatAppointmentStatus(apt.status)}
+                          </span>
                         </div>
-                      </form>
-                    )
-                  )}
-                </div>
-                <div className="pd-form-status">
-                  <span>Consent form</span>
-                  {consentComplete ? <span className="pd-status-done">Done</span> : (
-                    !showConsentForm ? (
-                      <button type="button" className="pd-btn pd-btn-sm" onClick={() => setShowConsentForm(true)}>Complete</button>
-                    ) : (
-                      <form className="pd-form compact" onSubmit={handleConsentSubmit}>
-                        <label className="pd-checkbox-label">
-                          <input type="checkbox" required /> I consent to treatment and privacy practices.
+                        <div className="mt-2 text-sm text-slate-600">
+                          {apt.time}
+                        </div>
+                        <div className="text-sm text-slate-700">
+                          {apt.doctor}
+                        </div>
+                        <div className="text-sm text-slate-500">
+                          {apt.type}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {appointmentRequestNotice && (
+                  <p className="mt-3 text-sm text-slate-500">
+                    {appointmentRequestNotice}
+                  </p>
+                )}
+
+                <div className="mt-4">
+                  {!showScheduleForm ? (
+                    <button
+                      type="button"
+                      className="rounded-lg bg-indigo-400 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                      onClick={() => setShowScheduleForm(true)}
+                      disabled={!activeClinicId}
+                    >
+                      Book appointment
+                    </button>
+                  ) : (
+                    <form
+                      className="flex flex-col gap-3"
+                      onSubmit={handleScheduleSubmit}
+                    >
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                          Date
                         </label>
-                        <div className="pd-form-actions">
-                          <button type="submit" className="pd-btn pd-btn-primary">Submit</button>
-                          <button type="button" className="pd-btn pd-btn-secondary" onClick={() => setShowConsentForm(false)}>Cancel</button>
-                        </div>
-                      </form>
-                    )
+                        <input
+                          type="date"
+                          value={scheduleForm.date}
+                          onChange={(e) =>
+                            setScheduleForm((f) => ({
+                              ...f,
+                              date: e.target.value,
+                            }))
+                          }
+                          min={todayStr}
+                          required
+                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                          Time
+                        </label>
+                        <input
+                          type="time"
+                          value={scheduleForm.time}
+                          onChange={(e) =>
+                            setScheduleForm((f) => ({
+                              ...f,
+                              time: e.target.value,
+                            }))
+                          }
+                          required
+                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                          Provider
+                        </label>
+                        <select
+                          value={scheduleForm.doctorId}
+                          onChange={(e) =>
+                            setScheduleForm((f) => ({
+                              ...f,
+                              doctorId: e.target.value,
+                            }))
+                          }
+                          required
+                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
+                        >
+                          {doctorOptions.length === 0 ? (
+                            <option value="">No providers available</option>
+                          ) : (
+                            doctorOptions.map((doctor) => (
+                              <option key={doctor.id} value={doctor.id}>
+                                {doctor.full_name ?? 'Doctor'}
+                              </option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                          Visit type
+                        </label>
+                        <select
+                          value={scheduleForm.type}
+                          onChange={(e) =>
+                            setScheduleForm((f) => ({
+                              ...f,
+                              type: e.target.value,
+                            }))
+                          }
+                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
+                        >
+                          {APPOINTMENT_TYPES.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                          Reason
+                        </label>
+                        <input
+                          type="text"
+                          value={scheduleForm.reason}
+                          onChange={(e) =>
+                            setScheduleForm((f) => ({
+                              ...f,
+                              reason: e.target.value,
+                            }))
+                          }
+                          placeholder="Reason for visit"
+                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
+                        />
+                      </div>
+
+                      <div className="mt-2 flex gap-3">
+                        <button
+                          type="submit"
+                          className="rounded-lg bg-indigo-400 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                          onClick={() => setShowScheduleForm(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {!activeClinicId && (
+                    <p className="mt-3 text-sm text-slate-500">
+                      Select a clinic first before booking.
+                    </p>
                   )}
                 </div>
-              </div>
-            </section>
+              </DashboardPanel>
+            </div>
+
+            <div>
+              <DashboardPanel
+                title="Recent medical records"
+                id="records"
+                className="min-h-[400px]"
+              >
+                {loadingDashboard ? (
+                  <p className="text-sm text-slate-500">Loading records...</p>
+                ) : recentRecords.length === 0 ? (
+                  <p className="text-sm text-slate-500">
+                    No medical records yet.
+                  </p>
+                ) : (
+                  <ul className="flex flex-col gap-3">
+                    {recentRecords.map((rec) => (
+                      <li
+                        key={rec.id}
+                        className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+                      >
+                        <div className="mb-2 flex flex-wrap gap-2 text-sm">
+                          <span className="font-semibold text-sky-700">
+                            {rec.date}
+                          </span>
+                          <span className="text-slate-500">{rec.doctor}</span>
+                        </div>
+                        <p className="text-sm leading-6 text-slate-600">
+                          {rec.summary}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <Link
+                  to="/dashboard/patient#records"
+                  className="mt-4 inline-block text-sm font-medium text-sky-600 hover:underline"
+                >
+                  View all records
+                </Link>
+              </DashboardPanel>
+            </div>
+
+            <div>
+              <DashboardPanel
+                title="Lab results summary"
+                id="lab"
+                className="min-h-[350px]"
+              >
+                <p className="text-sm text-slate-500">
+                  No lab results available.
+                </p>
+                <p className="mt-4 text-sm leading-6 text-slate-500">
+                  This section is ready in the UI, but your current Supabase schema
+                  does not have a patient lab results table yet.
+                </p>
+              </DashboardPanel>
+            </div>
+
+            <div>
+              <DashboardPanel
+                title="Medications"
+                id="medications"
+                className="min-h-[350px]"
+              >
+                <p className="text-sm text-slate-500">
+                  No medications on file.
+                </p>
+                <p className="mt-4 text-sm leading-6 text-slate-500">
+                  This section is ready in the UI, but your current Supabase schema
+                  does not have a patient medications table yet.
+                </p>
+              </DashboardPanel>
+            </div>
+
+            <div>
+              <DashboardPanel
+                title="Digital intake & consent"
+                id="forms"
+                className="min-h-[350px]"
+              >
+                <p className="mb-4 text-sm text-slate-500">
+                  Complete before your visit to reduce paperwork.
+                </p>
+
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="font-medium text-slate-800">
+                        Intake form
+                      </span>
+                      <span className="text-sm font-semibold text-slate-500">
+                        Not available yet
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="font-medium text-slate-800">
+                        Consent form
+                      </span>
+                      <span className="text-sm font-semibold text-slate-500">
+                        Not available yet
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </DashboardPanel>
+            </div>
           </div>
         </main>
       </div>
-    </div>
+    </SidebarProvider>
   )
 }

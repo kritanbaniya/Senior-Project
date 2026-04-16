@@ -6,9 +6,10 @@
 //   3. clinic exists, approved -> view mode with edit toggle
 
 import { useState, useEffect } from 'react'
-import { useClinicDashboard, SPECIALTIES, US_STATES } from './ClinicADashBoard'
+import { useClinicDashboard, SPECIALTIES } from './ClinicADashBoard'
 import ClinicCreation from './ClinicCreation'
-import type { ClinicFormData } from './ClinicCreation'
+import ClinicAddressAutocompleteSection from './ClinicAddressAutocompleteSection'
+import type { ClinicFormData } from './clinicFormTypes'
 
 export default function ClinicMyClinic() {
   const {
@@ -27,6 +28,7 @@ export default function ClinicMyClinic() {
     specialty: '',
     phone: '',
     email: '',
+    google_place_id: '',
     address_line1: '',
     address_line2: '',
     city: '',
@@ -44,6 +46,7 @@ export default function ClinicMyClinic() {
         specialty: clinicRow.specialty ?? '',
         phone: clinicRow.phone ?? '',
         email: clinicRow.email ?? '',
+        google_place_id: clinicRow.google_place_id ?? '',
         address_line1: clinicRow.address_line1 ?? '',
         address_line2: clinicRow.address_line2 ?? '',
         city: clinicRow.city ?? '',
@@ -64,6 +67,7 @@ export default function ClinicMyClinic() {
         specialty: clinicRow.specialty ?? '',
         phone: clinicRow.phone ?? '',
         email: clinicRow.email ?? '',
+        google_place_id: clinicRow.google_place_id ?? '',
         address_line1: clinicRow.address_line1 ?? '',
         address_line2: clinicRow.address_line2 ?? '',
         city: clinicRow.city ?? '',
@@ -77,8 +81,10 @@ export default function ClinicMyClinic() {
 
   const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    await handleClinicUpdate(form)
-    setEditing(false)
+    const ok = await handleClinicUpdate(form)
+    if (ok) {
+      setEditing(false)
+    }
   }
 
   if (loading) {
@@ -99,7 +105,13 @@ export default function ClinicMyClinic() {
   // sub-state 2: clinic exists but not approved
   if (!clinicRow.approved) {
     return (
-      <section className="pd-card">
+      <section
+      className="pd-card"
+      style={{
+        maxWidth: '880px',
+        width: '150%',
+        }}
+      >
         <h2 className="pd-card-title">{clinicRow.clinic_name}</h2>
         <div className="pd-alert pd-alert-info" style={{ marginBottom: '1rem' }}>
           Your clinic is pending approval. A system administrator will review and approve it.
@@ -150,7 +162,13 @@ export default function ClinicMyClinic() {
   // sub-state 3: clinic is approved -- edit mode
   if (editing) {
     return (
-      <section className="pd-card">
+      <section
+      className="pd-card"
+      style={{
+        maxWidth: '880px',
+        width: '150%',
+        }}
+      >
         <h2 className="pd-card-title">Edit clinic details</h2>
         <form className="pd-form" onSubmit={handleUpdateSubmit}>
           <div className="pd-form-row">
@@ -199,63 +217,7 @@ export default function ClinicMyClinic() {
               placeholder="contact@yourclinic.com"
             />
           </div>
-          <div className="pd-form-row">
-            <label htmlFor="cl-addr1">Address line 1</label>
-            <input
-              id="cl-addr1"
-              type="text"
-              value={form.address_line1}
-              onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))}
-              placeholder="Street address"
-              required
-            />
-          </div>
-          <div className="pd-form-row">
-            <label htmlFor="cl-addr2">Address line 2</label>
-            <input
-              id="cl-addr2"
-              type="text"
-              value={form.address_line2}
-              onChange={(e) => setForm((f) => ({ ...f, address_line2: e.target.value }))}
-              placeholder="Suite, floor, unit (optional)"
-            />
-          </div>
-          <div className="pd-form-row">
-            <label htmlFor="cl-city">City</label>
-            <input
-              id="cl-city"
-              type="text"
-              value={form.city}
-              onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-              placeholder="City"
-              required
-            />
-          </div>
-          <div className="pd-form-row">
-            <label htmlFor="cl-state">State</label>
-            <select
-              id="cl-state"
-              value={form.state}
-              onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-              required
-            >
-              <option value="">Select state</option>
-              {US_STATES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-          <div className="pd-form-row">
-            <label htmlFor="cl-zip">Zip code</label>
-            <input
-              id="cl-zip"
-              type="text"
-              value={form.zip_code}
-              onChange={(e) => setForm((f) => ({ ...f, zip_code: e.target.value }))}
-              placeholder="Zip code"
-              required
-            />
-          </div>
+          <ClinicAddressAutocompleteSection form={form} setForm={setForm} disabled={saving} />
           <div className="pd-form-row">
             <label htmlFor="cl-website">Website</label>
             <input
@@ -294,71 +256,126 @@ export default function ClinicMyClinic() {
     )
   }
 
-  // sub-state 3: clinic is approved -- view mode
-  return (
-    <section className="pd-card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 className="pd-card-title">{clinicRow.clinic_name}</h2>
-        <button
-          type="button"
-          className="pd-btn"
-          onClick={() => { setMessage(null); setEditing(true) }}
+// sub-state 3: clinic is approved -- view mode
+return (
+  <section
+      className="pd-card"
+      style={{
+        maxWidth: '880px',
+        width: '150%',
+        }}
+      >
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+      <h2 className="pd-card-title" style={{ marginBottom: 0 }}>
+        {clinicRow.clinic_name}
+      </h2>
+      <button
+        type="button"
+        className="pd-btn"
+        onClick={() => { setMessage(null); setEditing(true) }}
+      >
+        Edit
+      </button>
+    </div>
+
+    <p className="pd-card-desc" style={{ marginTop: '0.75rem' }}>
+      Your clinic is approved and active.
+    </p>
+
+    <div className="pd-overview-grid">
+      <div className="pd-overview-item">
+        <span className="pd-overview-label">Clinic ID</span>
+        <span
+          className="pd-overview-value pd-mono"
+          style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
         >
-          Edit
-        </button>
+          {clinicRow.clinic_id}
+        </span>
       </div>
-      <p className="pd-card-desc">Your clinic is approved and active.</p>
-      <div className="pd-overview-grid">
-        <div className="pd-overview-item">
-          <span className="pd-overview-label">Clinic ID</span>
-          <span className="pd-overview-value pd-mono">{clinicRow.clinic_id}</span>
-        </div>
-        <div className="pd-overview-item">
-          <span className="pd-overview-label">Specialty</span>
-          <span className="pd-overview-value">{clinicRow.specialty ?? '-'}</span>
-        </div>
-        <div className="pd-overview-item">
-          <span className="pd-overview-label">Phone</span>
-          <span className="pd-overview-value">{clinicRow.phone ?? '-'}</span>
-        </div>
-        <div className="pd-overview-item">
-          <span className="pd-overview-label">Email</span>
-          <span className="pd-overview-value">{clinicRow.email ?? '-'}</span>
-        </div>
-        <div className="pd-overview-item">
-          <span className="pd-overview-label">Address</span>
-          <span className="pd-overview-value">
-            {[clinicRow.address_line1, clinicRow.address_line2].filter(Boolean).join(', ') || '-'}
-          </span>
-        </div>
-        <div className="pd-overview-item">
-          <span className="pd-overview-label">City / State / Zip</span>
-          <span className="pd-overview-value">
-            {[clinicRow.city, clinicRow.state, clinicRow.zip_code].filter(Boolean).join(', ') || '-'}
-          </span>
-        </div>
-        {clinicRow.website && (
-          <div className="pd-overview-item">
-            <span className="pd-overview-label">Website</span>
-            <span className="pd-overview-value">{clinicRow.website}</span>
-          </div>
-        )}
-        {clinicRow.description && (
-          <div className="pd-overview-item">
-            <span className="pd-overview-label">Description</span>
-            <span className="pd-overview-value">{clinicRow.description}</span>
-          </div>
-        )}
-        <div className="pd-overview-item">
-          <span className="pd-overview-label">Status</span>
-          <span className="pd-overview-value pd-status-badge">Approved</span>
-        </div>
+
+      <div className="pd-overview-item">
+        <span className="pd-overview-label">Specialty</span>
+        <span className="pd-overview-value">{clinicRow.specialty ?? '-'}</span>
       </div>
-      {message && (
-        <p className={message.type === 'error' ? 'pd-alert pd-alert-warning' : 'pd-card-desc'} style={{ marginTop: '1rem' }}>
-          {message.text}
-        </p>
+
+      <div className="pd-overview-item">
+        <span className="pd-overview-label">Phone</span>
+        <span className="pd-overview-value">{clinicRow.phone ?? '-'}</span>
+      </div>
+
+      <div className="pd-overview-item">
+        <span className="pd-overview-label">Email</span>
+        <span
+          className="pd-overview-value"
+          style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+        >
+          {clinicRow.email ?? '-'}
+        </span>
+      </div>
+
+      <div className="pd-overview-item">
+        <span className="pd-overview-label">Address</span>
+        <span
+          className="pd-overview-value"
+          style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+        >
+          {[clinicRow.address_line1, clinicRow.address_line2].filter(Boolean).join(', ') || '-'}
+        </span>
+      </div>
+
+      <div className="pd-overview-item">
+        <span className="pd-overview-label">City / State / Zip</span>
+        <span className="pd-overview-value">
+          {[clinicRow.city, clinicRow.state, clinicRow.zip_code].filter(Boolean).join(', ') || '-'}
+        </span>
+      </div>
+
+      {clinicRow.website && (
+        <div className="pd-overview-item">
+          <span className="pd-overview-label">Website</span>
+          <a
+            href={clinicRow.website}
+            target="_blank"
+            rel="noreferrer"
+            className="pd-link"
+            style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+          >
+            {clinicRow.website}
+          </a>
+        </div>
       )}
-    </section>
-  )
+
+      {clinicRow.description && (
+        <div className="pd-overview-item">
+          <span className="pd-overview-label">Description</span>
+          <span
+            className="pd-overview-value"
+            style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+          >
+            {clinicRow.description}
+          </span>
+        </div>
+      )}
+
+      <div className="pd-overview-item">
+        <span className="pd-overview-label">Status</span>
+        <span
+          className="pd-status-badge"
+          style={{ alignSelf: 'flex-start' }}
+        >
+          Approved
+        </span>
+      </div>
+    </div>
+
+    {message && (
+      <p
+        className={message.type === 'error' ? 'pd-alert pd-alert-warning' : 'pd-card-desc'}
+        style={{ marginTop: '1rem' }}
+      >
+        {message.text}
+      </p>
+    )}
+  </section>
+)
 }

@@ -109,11 +109,28 @@ export async function fetchInProgressQueueForClinic(clinicId: string): Promise<Q
   return (data ?? []) as QueueEntryRow[]
 }
 
+function mergePermWithClinic(
+  perm: StaffPermissionRow,
+  clinicMap: Map<string, ClinicListItem>,
+): StaffPermissionRow & ClinicListItem {
+  const clinic = clinicMap.get(perm.clinic_id)
+  if (!clinic) {
+    return {
+      ...perm,
+      clinic_name: `Clinic ${perm.clinic_id.slice(0, 8)}`,
+      address_line1: null,
+      city: null,
+      state: null,
+    }
+  }
+  return { ...perm, ...clinic }
+}
+
 export async function fetchNurseClinicPermissions(): Promise<Array<StaffPermissionRow & ClinicListItem>> {
   const userId = await getCurrentUserId()
   const { data: perms, error: permsError } = await supabase
     .from('staff_permissions')
-    .select('clinic_id, user_id, manage_queue')
+    .select('id, clinic_id, user_id, manage_queue, invitation_status')
     .eq('user_id', userId)
 
   if (permsError) throw permsError
@@ -127,24 +144,23 @@ export async function fetchNurseClinicPermissions(): Promise<Array<StaffPermissi
     .in('clinic_id', clinicIds)
 
   if (clinicsError) {
-    // fallback if clinics rls currently blocks read: still show clinic ids
-    return permissionRows.map((perm) => ({
-      ...perm,
-      clinic_name: `Clinic ${perm.clinic_id.slice(0, 8)}`,
-      address_line1: null,
-      city: null,
-      state: null,
-    }))
+    return permissionRows.map((perm) => mergePermWithClinic(perm, new Map()))
   }
 
   const clinicMap = new Map((clinics ?? []).map((c) => [c.clinic_id, c as ClinicListItem]))
-  return permissionRows
-    .map((perm) => {
-      const clinic = clinicMap.get(perm.clinic_id)
-      if (!clinic) return null
-      return { ...perm, ...clinic }
-    })
-    .filter((row): row is StaffPermissionRow & ClinicListItem => Boolean(row))
+  return permissionRows.map((perm) => mergePermWithClinic(perm, clinicMap))
+}
+
+export async function updateNurseInvitationStatus(
+  permissionId: string,
+  status: 'accepted' | 'rejected',
+): Promise<void> {
+  const { error } = await supabase
+    .from('staff_permissions')
+    .update({ invitation_status: status })
+    .eq('id', permissionId)
+
+  if (error) throw error
 }
 
 export async function callPatient(entryId: string): Promise<void> {

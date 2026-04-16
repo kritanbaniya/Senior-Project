@@ -8,12 +8,21 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useClinicDashboard } from './ClinicADashBoard'
 
+type InvitationStatus = 'pending' | 'accepted' | 'rejected'
+
 type StaffMember = {
   id: string
   user_id: string
   manage_queue: boolean
+  invitation_status: InvitationStatus
   full_name: string | null
   email: string | null
+}
+
+function formatInvitationStatus(s: InvitationStatus): string {
+  if (s === 'pending') return 'Pending'
+  if (s === 'accepted') return 'Accepted'
+  return 'Rejected'
 }
 
 type PendingAction = {
@@ -72,6 +81,7 @@ export default function ClinicManageStaff() {
         id: r.id as string,
         user_id: r.user_id as string,
         manage_queue: r.manage_queue as boolean,
+        invitation_status: (r.invitation_status as InvitationStatus) ?? 'pending',
         full_name: (prof?.full_name as string | null) ?? null,
         email: (prof?.email as string | null) ?? null,
       }
@@ -121,7 +131,12 @@ export default function ClinicManageStaff() {
 
     const { data: inserted, error: insertErr } = await supabase
       .from('staff_permissions')
-      .insert({ clinic_id: clinicId, user_id: nurse.id, manage_queue: false })
+      .insert({
+        clinic_id: clinicId,
+        user_id: nurse.id,
+        manage_queue: false,
+        invitation_status: 'pending',
+      })
       .select()
       .single()
 
@@ -138,6 +153,7 @@ export default function ClinicManageStaff() {
         id: inserted.id as string,
         user_id: nurse.id as string,
         manage_queue: false,
+        invitation_status: (inserted.invitation_status as InvitationStatus) ?? 'pending',
         full_name: (nurse.full_name as string | null) ?? null,
         email: (nurse.email as string | null) ?? null,
       },
@@ -163,6 +179,7 @@ export default function ClinicManageStaff() {
   }
 
   const handleToggleQueue = (member: StaffMember) => {
+    if (member.invitation_status !== 'accepted') return
     const newValue = !member.manage_queue
     const label = member.full_name ?? member.email ?? 'this nurse'
     const action = newValue ? 'Grant' : 'Revoke'
@@ -336,11 +353,12 @@ export default function ClinicManageStaff() {
           <p className="pd-empty">No staff added yet.</p>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '500px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '620px' }}>
               <thead>
                 <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border, #e2e8f0)' }}>
                   <th style={{ padding: '0.5rem 0.75rem' }}>Name</th>
                   <th style={{ padding: '0.5rem 0.75rem' }}>Email</th>
+                  <th style={{ padding: '0.5rem 0.75rem' }}>Status</th>
                   <th style={{ padding: '0.5rem 0.75rem' }}>Queue Access</th>
                   <th style={{ padding: '0.5rem 0.75rem' }}></th>
                 </tr>
@@ -358,10 +376,22 @@ export default function ClinicManageStaff() {
                       {member.email ?? '-'}
                     </td>
                     <td style={{ padding: '0.5rem 0.75rem' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                      <span className="pd-status-badge">{formatInvitationStatus(member.invitation_status)}</span>
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          cursor: member.invitation_status === 'accepted' ? 'pointer' : 'not-allowed',
+                          opacity: member.invitation_status === 'accepted' ? 1 : 0.5,
+                        }}
+                      >
                         <input
                           type="checkbox"
                           checked={member.manage_queue}
+                          disabled={member.invitation_status !== 'accepted'}
                           onChange={() => handleToggleQueue(member)}
                         />
                         {member.manage_queue ? 'Yes' : 'No'}
