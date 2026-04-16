@@ -155,7 +155,7 @@ export default function PatientSidebar({
             <button
               type="button"
               onClick={onMobileClose}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-100"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-red-500/80 text-slate-700 shadow-sm transition hover:bg-slate-100"
               aria-label="Close menu"
             >
               <X className="h-5 w-5" />

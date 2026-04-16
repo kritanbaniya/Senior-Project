@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { Menu } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClinicContext } from '../../../context/ClinicContext'
 import { usePatientQueue } from '../../../features/queue/usePatientQueue'
@@ -186,6 +187,7 @@ export default function PatientDashboard() {
     (location.state as { clinicId?: string } | null)?.clinicId ?? null
 
   const [profileOpen, setProfileOpen] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [loadingDashboard, setLoadingDashboard] = useState(true)
 
   const [info, setInfo] = useState<PatientInfo | null>(null)
@@ -415,11 +417,23 @@ export default function PatientDashboard() {
       }
     
     >
-      <PatientSidebar />
+      <PatientSidebar 
+        mobileOpen={mobileSidebarOpen}
+        onMobileClose={() => setMobileSidebarOpen(false)}
+      />
 
       <div className="pd-right">
         <header className="pd-header">
           <div className="pd-header-left">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-indigo-400/70 text-slate-700 shadow-sm transition hover:bg-slate-100 md:hidden"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
             <h1 className="pd-header-title">Patient Dashboard</h1>
             <span className="pd-header-patient">{displayName}</span>
           </div>
