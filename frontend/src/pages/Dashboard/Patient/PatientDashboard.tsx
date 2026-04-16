@@ -569,6 +569,7 @@ export default function PatientDashboard() {
             <div>
               <PatientQueueCard
                 clinicSelected={Boolean(activeClinicId && selectedClinicName?.trim())}
+                clinicid={activeClinicId ?? null}
                 selectedClinicName={selectedClinicName}
                 loading={queueLoading}
                 row={queueRow}
