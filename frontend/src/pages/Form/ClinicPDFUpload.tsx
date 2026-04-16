@@ -112,124 +112,140 @@ const ClinicPDFUpload: React.FC = () => {
             setLoading(false);
         }
     };
+return (
+  <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
+    {/* Header */}
+    <div className="mb-8">
+      <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+        <Hospital className="w-7 h-7 mr-2 text-blue-600" />
+        Clinic Form Management
+      </h1>
+      <p className="mt-2 text-gray-600">
+        Upload and manage the official form template for patients.
+      </p>
+    </div>
 
-    return (
-        <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
-            {/* Header */}
-            <div className="mb-8 flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Hospital className="text-blue-600" /> Clinic Form Management
-                    </h1>
-                    <p className="mt-1 text-gray-500">Upload the master PDF template that patients need to fill out.</p>
-                </div>
-            </div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Left Column */}
+      <div className="lg:col-span-1 space-y-6">
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Side: Actions */}
-                <div className="lg:col-span-1 space-y-6">
-                    
-                    {/* Step 1: Clinic Selection */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center italic">
-                            <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center mr-2 text-[10px] not-italic">1</span>
-                            Current Clinic
-                        </label>
-                        <select
-                            value={selectedClinicId || ""}
-                            onChange={(e) => setSelectedClinicId && setSelectedClinicId(e.target.value)}
-                            className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        >
-                            <option value="">-- Select Clinic --</option>
-                            {clinics.map((clinic) => (
-                                <option key={clinic.clinic_id} value={clinic.clinic_name}>
-                                    {clinic.clinic_name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+        {/* Step 1 */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
+            <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-2 text-xs">
+              1
+            </span>
+            Select Clinic
+          </label>
 
-                    {/* Step 2: Upload Action */}
-                    <div className={`bg-white p-6 rounded-xl shadow-sm border border-gray-200 transition-opacity ${!selectedClinicId && 'opacity-50 pointer-events-none'}`}>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center italic">
-                            <span className="w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center mr-2 text-[10px] not-italic">2</span>
-                            Update Template
-                        </label>
-                        
-                        <div className="group relative border-2 border-dashed border-gray-200 rounded-xl p-8 transition-all hover:border-blue-400 text-center bg-gray-50/50">
-                            <input
-                                type="file"
-                                accept="application/pdf"
-                                onChange={handleFileChange}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            />
-                            <Upload className="w-8 h-8 text-gray-400 mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                            <p className="text-xs text-gray-500 leading-relaxed">
-                                {file ? (
-                                    <span className="font-medium text-blue-600">{file.name}</span>
-                                ) : (
-                                    "Drop new master form here or click to browse"
-                                )}
-                            </p>
-                        </div>
-
-                        <button
-                            onClick={handleUpload}
-                            disabled={loading || !file}
-                            className="w-full mt-5 bg-gray-900 hover:bg-black text-white font-medium py-3 px-4 rounded-lg shadow-md disabled:bg-gray-200 disabled:text-gray-400 transition-all flex items-center justify-center"
-                        >
-                            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle className="w-5 h-5 mr-2" />}
-                            {loading ? "Processing..." : "Publish Template"}
-                        </button>
-
-                        {uploadSuccess && (
-                            <div className="mt-4 p-3 bg-green-50 border border-green-100 rounded-lg flex items-center text-green-700 text-sm">
-                                <CheckCircle className="w-4 h-4 mr-2" /> Live template updated!
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Right Side: Preview */}
-                <div className="lg:col-span-2">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full min-h-[650px] flex flex-col">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-50 rounded-lg">
-                                    <FileText className="w-5 h-5 text-blue-600" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-gray-800">Master Template Preview</h3>
-                                    <p className="text-[11px] text-gray-400 uppercase tracking-wider font-semibold">Active Document</p>
-                                </div>
-                            </div>
-                            {fetching && <Loader2 className="w-5 h-5 animate-spin text-blue-500" />}
-                        </div>
-                        
-                        <div className="flex-grow bg-[#525659] flex items-center justify-center relative">
-                            {!selectedClinicId ? (
-                                <div className="text-center text-gray-400 bg-white/5 p-8 rounded-2xl backdrop-blur-sm border border-white/10">
-                                    <Hospital className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                                    <p className="text-lg">Select a clinic to view the current form</p>
-                                </div>
-                            ) : pdfUrl ? (
-                                <iframe
-                                    src={`${pdfUrl}#view=FitH&toolbar=0`}
-                                    className="w-full h-full border-none shadow-2xl"
-                                    title="Clinic Template Preview"
-                                />
-                            ) : (
-                                <div className="text-center p-8">
-                                    <AlertCircle className="w-12 h-12 text-gray-500 mx-auto mb-4 opacity-30" />
-                                    <p className="text-gray-300">No template has been uploaded for this clinic yet.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
+          <select
+            value={selectedClinicId || ""}
+            onChange={(e) => setSelectedClinicId && setSelectedClinicId(e.target.value)}
+            className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 py-2.5"
+          >
+            <option value="">-- Choose a clinic --</option>
+            {clinics.map((clinic) => (
+              <option key={clinic.clinic_id} value={clinic.clinic_name}>
+                {clinic.clinic_name}
+              </option>
+            ))}
+          </select>
         </div>
-    );
+
+        {/* Step 2 */}
+        <div
+          className={`bg-white p-6 rounded-xl shadow-sm border border-gray-200 ${
+            !selectedClinicId && "opacity-50 pointer-events-none"
+          }`}
+        >
+          <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
+            <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-2 text-xs">
+              2
+            </span>
+            Upload Template
+          </label>
+
+          <div className="group relative border-2 border-dashed border-gray-300 rounded-lg p-6 transition-all hover:border-blue-400 text-center">
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={handleFileChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+            <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2 group-hover:text-blue-500 transition-colors" />
+            <p className="text-sm text-gray-600">
+              {file ? (
+                <span className="font-medium text-blue-600">{file.name}</span>
+              ) : (
+                "Click or drag PDF here"
+              )}
+            </p>
+          </div>
+
+          <button
+            onClick={handleUpload}
+            disabled={loading || !file}
+            className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg shadow-blue-200 disabled:bg-gray-300 disabled:shadow-none transition-all flex items-center justify-center"
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+            ) : (
+              <CheckCircle className="w-5 h-5 mr-2" />
+            )}
+            {loading ? "Uploading..." : "Publish Template"}
+          </button>
+
+          {uploadSuccess && (
+            <p className="mt-3 text-sm text-green-600 flex items-center justify-center">
+              <CheckCircle className="w-4 h-4 mr-1" />
+              Template updated successfully!
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Right Column */}
+      <div className="lg:col-span-2">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full min-h-[600px] flex flex-col">
+          
+          {/* Header */}
+          <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+            <h3 className="font-semibold text-gray-700 flex items-center">
+              <FileText className="w-5 h-5 mr-2 text-blue-500" />
+              Template Preview
+            </h3>
+            {fetching && (
+              <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="flex-grow bg-gray-200 relative">
+            {!selectedClinicId ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 p-8 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-2xl">
+                  🏥
+                </div>
+                <p>Select a clinic to view template</p>
+              </div>
+            ) : pdfUrl ? (
+              <iframe
+                src={`${pdfUrl}#toolbar=0`}
+                className="w-full h-full border-none"
+                title="Template Preview"
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 p-8 text-center">
+                <FileText className="w-12 h-12 mb-2 opacity-20" />
+                <p>No template uploaded yet.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 };
 
 export default ClinicPDFUpload;

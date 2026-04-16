@@ -153,12 +153,7 @@ const PatientPDFUpload: React.FC = () => {
 
             </label>
 
-
-
             {isLockedClinic ? (
-
-              // ✅ 锁定状态（从别的页面进来）
-
               <div className="w-full py-2.5 px-3 rounded-lg bg-gray-100 border border-gray-200 text-gray-700 font-medium">
 
                 {selectedClinic?.clinic_name || "Loading clinic..."}
@@ -166,9 +161,6 @@ const PatientPDFUpload: React.FC = () => {
               </div>
 
             ) : (
-
-              // ✅ 正常可选状态
-
               <select
 
                 value={selectedClinicId || ""}
