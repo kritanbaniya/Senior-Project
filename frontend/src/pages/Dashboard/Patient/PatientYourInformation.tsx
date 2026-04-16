@@ -4,10 +4,10 @@
 // DashboardGuard + RoleGuard so the user is guaranteed to be an authenticated patient.
 
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
-import { useAuth } from '../../../context/AuthContext'
-import PatientSideBar from './PatientSideBar'
+//import { useAuth } from '../../../context/AuthContext'
+import PatientSidebar from './components/PatientSidebar'
+import { SidebarProvider } from '@/components/ui/sidebar'
 
 type PatientInfoRow = {
   id: string
@@ -20,13 +20,41 @@ type PatientInfoRow = {
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
+function DashboardPanel({
+  title,
+  children,
+  className = '',
+}: {
+  title: string
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <section
+      className={[
+        'min-h-[400px] w-full overflow-hidden rounded-2xl border border-slate-200/70 bg-white/95',
+        'shadow-[0px_4px_14px_rgba(15,23,42,0.08)] backdrop-blur-sm',
+        'transition-all duration-300 ease-out motion-reduce:transition-none',
+        'hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0px_20px_40px_rgba(15,23,42,0.14)]',
+        className,
+      ].join(' ')}
+    >
+      <div className="border-b border-slate-200/80 px-6 py-5">
+        <h2 className="text-xl font-semibold text-slate-800">{title}</h2>
+      </div>
+
+      <div className="px-6 py-5">{children}</div>
+    </section>
+  )
+}
+
 // renders the sidebar, header, and a form for personal details (name, birthday,
 // gender, age, blood type). on mount it loads existing data from patient_info;
 // on submit it upserts the row keyed by the user's auth uid.
 export default function PatientYourInformation() {
-  const { profile } = useAuth()
+  /*const { profile } = useAuth()
   const displayName = profile?.full_name?.trim() || 'Patient'
-  const [profileOpen, setProfileOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)*/
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -78,27 +106,33 @@ export default function PatientYourInformation() {
 
   // validates age input then upserts the form data into public.patient_info
   // using the user's auth uid as the primary key (onConflict: 'id').
+  // also updates public.profiles.full_name so the header/app profile name stays in sync.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setMessage(null)
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       setMessage({ type: 'error', text: 'not logged in' })
       return
     }
-    setSaving(true)
+
+    const trimmedName = form.name.trim()
     const ageNum = form.age.trim() === '' ? null : parseInt(form.age, 10)
+
     if (form.age.trim() !== '' && (ageNum === null || Number.isNaN(ageNum) || ageNum < 0 || ageNum > 150)) {
       setMessage({ type: 'error', text: 'age must be a number between 0 and 150' })
-      setSaving(false)
       return
     }
-    const { error } = await supabase
+
+    setSaving(true)
+
+    const { error: patientInfoError } = await supabase
       .from('patient_info')
       .upsert(
         {
           id: user.id,
-          name: form.name.trim() || null,
+          name: trimmedName || null,
           birthday: form.birthday || null,
           gender: form.gender.trim() || null,
           age: ageNum,
@@ -107,120 +141,155 @@ export default function PatientYourInformation() {
         { onConflict: 'id' }
       )
 
-    setSaving(false)
-    if (error) {
-      setMessage({ type: 'error', text: error.message })
+    if (patientInfoError) {
+      setSaving(false)
+      setMessage({ type: 'error', text: patientInfoError.message })
       return
     }
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        full_name: trimmedName || null,
+      })
+      .eq('id', user.id)
+
+    setSaving(false)
+
+    if (profileError) {
+      setMessage({
+        type: 'error',
+        text: `patient_info saved, but profiles update failed: ${profileError.message}`,
+      })
+      return
+    }
+
     setMessage({ type: 'success', text: 'saved' })
+
+    setTimeout(() => {
+      window.location.reload()
+    }, 500)
   }
 
-  return (
-    <div className="pd-layout">
-      <PatientSideBar/> 
-      <div className="pd-right">
-        <header className="pd-header">
-          <div className="pd-header-left">
-            <h1 className="pd-header-title">Your information</h1>
-            <span className="pd-header-patient">{displayName}</span>
-          </div>
-          <div className="pd-header-actions">
-            <div className="pd-profile-wrap">
-              <button type="button" className="pd-profile-btn" onClick={() => setProfileOpen((o) => !o)} aria-expanded={profileOpen} aria-haspopup="true">
-                <span className="pd-avatar">{displayName.slice(0, 2).toUpperCase()}</span>
-                <span className="pd-profile-name">{displayName}</span>
-                <span className="pd-chevron">v</span>
-              </button>
-              {profileOpen && (
-                <div className="pd-dropdown" role="menu">
-                  <Link to="/" className="pd-dropdown-item">Home</Link>
-                  <Link to="/dashboard/patient" className="pd-dropdown-item">Dashboard</Link>
-                  <button type="button" className="pd-dropdown-item" onClick={() => setProfileOpen(false)}>Sign out</button>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
+ return (
+  <SidebarProvider defaultOpen>
+    <div className="flex min-h-[calc(100vh-96px)]">
+      <PatientSidebar />
 
-        <main className="pd-main">
-          <div className="pd-grid">
-            <section className="pd-card">
-              <h2 className="pd-card-title">Personal details</h2>
-              <p className="pd-card-desc">View and update your information. Only you can see and edit this.</p>
-              {loading ? (
-                <p className="pd-empty">Loading...</p>
-              ) : (
-                <form className="pd-form" onSubmit={handleSubmit}>
-                  <div className="pd-form-row">
-                    <label htmlFor="pi-name">Name</label>
-                    <input
-                      id="pi-name"
-                      type="text"
-                      value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                      placeholder="Full name"
-                    />
-                  </div>
-                  <div className="pd-form-row">
-                    <label htmlFor="pi-birthday">Birthday</label>
-                    <input
-                      id="pi-birthday"
-                      type="date"
-                      value={form.birthday}
-                      onChange={(e) => setForm((f) => ({ ...f, birthday: e.target.value }))}
-                    />
-                  </div>
-                  <div className="pd-form-row">
-                    <label htmlFor="pi-gender">Gender</label>
-                    <input
-                      id="pi-gender"
-                      type="text"
-                      value={form.gender}
-                      onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
-                      placeholder="Gender"
-                    />
-                  </div>
-                  <div className="pd-form-row">
-                    <label htmlFor="pi-age">Age</label>
-                    <input
-                      id="pi-age"
-                      type="number"
-                      min={0}
-                      max={150}
-                      value={form.age}
-                      onChange={(e) => setForm((f) => ({ ...f, age: e.target.value }))}
-                      placeholder="Age"
-                    />
-                  </div>
-                  <div className="pd-form-row">
-                    <label htmlFor="pi-blood_type">Blood type</label>
-                    <select
-                      id="pi-blood_type"
-                      value={form.blood_type}
-                      onChange={(e) => setForm((f) => ({ ...f, blood_type: e.target.value }))}
-                    >
-                      <option value="">Select</option>
-                      {BLOOD_TYPES.map((bt) => (
-                        <option key={bt} value={bt}>{bt}</option>
-                      ))}
-                    </select>
-                  </div>
-                  {message && (
-                    <p className={message.type === 'error' ? 'pd-alert pd-alert-warning' : 'pd-card-desc'}>
-                      {message.text}
-                    </p>
-                  )}
-                  <div className="pd-form-actions">
-                    <button type="submit" className="pd-btn pd-btn-primary" disabled={saving}>
-                      {saving ? 'Saving...' : 'Save'}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </section>
+<main className="pd-main">
+  <div className="grid gap-6 items-start auto-rows-max grid-cols-[repeat(auto-fill,minmax(500px,1fr))]">
+    <DashboardPanel title="Personal details" className="min-h-[400px]">
+      <p className="mb-4 text-sm text-slate-500">
+        View and update your information. Only you can see and edit this.
+      </p>
+
+      {loading ? (
+        <p className="text-sm text-slate-500">Loading...</p>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label htmlFor="pi-name" className="mb-1 block text-sm font-medium text-slate-700">
+              Name
+            </label>
+            <input
+              id="pi-name"
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="Full name"
+              className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none transition focus:border-indigo-400"
+            />
           </div>
-        </main>
-      </div>
+
+          <div>
+            <label htmlFor="pi-birthday" className="mb-1 block text-sm font-medium text-slate-700">
+              Date of Birth
+            </label>
+            <input
+              id="pi-birthday"
+              type="date"
+              value={form.birthday}
+              onChange={(e) => setForm((f) => ({ ...f, birthday: e.target.value }))}
+              className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none transition focus:border-indigo-400"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="pi-gender" className="mb-1 block text-sm font-medium text-slate-700">
+              Gender
+            </label>
+            <input
+              id="pi-gender"
+              type="text"
+              value={form.gender}
+              onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
+              placeholder="Gender"
+              className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none transition focus:border-indigo-400"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="pi-age" className="mb-1 block text-sm font-medium text-slate-700">
+              Age
+            </label>
+            <input
+              id="pi-age"
+              type="number"
+              min={0}
+              max={150}
+              value={form.age}
+              onChange={(e) => setForm((f) => ({ ...f, age: e.target.value }))}
+              placeholder="Age"
+              className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none transition focus:border-indigo-400"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="pi-blood_type" className="mb-1 block text-sm font-medium text-slate-700">
+              Blood type
+            </label>
+            <select
+              id="pi-blood_type"
+              value={form.blood_type}
+              onChange={(e) => setForm((f) => ({ ...f, blood_type: e.target.value }))}
+              className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none transition focus:border-indigo-400"
+            >
+              <option value="">Select</option>
+              {BLOOD_TYPES.map((bt) => (
+                <option key={bt} value={bt}>
+                  {bt}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {message && (
+            <div
+              className={`rounded-lg px-4 py-3 text-sm ${
+                message.type === 'error'
+                  ? 'border border-red-200 bg-red-50 text-red-700'
+                  : 'border border-green-200 bg-green-50 text-green-700'
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
+
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-lg bg-indigo-400 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </form>
+      )}
+    </DashboardPanel>
+  </div>
+</main>
     </div>
-  )
+  </SidebarProvider>
+)
 }

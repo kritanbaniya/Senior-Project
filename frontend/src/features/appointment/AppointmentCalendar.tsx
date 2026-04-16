@@ -79,9 +79,20 @@ export default function AppointmentCalendar({
       })
   }, [appointments])
   // ^ dependency: which refreshes on the appointments state from parent
+ 
 
-
-
+  const totalEvents: CalendarEvent[] = useMemo(() => {
+    
+    // if (viewPrefs.showReqs === 'all'){ 
+    // const merged = [...eventsReq, ...events]; 
+    //   return merged}
+    // else if (viewPrefs.showReqs === 'unseen'){ 
+    //   return eventsReq}
+    // else if (viewPrefs.showReqs === 'active'){ 
+    //   return events}
+    
+    return events
+  }, [events])
   
 
   //// USE CALENDAR COMPONENT 
@@ -89,7 +100,7 @@ export default function AppointmentCalendar({
     <div style={{ height: '650px', margin: '20px 0' }}>
       <Calendar
         localizer={localizer}
-        events={events}
+        events={totalEvents}
         date={currentDate}
         view={currentView}
         onNavigate={(newDate: Date) => setCurrentDate(newDate)} // aware of today's date
@@ -121,7 +132,7 @@ export default function AppointmentCalendar({
         popup
         step={30}
         timeslots={2}
-        defaultView={Views.MONTH}
+        defaultView={Views.WEEK}
         dayPropGetter={(date: Date) => {
           const cellDate = startOfDay(date)
           if (cellDate < today) {
