@@ -922,6 +922,63 @@ button:focus-visible {
 }
 .pd-form-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
 
+/* clinic address maptiler autocomplete (create / edit clinic) */
+.caa-hint {
+  margin: 0 0 0.35rem 0;
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+.caa-wrap {
+  position: relative;
+}
+.caa-wrap > input {
+  width: 100%;
+}
+.caa-loading {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+.caa-notice {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: #92400e;
+}
+.caa-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 40;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  max-height: 240px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.caa-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  font-size: 0.9rem;
+  color: #0f172a;
+  cursor: pointer;
+  line-height: 1.35;
+}
+.caa-item:hover,
+.caa-item.is-active {
+  background: #f1f5f9;
+}
+
 .pd-records-list { display: flex; flex-direction: column; gap: 0.75rem; }
 .pd-record-item { padding-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9; }
 .pd-record-item:last-child { border-bottom: none; }
@@ -1203,6 +1260,76 @@ button:focus-visible {
   position: absolute;
   inset: 0;
 }
+/* map pins + popups (maplibre marker / popup content) */
+.clinic-discovery-map .cd-map-pin {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  user-select: none;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+}
+.clinic-discovery-map .cd-map-pin:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+}
+.clinic-discovery-map .maplibregl-popup-content {
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+.clinic-discovery-map .maplibregl-popup-close-button {
+  font-size: 1.25rem;
+  padding: 0.35rem 0.5rem;
+  color: #64748b;
+}
+.clinic-discovery-map .cd-map-popup {
+  padding: 0.85rem 1rem 1rem;
+  min-width: 200px;
+  max-width: min(320px, 92vw);
+  text-align: left;
+}
+.clinic-discovery-map .cd-map-popup-title {
+  margin: 0 0 0.35rem 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+}
+.clinic-discovery-map .cd-map-popup-specialty {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0369a1;
+  background: #e0f2fe;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 0.45rem;
+}
+.clinic-discovery-map .cd-map-popup-address {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.4;
+}
+.clinic-discovery-map .cd-map-popup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+.clinic-discovery-map .cd-map-popup-actions .cd-btn {
+  padding: 0.45rem 1rem;
+  font-size: 0.88rem;
+}
 .clinic-discovery-map .cd-overlay {
   position: absolute;
   top: 0.75rem;
@@ -1441,6 +1568,10 @@ button:focus-visible {
   border: 1px solid rgba(0,0,0,0.12);
   box-shadow: 0 4px 14px rgba(0,0,0,0.12);
 }
+.clinic-discovery-map .cd-back-floating.is-panel-open {
+  left: auto;
+  right: 1rem;
+}
 @media (max-width: 768px) {
   .clinic-discovery-map {
     min-height: calc(100vh - 6rem);
@@ -1478,6 +1609,9 @@ button:focus-visible {
     left: auto;
     right: 0.8rem;
     bottom: 0.5rem;
+  }
+  .clinic-discovery-map .cd-back-floating.is-panel-open {
+    right: 0.8rem;
   }
 }
 

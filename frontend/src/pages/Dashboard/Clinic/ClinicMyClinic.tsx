@@ -6,9 +6,10 @@
 //   3. clinic exists, approved -> view mode with edit toggle
 
 import { useState, useEffect } from 'react'
-import { useClinicDashboard, SPECIALTIES, US_STATES } from './ClinicADashBoard'
+import { useClinicDashboard, SPECIALTIES } from './ClinicADashBoard'
 import ClinicCreation from './ClinicCreation'
-import type { ClinicFormData } from './ClinicCreation'
+import ClinicAddressAutocompleteSection from './ClinicAddressAutocompleteSection'
+import type { ClinicFormData } from './clinicFormTypes'
 
 export default function ClinicMyClinic() {
   const {
@@ -27,6 +28,7 @@ export default function ClinicMyClinic() {
     specialty: '',
     phone: '',
     email: '',
+    google_place_id: '',
     address_line1: '',
     address_line2: '',
     city: '',
@@ -44,6 +46,7 @@ export default function ClinicMyClinic() {
         specialty: clinicRow.specialty ?? '',
         phone: clinicRow.phone ?? '',
         email: clinicRow.email ?? '',
+        google_place_id: clinicRow.google_place_id ?? '',
         address_line1: clinicRow.address_line1 ?? '',
         address_line2: clinicRow.address_line2 ?? '',
         city: clinicRow.city ?? '',
@@ -64,6 +67,7 @@ export default function ClinicMyClinic() {
         specialty: clinicRow.specialty ?? '',
         phone: clinicRow.phone ?? '',
         email: clinicRow.email ?? '',
+        google_place_id: clinicRow.google_place_id ?? '',
         address_line1: clinicRow.address_line1 ?? '',
         address_line2: clinicRow.address_line2 ?? '',
         city: clinicRow.city ?? '',
@@ -77,8 +81,10 @@ export default function ClinicMyClinic() {
 
   const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    await handleClinicUpdate(form)
-    setEditing(false)
+    const ok = await handleClinicUpdate(form)
+    if (ok) {
+      setEditing(false)
+    }
   }
 
   if (loading) {
@@ -211,63 +217,7 @@ export default function ClinicMyClinic() {
               placeholder="contact@yourclinic.com"
             />
           </div>
-          <div className="pd-form-row">
-            <label htmlFor="cl-addr1">Address line 1</label>
-            <input
-              id="cl-addr1"
-              type="text"
-              value={form.address_line1}
-              onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))}
-              placeholder="Street address"
-              required
-            />
-          </div>
-          <div className="pd-form-row">
-            <label htmlFor="cl-addr2">Address line 2</label>
-            <input
-              id="cl-addr2"
-              type="text"
-              value={form.address_line2}
-              onChange={(e) => setForm((f) => ({ ...f, address_line2: e.target.value }))}
-              placeholder="Suite, floor, unit (optional)"
-            />
-          </div>
-          <div className="pd-form-row">
-            <label htmlFor="cl-city">City</label>
-            <input
-              id="cl-city"
-              type="text"
-              value={form.city}
-              onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-              placeholder="City"
-              required
-            />
-          </div>
-          <div className="pd-form-row">
-            <label htmlFor="cl-state">State</label>
-            <select
-              id="cl-state"
-              value={form.state}
-              onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-              required
-            >
-              <option value="">Select state</option>
-              {US_STATES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-          <div className="pd-form-row">
-            <label htmlFor="cl-zip">Zip code</label>
-            <input
-              id="cl-zip"
-              type="text"
-              value={form.zip_code}
-              onChange={(e) => setForm((f) => ({ ...f, zip_code: e.target.value }))}
-              placeholder="Zip code"
-              required
-            />
-          </div>
+          <ClinicAddressAutocompleteSection form={form} setForm={setForm} disabled={saving} />
           <div className="pd-form-row">
             <label htmlFor="cl-website">Website</label>
             <input
