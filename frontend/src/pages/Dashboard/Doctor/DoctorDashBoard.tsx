@@ -88,20 +88,6 @@ export default function DoctorDashBoard() {
         medicalHistory: 'Hypertension (diagnosed 2020)',
         emergencyContact: 'John Doe (spouse) - 555-0123',
       },
-      medicalHistory: [
-        {
-          date: '2024-11-15',
-          diagnosis: 'Upper respiratory infection',
-          notes: 'Prescribed amoxicillin 500mg. Symptoms resolved after 7 days.',
-          doctor: 'Dr. Smith',
-        },
-        {
-          date: '2024-08-22',
-          diagnosis: 'Annual physical examination',
-          notes: 'All vitals normal. Continue current hypertension medication.',
-          doctor: 'Dr. Johnson',
-        },
-      ],
       testResults: [
         {
           id: 't1',
@@ -128,14 +114,6 @@ export default function DoctorDashBoard() {
         medicalHistory: 'Type 2 Diabetes, High cholesterol',
         emergencyContact: 'Sarah Smith (daughter) - 555-0456',
       },
-      medicalHistory: [
-        {
-          date: '2024-12-01',
-          diagnosis: 'Type 2 Diabetes follow-up',
-          notes: 'HbA1c at 7.2%. Continue current regimen. Recommend dietary counseling.',
-          doctor: 'Dr. Martinez',
-        },
-      ],
     },
     {
       id: '3',
@@ -435,9 +413,8 @@ export default function DoctorDashBoard() {
                   <>
                     {loadingHistory ? (
                       <p className="text-sm text-gray-500">Loading history...</p>
-                    ) : fetchedHistory.length > 0 || (selectedPatient.medicalHistory && selectedPatient.medicalHistory.length > 0) ? (
+                    ) : fetchedHistory.length > 0 ? (
                       <div className="space-y-4">
-                        {/* Show fetched history from database first */}
                         {fetchedHistory.map((record) => (
                           <div key={record.id} className="pb-4 border-b border-gray-200 last:border-b-0 last:pb-0">
                             <div className="flex items-baseline gap-3 mb-2">
@@ -465,18 +442,6 @@ export default function DoctorDashBoard() {
                             </div>
                             
                             <p className="text-xs text-gray-500 mt-2">{record.doctor_name}</p>
-                          </div>
-                        ))}
-                        
-                        {/* Show mock history after real history */}
-                        {selectedPatient.medicalHistory?.map((record, index) => (
-                          <div key={`mock-${index}`} className="pb-4 border-b border-gray-200 last:border-b-0 last:pb-0">
-                            <div className="flex items-baseline gap-3 mb-1">
-                              <span className="text-sm font-semibold text-blue-600">{record.date}</span>
-                              <span className="text-sm font-medium text-gray-900">{record.diagnosis}</span>
-                            </div>
-                            <p className="text-sm text-gray-700 mb-1">{record.notes}</p>
-                            <p className="text-xs text-gray-500">{record.doctor}</p>
                           </div>
                         ))}
                       </div>
