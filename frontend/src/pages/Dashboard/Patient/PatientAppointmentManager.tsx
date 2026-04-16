@@ -1,71 +1,31 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase.ts' 
-import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
-import type { MemberList, Appointment, AppointmentViewPrefs, AppointmentType, AppointmentFormType } from '@/features/appointment/types.ts'
-import AppointmentForm from '@/features/appointment/AppointmentForm.tsx'
+import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx';
+import type {  
+    UserClinicRelationship, 
+    Appointment, 
+    AppointmentViewPrefs, 
+    AppointmentType, 
+    CreateApptForm 
+} from '@/features/appointment/types.ts';
 import PatientSidebar from './components/PatientSidebar.tsx'
+import ApptCreateModal from '@/features/appointment/ApptCreateModal.tsx';
+import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
 import { SidebarProvider } from '@/components/ui/sidebar'
+
+ 
+
+// CAN ONLY EDIT REQUESTS OR PENDING 
 
 
 
 export default function PatientAppointmentManager() {
-    var debuglog : boolean = false
-    type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
+    type debuglogType = 'initial'| 'read' | 'create' | 'update' | 'delete' | 'lifecycle'
+    var debuglog: debuglogType[] = []
+    type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed' 
 
-    // form management 
-    const [scheduleForm, setScheduleForm] = useState<AppointmentFormType>({
-        patientId: '',
-        date: '',
-        time: '',
-        doctorId: '',
-        type: '',
-    })
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    // VIEW PREFERENCES 
-    const [totalPages, setTotalPage] = useState<number>(0)
-    const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
-        mode: 'calendar',
-        page: 1,
-        rowsPerPage: 10, // user can edit the number of rows per page 
-        sortRules: [ // by default, sort by date 
-        { field: 'appointment_date', direction: 'asc' },
-        ], 
-        dateMode: 'upcoming',
-        rangeStart: '',
-        rangeEnd: '',
-    }) // viewPref CANNOT be undefined 
-    // call back function; update viewpreferences from child components 
-    const updateViewPrefs = (updates: Partial<AppointmentViewPrefs>) => {
-        setViewPrefs((prev) => {  // old object 
-        const next = {
-        ...prev,    // copy what remains the same 
-        ...updates, // overwrite with what changes 
-        }
-
-        if (
-            updates.rowsPerPage !== undefined &&
-            updates.rowsPerPage !== prev.rowsPerPage
-        ) {
-            next.page = 1
-        }
-        return next
-        })
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //// COMPONENT RENDER VARIABLES - decides if a part of the page gets mounted
-    const [showScheduleForm, setShowScheduleForm] = useState(false) 
-    // const [showAptUpdateForm, setShowAptUpdateForm] = useState(false)
-    // creation status 
-    const [createStatus, setCreateStatus] = useState<AppointmentCreateStatus>('idle')
-    const [createMessage, setCreateMessage] = useState('')
-    // stop showing appointments while new query is loading new appt list - MAY NEED BETTER PERFORMANCE
-    const [appointmentsLoading, setAppointmentsLoading] = useState(false)
-
-
-
-
+ 
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// HELPER FUNCTIONS: 
     // Retrieve Appointment Types  
@@ -81,14 +41,16 @@ export default function PatientAppointmentManager() {
             (row: { value: string }) => row.value as AppointmentType
         )
         setAppointmentTypes(values)
-        if(debuglog === true){
+        if(debuglog.includes('initial')){
             console.log(appointmentTypes)
         }
     }
     
-    // Retrieve clinic ID  
-    const [clinicList, setClinicList] = useState<any[]>([])
-    const [clinic, setClinic] = useState<string>() 
+    // The CLINIC Selected for creation  
+    const [ showClinicSelector, setShowClinicSelector ] = useState<boolean>(true) // decides if form needs to show clinic selector UI 
+    const [ clinicReq, setClinicReq ] = useState<string>() // for the Form 
+    const [clinicView, setClinicView] = useState<string>() // for the View 
+    const [clinicList, setClinicList] = useState<UserClinicRelationship[]>([]) 
     const loadClinics = async () => {
         const { data: authData, error: authErr } = await supabase.auth.getUser()
         if (authErr || !authData.user) {
@@ -105,40 +67,35 @@ export default function PatientAppointmentManager() {
             console.log('CLINIC ERROR:', error)
             return  
         }
-        if(debuglog == true) {console.log(data)} 
-
+        if(debuglog.includes('initial')) {console.log(data)} 
+        // 
+        data.unshift({clinic_id: 'all', clinic_name: 'All', created_at: null, role: 'patient'})
         setClinicList(data) 
-        setClinic(data[0].clinic_id)  
+        setClinicView(data[0].clinic_id)  
     }
 
-
-    // temparory empty f 
-    function emptyf(): void {
-        return
-    }
-
-    
-    // Retrieve the Practicianers of selected clinic 
-    const [practicionerList, setPracticionerList] = useState<MemberList[]>([])
+    // Retrieve the PRACTICIANERS of selected clinic 
+    const [practicionerList, setPracticionerList] = useState<UserClinicRelationship[]>([])
     const retrievePracticioners = async (clinicId: string) => {
-        const { data, error } = await supabase
-            .schema('public')
-            .from('membernamerole')
-            .select('*')
-            .eq('clinic_id', clinicId)
-            .eq('role', 'doctor')
-        if (error) {
-            console.log('DOCTORS ERROR:', error)
-            return
+        if(clinicId == 'all'){
+            setPracticionerList([])
+        }else{
+            const { data, error } = await supabase
+                .schema('public')
+                .from('membernamerole')
+                .select('*')
+                .eq('clinic_id', clinicId)
+                .eq('role', 'doctor')
+            if (error) {
+                console.log('DOCTORS ERROR:', error)
+                return
+            }
+            console.log("doctor list:", data)
+            setPracticionerList(data ?? [])
         }
-        console.log("doctor list:", data)
-        setPracticionerList(data ?? [])
     }
 
-    // Keep track of patient's own data 
-    // just load into one object? yes. - i want to do that
-    // const [patientName, setPatientName] = useState<MemberList | undefined>(undefined)
-    // const [patientId, setPatientId] = useState<string>()
+    // Retrieve own info
     type patientInfoType = {
         created_at : string, 
         email : string, 
@@ -166,16 +123,15 @@ export default function PatientAppointmentManager() {
             return  
         }
         
-        setPatientInfo(data)
-        // console.log(data)
-        if (debuglog == true){ console.log("PROFILE INFO:", data) }
+        setPatientInfo(data) 
+        if (debuglog.includes('initial')){ console.log("PROFILE INFO:", data) } 
+    }
 
-        //IN:  pass in userID 
-        //OUT: 
-        // - retrieve PROFILE user information 
-        // - member list 
-        
-        // supabase. 
+
+
+    // temparory empty f 
+    function emptyf(): void {
+        return
     }
     
 
@@ -183,26 +139,51 @@ export default function PatientAppointmentManager() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     ///// C R U D !!! 
+    // C: UI 
+    const [showCreateForm, setShowCreateForm] = useState<boolean>(false)
+    const [createForm, setCreateForm] = useState<CreateApptForm>({
+        appointmentId: '', 
+        patientId: '',
+        doctorId: '',
+        date: '',
+        time: '',
+        type: '',
+        appointment_status: 'requested',
+        nurse_note: '',
+        patient_note: '' 
+    })
+    const [createStatus, setCreateStatus] = useState<AppointmentCreateStatus>('idle')
+    const [createMessage, setCreateMessage] = useState('')
     //// C: CREATE APPT REQUEST 
-    const createAppointment = async (clinicId: string) => {
+    const createAppointment = async (clinicId: string) => { // I : clinicId  &&  Submission form 
+        if(debuglog.includes('create')){console.log('CREATEFORM SUBMITTED', createForm)} 
+
+
+        ////// SET UI 
         setCreateStatus('loading')
         setCreateMessage('')  
-        if(debuglog == true){console.log('FORMSUBMITTED', scheduleForm)}
-        
+  
+        ////// EXIT CASES 
         // exit if form is incomplete. 
-        if (  !clinicId ||
-        !patientInfo?.id ||
-        !scheduleForm.date ||
-        !scheduleForm.time ||
-        !scheduleForm.doctorId ||
-        !scheduleForm.type) {
+        if (  !clinicId || 
+            !patientInfo?.id || 
+            !createForm || 
+            !createForm.date || 
+            !createForm.time || 
+            !createForm.doctorId || 
+            !createForm.type) {
             setCreateStatus('failed')
             setCreateMessage('Appointment creation failed. Please complete all fields.')
             console.log('ERROR: APPOINTMENT CREATION FAILED')
             return
         }
+        if (clinicId === 'all' ){
+            setCreateStatus('failed')
+            setCreateMessage('Please select a clinic') 
+            console.log('APPOINTMENT CREATION REQUIRES A CLINIC')
+            return}
         // exit if appt time is before current time 
-        const selectedDateTime = new Date(`${scheduleForm.date}T${scheduleForm.time}`)
+        const selectedDateTime = new Date(`${createForm.date}T${createForm.time}`)
         const now = new Date()
         if (selectedDateTime < now) {
             setCreateStatus('failed')
@@ -211,77 +192,110 @@ export default function PatientAppointmentManager() {
         }
 
         // CREATE IT 
-        let appointmentDate = `${scheduleForm.date} ${scheduleForm.time}:00`
-        const { data, error } = await supabase
-            .schema('public')
-            .from('appt_creation_requests')
-            .insert([
-                {
-                    appointment_date: appointmentDate,
-                    patient_id: patientInfo.id,
-                    clinic_id: clinicId,
-                    clinician_id: scheduleForm.doctorId,
-                    visit_type: scheduleForm.type,
-                    patient_notes: null, 
-                    nurse_notes: null, 
-                    request_status: 'unseen'
-                },
-            ])
-            .select('*')
-            .single()
-    
-        if (error || !data) {
-            setCreateStatus('failed')
-            setCreateMessage('Appointment creation failed.')
+        try {
+            const created = await apiCreateAppt(createForm, clinicId)
+            if(debuglog.includes('create')) console.log('CREATED:', created)
+            // TAIL UI CHANGES console.log('doctorId in form:', createForm.doctorId)
+            const doctorName = practicionerList.find((d) => d.user_id === createForm.doctorId)?.full_name ?? 'Unknown provider' 
+            const clinicThis = clinicList.find((d) => d.clinic_id === clinicReq)?.clinic_name ?? 'Unknown Clinic' 
+            setCreateStatus('success')
+            setCreateMessage(`Appointment Requested for ${createForm.date} at ${clinicThis} with ${doctorName}.`)
+            // since appt list changed, re-call readAppt
+            if(clinicView === clinicId) await readAppointments(clinicId, viewPrefs)
+        } catch (error) {
             console.log('ERROR CREATE:', error)
-            return
-        }
-
-        const doctorName = practicionerList.find((d) => d.user_id === scheduleForm.doctorId)?.full_name ??
-        'Unknown provider'
-        setCreateStatus('success')
-        setCreateMessage(
-        `Appointment created for ${patientInfo.full_name} on ${scheduleForm.date} at ${scheduleForm.time} with ${doctorName}.`
-        )
-
-        await readAppointments(clinicId, viewPrefs)
+            // TAIL UI CHANGES  
+            setCreateStatus('failed')
+            setCreateMessage('Appointment request failed.') 
+        } finally {
+            // if(clinic) await readAppointments(clinic, viewPrefs)
+        }  
     }
     /// pass these to children 
-    // create am appointment FOR FORM 
-    const handleNewAppointment = (start: Date) => {
+    // create an appointment 
+    const handleCreateAppointment = async () => { 
+        if(clinicReq) createAppointment(clinicReq) 
+        if(!clinicReq) if(!clinicView) createAppointment(clinicView as string)
+    }
+    // open the form modal * 
+    const openCreateForm = (start: Date) => { 
         const now = new Date()
         if (start < now) {
             setCreateStatus('failed')
             setCreateMessage('Cannot create an appointment for the past.')
             return
         }
-
         const yyyy = start.getFullYear()
         const mm = String(start.getMonth() + 1).padStart(2, '0')
         const dd = String(start.getDate()).padStart(2, '0')
         const hh = String(start.getHours()).padStart(2, '0')
         const min = String(start.getMinutes()).padStart(2, '0')
+        
+        if(!patientInfo) {
+            setCreateStatus('failed')                           // for UI 
+            setCreateMessage('No valid user logged in')         // for UI 
+            setShowCreateForm(false)   // Allow the user to edit the form 
+            return}
 
-        setScheduleForm((f: AppointmentFormType) => ({
+
+        setCreateForm((f: CreateApptForm) => ({     // prefill date and time 
             ...f,
             date: `${yyyy}-${mm}-${dd}`,
-            time: `${hh}:${min}`,
+            time: `${hh}:${min}`,  
+            patientId: patientInfo.id,
+            appointment_status: 'requested' 
         }))
-
-        setCreateStatus('idle')
-        setCreateMessage('')
-        setShowScheduleForm(true)
+        // setShowAptUpdateForm(false)     // make sure updateForm is not open 
+        setCreateStatus('idle')     // for UI 
+        setCreateMessage('')        // for UI 
+        setShowCreateForm(true)   // Allow the user to edit the form 
     } 
-    // : string // this should come from a selection in the child 
-    const handleCreateAppointment = async () => {
-        if (clinic){
-            createAppointment(clinic)}
-    }
 
 
 
 
-    //// R: READ APPOINTMENT
+    /////////////////////////////////////////////////////
+    //// R: READ APPOINTMENT// VIEW PREFERENCES 
+    const [totalPages, setTotalPage] = useState<number>(0)
+    const [viewPrefs, setViewPrefs] = useState<AppointmentViewPrefs>({
+        mode: 'calendar',
+        page: 1, 
+        rowsPerPage: 10, // user can edit the number of rows per page 
+        sortRules: [ // by default, sort by date 
+        { field: 'appointment_date', direction: 'asc' },
+        ], 
+        searchBy: '',
+        searchValue: '',
+        showReqs: [ 
+            'pending',
+            'requested',
+            'canceled',
+            'deserted',
+            'active',
+            'completed'  
+        ], 
+        showPast: false, 
+        rangeStart: '',
+        rangeEnd: '',
+    }) 
+    const updateViewPrefs = (updates: Partial<AppointmentViewPrefs>) => {
+        setViewPrefs((prev) => {  // old object 
+            const next = {
+            ...prev,    // copy what remains the same 
+            ...updates, // overwrite with what changes 
+            } 
+            if (
+                updates.rowsPerPage !== undefined &&
+                updates.rowsPerPage !== prev.rowsPerPage
+            ) {
+                next.page = 1
+            }
+
+            if(debuglog.includes('read')) console.log("PREFERENCES:", viewPrefs) 
+            return next
+        })
+    } 
+    const [appointmentsLoading, setAppointmentsLoading] = useState(false)
     const [appointmentsList, setAppointmentsList] = useState<Appointment[]>([])
     const readAppointments = async (
         clinicId: string,            // retrieve this clinic ID 
@@ -290,16 +304,37 @@ export default function PatientAppointmentManager() {
         setAppointmentsLoading(true)
         
         //   CREATE initial QUERY & ADD RULES 
-        let query = supabase
-            .schema('public')
-            .from('appointmentlist_display2')
-            .select('*', { count: prefs.mode === 'list' ? 'exact' : undefined })
-            .eq('clinic_id', clinicId)
+        let query 
+        if (clinicId === 'all'){
+            query = supabase
+                .schema('public')
+                .from('appointmentlist_display')
+                .select('*', { count: prefs.mode === 'list' ? 'exact' : undefined }) 
+        } else {
+            query = supabase
+                .schema('public')
+                .from('appointmentlist_display')
+                .select('*', { count: prefs.mode === 'list' ? 'exact' : undefined })
+                .eq('clinic_id', clinicId)
+        }
+        
+        /////////////////////////////////////////////////////////////////////////////
+        //// BUILD QUERY   
+        // Appointment Status Checklist 
+        if (debuglog.includes('read')) console.log('Appointment Status Checklist :', prefs.showReqs)
+        if (prefs.showReqs.length === 0) {
+            return
+        }
+        const filters = [] 
+        for (const status of prefs.showReqs) {
+            filters.push(`appointment_status.eq.${status}`)
+        } 
+        query = query.or(filters.join(','))
     
-         
-        // IF CALENDAR MODE 
+
+        // CALENDAR MODE 
         if (prefs.mode === 'calendar') {
-        // from 
+            // from 
             if (prefs.rangeStart) {
                 query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
             }
@@ -312,7 +347,7 @@ export default function PatientAppointmentManager() {
                 ascending: rule.direction === 'asc',
                 })
             }
-     
+    
             // USE THE QUERY TO OBTAIN RETURN DATA 
             const { data, error } = await query
             if (error) {
@@ -326,44 +361,65 @@ export default function PatientAppointmentManager() {
             
             return
         }
-     
-        // list mode
-        const from = (prefs.page - 1) * prefs.rowsPerPage // first row on page 
-        const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
     
-        if (prefs.dateMode === 'upcoming') {
-        query = query.gte('appointment_date', new Date().toISOString())
-        } else if (prefs.dateMode === 'past') {
-        query = query.lt('appointment_date', new Date().toISOString())
-        } else if (
-        prefs.dateMode === 'range' &&
-        prefs.rangeStart &&
-        prefs.rangeEnd
-        ) {
-        query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
-        query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
-        }
-    
-        for (const rule of prefs.sortRules) {
-        query = query.order(rule.field, {
-            ascending: rule.direction === 'asc',
-        })
-        }
-    
-        // USE THE QUERY TO OBTAIN RETURN DATA 
-        const { data, error, count } = await query.range(from, to)
-        if (error) {
-        console.log('APPOINTMENT READ ERROR:', error)
-        setAppointmentsList([])
-        setAppointmentsLoading(false)
-        return
-        }
-        setAppointmentsList(data ?? [])
-        setAppointmentsLoading(false) 
-        setTotalPage(count ? Math.ceil(count / viewPrefs.rowsPerPage) : 1) 
 
-        if(debuglog == true) {console.log("total pages", totalPages)} 
-    }
+        // LIST MODE 
+        if (prefs.mode === 'list'){
+            const from = (prefs.page - 1) * prefs.rowsPerPage // first row on page 
+            const to = (prefs.rowsPerPage * prefs.page)-1     // last row on page 
+        
+            // show past 
+            if (prefs.showPast === false && prefs.searchBy !== 'date range'){ 
+                query = query.gte('appointment_date', new Date().toISOString())
+            } 
+            
+            // search by date range 
+            if (prefs.searchBy === 'date range' &&
+                prefs.rangeStart &&
+                prefs.rangeEnd) {
+                query = query.gte('appointment_date', `${prefs.rangeStart}T00:00:00`)
+                query = query.lte('appointment_date', `${prefs.rangeEnd}T23:59:59`)
+            } 
+            if (prefs.searchBy === 'visit type' && prefs.searchValue){
+                query = query.eq('visit_type', prefs.searchValue as AppointmentType)
+            } 
+            if (prefs.searchBy === 'patient' && prefs.searchValue){
+                query = query.ilike('patient_name', `%${prefs.searchValue}%`)
+            } 
+            if (prefs.searchBy === 'provider' && prefs.searchValue){
+                query = query.ilike('clinician_name', `%${prefs.searchValue}%`)
+            } 
+            if (prefs.searchBy === 'clinic' && prefs.searchValue){
+                query = query.ilike('clinic_name', `%${prefs.searchValue}%`)
+            } 
+
+
+            for (const rule of prefs.sortRules) {
+                query = query.order(rule.field, {
+                ascending: rule.direction === 'asc',
+                })
+            } // add more sort rules 
+  
+        
+
+            // USE THE QUERY TO OBTAIN RETURN DATA 
+            const { data, error, count } = await query.range(from, to)
+            if (error) {
+                console.log('APPOINTMENT READ ERROR:', error)
+                setAppointmentsList([])
+                setAppointmentsLoading(false)
+                return
+            }
+            setAppointmentsList(data ?? [])
+            setAppointmentsLoading(false) 
+            setTotalPage(count ? Math.ceil(count / viewPrefs.rowsPerPage) : 1) 
+
+            if(debuglog.includes('read')) {console.log("total pages", totalPages)} 
+        }
+        setAppointmentsLoading(false)
+    } 
+
+
 
 
 
@@ -376,100 +432,131 @@ export default function PatientAppointmentManager() {
         loadPatientInfo()
     }, [])
 
-    useEffect(() => {
-        if (!clinic) return
-        retrieveAppointmentTypes()    // may depend on clinics in the future 
-        retrievePracticioners(clinic)
-        // can i rewrite this so it only relies on one variable?, so it doesn't appear to double load 
-    }, [clinic])
+    useEffect(() => { // Show Clinic Selector 
+        if (!clinicView)  return  
+        setShowClinicSelector(true)  
+        setClinicReq(clinicView)
+    }, [clinicView])
 
-    useEffect(() => {
-        if (!clinic) return
-        readAppointments(clinic, viewPrefs)
-    }, [clinic, viewPrefs])
+    useEffect(() => { // Load Practicianers depending on clinicReq 
+        if (!clinicReq)  return 
+        retrieveAppointmentTypes()
+        retrievePracticioners(clinicReq) 
+    }, [clinicReq])
 
+    // RE-QUERY FETCH APPTs WHEN VIEW SETTINGS CHANGE 
+    useEffect(() => { 
+        if (!clinicView) return 
+        readAppointments(clinicView, viewPrefs)
+    }, [clinicView, viewPrefs])
 
     // Rerender components when these values are retrieved/updated 
     useEffect(() => {
-        if (practicionerList.length > 0 && scheduleForm.doctorId === '') {
-            setScheduleForm((f) => ({ ...f, doctorId: practicionerList[0].user_id }))
+        if (practicionerList.length > 0 && createForm.doctorId === '') {
+            setCreateForm((f) => ({ ...f, doctorId: practicionerList[0].user_id }))
         }
     }, [practicionerList])
+
     useEffect(() => {
         if (appointmentTypes.length > 0) {
-            setScheduleForm((f) => ({
+            setCreateForm((f) => ({
                 ...f,
                 type: f.type || appointmentTypes[0],
             }))
-
-            // setUpdateForm((f) => ({
-            //     ...f,
-            //     type: f.type || appointmentTypes[0],
-            // }))
         }
     }, [appointmentTypes])
 
 
-    // useEffect(()=>{
-    //     console.log(appointmentsList)
-    // }, [appointmentsList])
 
-
-
-               return(
+    return( <>
             <SidebarProvider defaultOpen>
-                    <PatientSidebar />
-                        
-                    <div className="pd-right">
-                        <div className="info-box appointments-section">
-                            <h1 className="info-box-title">
-                                <select 
-                                    className='m-2 p-2 font-bold border-2 border-solid rounded-lg' 
-                                    onChange={(e) =>
-                                    setClinic(() => (e.target.value))
-                                    }>
-                                    {clinicList.map((c) => (
-                                    <option key={c.clinic_id} value={c.clinic_id}>
-                                            {c.clinic_name}
-                                    </option>))} 
-                                </select>
-                                Appointment Scheduling
-                            </h1>
-                            {(!clinic || !viewPrefs) ? (<p>Loading clinic...</p>) 
-                            : (<>
-                            {/* VIEWING APPOINTMENTS */}
-                            <AppointmentSwitch
-                                appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
-                                // functions to handle appointment CRUD actions 
-                                onSelectAppointment={emptyf} 
-                                onDeleteAppointment={emptyf}
-                                onSelectSlot={emptyf}
-                                // function to handle appointment view changes (changing query)
-                                viewPrefs={viewPrefs}
-                                totalPages = {totalPages}
-                                onUpdateViewPrefs = {updateViewPrefs}
-                                />
+            {/* Left sidebar */}
+            <PatientSidebar/> 
+                    
+                <div className="pd-right">
+                    <div className="info-box appointments-section">
+                        <div className='flex justify-between'>
+                        {/* SELECT CLINIC */}
+                        <h1 className="info-box-title">
+                            <select 
+                                className='m-2 p-2 font-bold border-2 border-solid rounded-lg' 
+                                onChange={(e) =>
+                                setClinicView(() => (e.target.value))
+                                }>
+                                {clinicList.map((c) => (
+                                <option key={c.clinic_id} value={c.clinic_id}>
+                                        {c.clinic_name}
+                                </option>))} 
+                            </select>
+                            Appointment Scheduling
+                        </h1>
 
-                            <AppointmentForm
-                                showScheduleForm={showScheduleForm}
-                                setShowScheduleForm={setShowScheduleForm}
-                                scheduleForm={scheduleForm}
-                                setScheduleForm={setScheduleForm}
+                        {/* FORM/MODALS */}
+                        {/* CREATION FORM */}
+                        <div className = "flex items-center">
+                            <ApptCreateModal
+                                showClinicSelector={showClinicSelector}
+                                clinicList={clinicList} 
+                                selectedClinic = {clinicReq || ''}
+                                setSelectedClinic={setClinicReq}
+
+                                showCreateForm={showCreateForm}
+                                setShowCreateForm={setShowCreateForm}
+                                createForm={createForm}
+                                setCreateForm={setCreateForm}
                                 createStatus={createStatus}
                                 setCreateStatus={setCreateStatus}
                                 createMessage={createMessage}
                                 setCreateMessage={setCreateMessage}
-                                handleNewAppointment={handleNewAppointment}
+                                openCreateForm={openCreateForm}
                                 createAppointment={handleCreateAppointment} // createAppointment
                                 nurse={false}
                                 patientList={[]}
                                 patientName={patientInfo?.full_name || 'Err Or'}
                                 practicionerList={practicionerList}
                                 appointmentTypes={appointmentTypes}
-                                />
-                                </>)}
+                            /> 
                         </div>
+                    </div> 
+
+
+
+                        
+                        
+                        {(!clinicView || !viewPrefs) ? (<p>Loading clinic...</p>) 
+                        : (<>
+                            {/* VIEWING APPOINTMENTS */}
+                            <AppointmentSwitch
+                                appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments 
+                                // functions to handle appointment CRUD actions 
+                                onSelectAppointment={emptyf} 
+                                onDeleteAppointment={emptyf}
+                                onSelectSlot={openCreateForm}
+                                // function to handle appointment view changes (changing query)
+                                viewPrefs={viewPrefs}
+                                totalPages = {totalPages}
+                                onUpdateViewPrefs = {updateViewPrefs}
+                                nurse={false}
+                                /> 
+                            </>)}
                     </div>
+                </div>
             </SidebarProvider>
-        );
-    }
+        </>
+    );
+} 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,4 +1,7 @@
 {
+  "dependencies": {
+    "radix-ui": "^1.4.3"
+  },
   "devDependencies": {
     "supabase": "^2.89.0"
   },
