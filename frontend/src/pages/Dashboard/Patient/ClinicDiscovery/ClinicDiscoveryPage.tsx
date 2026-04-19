@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import {
+    distanceMilesLl,
     distanceMetersLl,
     readPatientMapLocation,
     writePatientMapLocation,
@@ -460,6 +461,33 @@ export default function ClinicDiscoveryPage() {
         return clinics
     }, [searchResults, clinics, searchText])
 
+    const sortedDisplayedClinics = useMemo(() => {
+        if (!userLngLat) {
+            return displayedClinics
+        }
+        const { lat, lng } = userLngLat
+        const withCoords: ClinicRow[] = []
+        const withoutCoords: ClinicRow[] = []
+        for (const c of displayedClinics) {
+            if (
+                c.latitude != null &&
+                c.longitude != null &&
+                Number.isFinite(c.latitude) &&
+                Number.isFinite(c.longitude)
+            ) {
+                withCoords.push(c)
+            } else {
+                withoutCoords.push(c)
+            }
+        }
+        withCoords.sort(
+            (a, b) =>
+                distanceMilesLl(lat, lng, a.latitude as number, a.longitude as number) -
+                distanceMilesLl(lat, lng, b.latitude as number, b.longitude as number),
+        )
+        return [...withCoords, ...withoutCoords]
+    }, [displayedClinics, userLngLat])
+
     const clinicsWithCoords = useMemo(
         () =>
             displayedClinics.filter(
@@ -552,9 +580,9 @@ export default function ClinicDiscoveryPage() {
 
     const formatAddress = (c: ClinicRow) => formatClinicAddressLine(c)
 
-    const totalPages = Math.max(1, Math.ceil(displayedClinics.length / PAGE_SIZE))
+    const totalPages = Math.max(1, Math.ceil(sortedDisplayedClinics.length / PAGE_SIZE))
     const start = (currentPage - 1) * PAGE_SIZE
-    const clinicsOnPage = displayedClinics.slice(start, start + PAGE_SIZE)
+    const clinicsOnPage = sortedDisplayedClinics.slice(start, start + PAGE_SIZE)
 
     return (
         <div className="clinic-discovery clinic-discovery-map">
@@ -591,7 +619,7 @@ export default function ClinicDiscoveryPage() {
                         <p className="cd-loading cd-loading-dots">Loading</p>
                     ) : searchLoading ? (
                         <p className="cd-loading cd-loading-dots">Searching</p>
-                    ) : displayedClinics.length === 0 ? (
+                    ) : sortedDisplayedClinics.length === 0 ? (
                         searchText.trim() ? (
                             <p className="cd-empty">No clinics matched "{searchText.trim()}".</p>
                         ) : (
@@ -600,71 +628,95 @@ export default function ClinicDiscoveryPage() {
                     ) : (
                         <>
                             <ul className="cd-list">
-                                {clinicsOnPage.map((clinic) => (
-                                    <li
-                                        key={clinic.clinic_id}
-                                        className="cd-card"
-                                        role="button"
-                                        tabIndex={0}
-                                        aria-label={`Center map on ${clinic.clinic_name ?? 'clinic'}`}
-                                        onClick={(e) => {
-                                            const target = e.target as HTMLElement
-                                            if (target.closest('button, a')) {
-                                                return
-                                            }
-                                            focusClinicOnMap(clinic)
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' || e.key === ' ') {
-                                                e.preventDefault()
+                                {clinicsOnPage.map((clinic) => {
+                                    const distMi =
+                                        userLngLat &&
+                                        clinic.latitude != null &&
+                                        clinic.longitude != null &&
+                                        Number.isFinite(clinic.latitude) &&
+                                        Number.isFinite(clinic.longitude)
+                                            ? distanceMilesLl(
+                                                  userLngLat.lat,
+                                                  userLngLat.lng,
+                                                  clinic.latitude,
+                                                  clinic.longitude,
+                                              )
+                                            : null
+                                    const distLabel =
+                                        distMi != null
+                                            ? distMi < 0.1
+                                                ? '< 0.1 mi away'
+                                                : `${distMi.toFixed(1)} mi away`
+                                            : null
+                                    return (
+                                        <li
+                                            key={clinic.clinic_id}
+                                            className="cd-card"
+                                            role="button"
+                                            tabIndex={0}
+                                            aria-label={`Center map on ${clinic.clinic_name ?? 'clinic'}`}
+                                            onClick={(e) => {
+                                                const target = e.target as HTMLElement
+                                                if (target.closest('button, a')) {
+                                                    return
+                                                }
                                                 focusClinicOnMap(clinic)
-                                            }
-                                        }}
-                                    >
-                                        <h2 className="cd-card-name">{clinic.clinic_name ?? 'Clinic'}</h2>
-                                        {clinic.specialty && (
-                                            <span className="cd-card-specialty">{clinic.specialty}</span>
-                                        )}
-                                        {formatAddress(clinic) && (
-                                            <p className="cd-card-address">{formatAddress(clinic)}</p>
-                                        )}
-                                        {(clinic.phone || clinic.email || clinic.website) && (
-                                            <div className="cd-card-meta">
-                                                {clinic.phone && <span>Phone: {clinic.phone}</span>}
-                                                {clinic.email && (
-                                                    <a href={`mailto:${clinic.email}`}>{clinic.email}</a>
-                                                )}
-                                                {clinic.website && (
-                                                    <a href={clinic.website.startsWith('http') ? clinic.website : `https://${clinic.website}`} target="_blank" rel="noopener noreferrer">
-                                                        Website
-                                                    </a>
-                                                )}
-                                            </div>
-                                        )}
-                                        <div className="cd-card-actions">
-                                            <button
-                                                type="button"
-                                                className="cd-btn"
-                                                onClick={() => navigate('/clinic', { state: { clinicId: clinic.clinic_id, clinic } })}
-                                            >
-                                                Check
-                                            </button>
-                                            {profile?.role === 'patient' && (
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault()
+                                                    focusClinicOnMap(clinic)
+                                                }
+                                            }}
+                                        >
+                                            <h2 className="cd-card-name">{clinic.clinic_name ?? 'Clinic'}</h2>
+                                            {clinic.specialty && (
+                                                <span className="cd-card-specialty">{clinic.specialty}</span>
+                                            )}
+                                            {distLabel && (
+                                                <span className="cd-card-distance">{distLabel}</span>
+                                            )}
+                                            {formatAddress(clinic) && (
+                                                <p className="cd-card-address">{formatAddress(clinic)}</p>
+                                            )}
+                                            {(clinic.phone || clinic.email || clinic.website) && (
+                                                <div className="cd-card-meta">
+                                                    {clinic.phone && <span>Phone: {clinic.phone}</span>}
+                                                    {clinic.email && (
+                                                        <a href={`mailto:${clinic.email}`}>{clinic.email}</a>
+                                                    )}
+                                                    {clinic.website && (
+                                                        <a href={clinic.website.startsWith('http') ? clinic.website : `https://${clinic.website}`} target="_blank" rel="noopener noreferrer">
+                                                            Website
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            )}
+                                            <div className="cd-card-actions">
                                                 <button
                                                     type="button"
                                                     className="cd-btn"
-                                                    onClick={() => {
-                                                        setSelectedClinicId(clinic.clinic_id)
-                                                        setSelectedClinicName(clinic.clinic_name ?? 'Clinic')
-                                                        navigate('/dashboard/patient', { state: { clinicId: clinic.clinic_id } })
-                                                    }}
+                                                    onClick={() => navigate('/clinic', { state: { clinicId: clinic.clinic_id, clinic } })}
                                                 >
-                                                    Select clinic
+                                                    Check
                                                 </button>
-                                            )}
-                                        </div>
-                                    </li>
-                                ))}
+                                                {profile?.role === 'patient' && (
+                                                    <button
+                                                        type="button"
+                                                        className="cd-btn"
+                                                        onClick={() => {
+                                                            setSelectedClinicId(clinic.clinic_id)
+                                                            setSelectedClinicName(clinic.clinic_name ?? 'Clinic')
+                                                            navigate('/dashboard/patient', { state: { clinicId: clinic.clinic_id } })
+                                                        }}
+                                                    >
+                                                        Select clinic
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </li>
+                                    )
+                                })}
                             </ul>
                             {totalPages > 1 && (
                                 <div className="cd-pagination">

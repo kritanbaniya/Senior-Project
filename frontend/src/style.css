@@ -1454,6 +1454,13 @@ button:focus-visible {
   border-radius: 8px;
   margin-bottom: 0.5rem;
 }
+.clinic-discovery .cd-card-distance {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
 .clinic-discovery .cd-card-address,
 .clinic-discovery .cd-card-meta {
   font-size: 0.9rem;

@@ -79,3 +79,13 @@ export function distanceMetersLl(
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
     return R * c
 }
+
+/** great-circle distance in miles (same sphere model as distanceMetersLl) */
+export function distanceMilesLl(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number,
+): number {
+    return distanceMetersLl(lat1, lng1, lat2, lng2) * 0.000621371
+}
