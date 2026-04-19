@@ -2,6 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import {
+    distanceMetersLl,
+    readPatientMapLocation,
+    writePatientMapLocation,
+} from '../../../../lib/clinicDiscoveryLocationStorage'
 import { supabase } from '../../../../lib/supabase'
 import { useAuth } from '../../../../context/AuthContext'
 import { useClinicContext } from '../../../../context/ClinicContext'
@@ -18,6 +23,63 @@ const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY?.trim() ?? ''
 const MAP_STYLE_URL = MAPTILER_KEY
     ? `https://api.maptiler.com/maps/streets-v4/style.json?key=${MAPTILER_KEY}`
     : null
+
+const USER_AREA_SOURCE_ID = 'cd-user-area'
+const USER_AREA_LAYER_ID = 'cd-user-area-fill'
+const USER_AREA_RADIUS_M = 150
+const USER_AREA_SEGMENTS = 64
+const USER_AREA_REOPEN_EASE_MIN_M = 45
+
+type DiscPolygonFeature = {
+    type: 'Feature'
+    properties: Record<string, never>
+    geometry: { type: 'Polygon'; coordinates: [number, number][][] }
+}
+
+/** wgs84 disc for small radius (meters) using spherical forward geodesic */
+function approximateDiscPolygonFeature(
+    centerLng: number,
+    centerLat: number,
+    radiusMeters: number,
+    segments: number,
+): DiscPolygonFeature {
+    const earthM = 6371000
+    const lat1 = (centerLat * Math.PI) / 180
+    const lng1 = (centerLng * Math.PI) / 180
+    const dR = radiusMeters / earthM
+    const ring: [number, number][] = []
+
+    for (let i = 0; i <= segments; i++) {
+        const theta = (2 * Math.PI * i) / segments
+        const lat2 = Math.asin(
+            Math.sin(lat1) * Math.cos(dR) + Math.cos(lat1) * Math.sin(dR) * Math.cos(theta),
+        )
+        const lng2 =
+            lng1 +
+            Math.atan2(
+                Math.sin(theta) * Math.sin(dR) * Math.cos(lat1),
+                Math.cos(dR) - Math.sin(lat1) * Math.sin(lat2),
+            )
+        ring.push([(lng2 * 180) / Math.PI, (lat2 * 180) / Math.PI])
+    }
+
+    return {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+            type: 'Polygon',
+            coordinates: [ring],
+        },
+    }
+}
+
+function firstSymbolLayerId(map: maplibregl.Map): string | undefined {
+    const layers = map.getStyle()?.layers
+    if (!layers) {
+        return undefined
+    }
+    return layers.find((l) => l.type === 'symbol')?.id
+}
 
 function formatClinicAddressLine(c: ClinicRow): string | null {
     const parts = [c.address_line1, c.address_line2, c.city, c.state, c.zip_code].filter(Boolean)
@@ -116,6 +178,13 @@ export default function ClinicDiscoveryPage() {
     const [isPanelOpen, setIsPanelOpen] = useState(true)
     const [searchText, setSearchText] = useState('')
     const searchReqRef = useRef(0)
+    const geolocationRequestedRef = useRef(false)
+    const userLocationGrantedRef = useRef(!!readPatientMapLocation())
+    const skipInitialUserAreaEaseRef = useRef(!!readPatientMapLocation())
+    const [userLngLat, setUserLngLat] = useState<{ lng: number; lat: number } | null>(() => {
+        const p = readPatientMapLocation()
+        return p ? { lng: p.lng, lat: p.lat } : null
+    })
 
     const focusClinicOnMap = (clinic: ClinicRow) => {
         const map = mapRef.current
@@ -198,11 +267,17 @@ export default function ClinicDiscoveryPage() {
             return
         }
 
+        const persisted = readPatientMapLocation()
+        const initialCenter: [number, number] = persisted
+            ? [persisted.lng, persisted.lat]
+            : NYC_CENTER
+        const initialZoom = persisted ? 13 : 10.3
+
         mapRef.current = new maplibregl.Map({
             container: mapContainerRef.current,
             style: MAP_STYLE_URL,
-            center: NYC_CENTER,
-            zoom: 10.3,
+            center: initialCenter,
+            zoom: initialZoom,
             minZoom: 9.7,
             maxZoom: 16,
             maxBounds: NYC_BOUNDS,
@@ -211,20 +286,172 @@ export default function ClinicDiscoveryPage() {
         mapRef.current.on('error', (evt) => {
             console.error('maplibre style or tile load error', evt.error)
         })
+        // same corner: first control sits closest to the corner (attribution above zoom)
+        mapRef.current.addControl(new maplibregl.AttributionControl({ compact: true }), 'top-right')
         mapRef.current.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
-        mapRef.current.addControl(new maplibregl.AttributionControl({ compact: true }), 'top-left')
 
         mapRef.current.once('load', () => {
             setMapReady(true)
         })
 
         return () => {
-            setMapReady(false)
             didFitBoundsRef.current = false
-            mapRef.current?.remove()
+            const m = mapRef.current
+            if (m) {
+                try {
+                    m.stop()
+                } catch {
+                    // map may already be tearing down
+                }
+                m.remove()
+            }
             mapRef.current = null
         }
     }, [])
+
+    useEffect(() => {
+        if (!mapReady) {
+            return
+        }
+        if (geolocationRequestedRef.current) {
+            return
+        }
+        geolocationRequestedRef.current = true
+
+        const geo = navigator.geolocation
+        if (!geo?.getCurrentPosition) {
+            return
+        }
+
+        let cancelled = false
+
+        geo.getCurrentPosition(
+            (pos) => {
+                if (cancelled) {
+                    return
+                }
+                const { latitude, longitude } = pos.coords
+                if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+                    return
+                }
+                writePatientMapLocation(latitude, longitude)
+                userLocationGrantedRef.current = true
+                setUserLngLat({ lng: longitude, lat: latitude })
+            },
+            () => {
+                // permission denied or timeout: keep default map behavior
+            },
+            { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 },
+        )
+
+        return () => {
+            cancelled = true
+        }
+    }, [mapReady])
+
+    useEffect(() => {
+        const map = mapRef.current
+        if (!map || !mapReady || !userLngLat) {
+            return
+        }
+
+        const feature = approximateDiscPolygonFeature(
+            userLngLat.lng,
+            userLngLat.lat,
+            USER_AREA_RADIUS_M,
+            USER_AREA_SEGMENTS,
+        )
+
+        const beforeId = firstSymbolLayerId(map)
+        const existing = map.getSource(USER_AREA_SOURCE_ID)
+
+        if (existing) {
+            const geoSource = existing as maplibregl.GeoJSONSource
+            geoSource.setData(feature)
+            if (!map.getLayer(USER_AREA_LAYER_ID)) {
+                const layerSpec: maplibregl.FillLayerSpecification = {
+                    id: USER_AREA_LAYER_ID,
+                    type: 'fill',
+                    source: USER_AREA_SOURCE_ID,
+                    paint: {
+                        'fill-color': '#3b82f6',
+                        'fill-opacity': 0.28,
+                    },
+                }
+                if (beforeId) {
+                    map.addLayer(layerSpec, beforeId)
+                } else {
+                    map.addLayer(layerSpec)
+                }
+            }
+        } else {
+            map.addSource(USER_AREA_SOURCE_ID, {
+                type: 'geojson',
+                data: feature,
+            })
+            const layerSpec: maplibregl.FillLayerSpecification = {
+                id: USER_AREA_LAYER_ID,
+                type: 'fill',
+                source: USER_AREA_SOURCE_ID,
+                paint: {
+                    'fill-color': '#3b82f6',
+                    'fill-opacity': 0.28,
+                },
+            }
+            if (beforeId) {
+                map.addLayer(layerSpec, beforeId)
+            } else {
+                map.addLayer(layerSpec)
+            }
+        }
+
+        const isMobile = window.innerWidth <= 768
+        const padding = isMobile
+            ? { top: 24, right: 24, bottom: isPanelOpen ? 340 : 24, left: 24 }
+            : { top: 24, right: 24, bottom: 24, left: isPanelOpen ? 440 : 24 }
+
+        let shouldEase = true
+        if (skipInitialUserAreaEaseRef.current) {
+            skipInitialUserAreaEaseRef.current = false
+            shouldEase = false
+        } else {
+            try {
+                const c = map.getCenter()
+                const d = distanceMetersLl(c.lat, c.lng, userLngLat.lat, userLngLat.lng)
+                if (d < USER_AREA_REOPEN_EASE_MIN_M) {
+                    shouldEase = false
+                }
+            } catch {
+                shouldEase = true
+            }
+        }
+
+        try {
+            if (shouldEase && map.isStyleLoaded()) {
+                map.easeTo({
+                    center: [userLngLat.lng, userLngLat.lat],
+                    zoom: Math.max(map.getZoom(), 13),
+                    duration: 700,
+                    padding,
+                })
+            }
+        } catch {
+            // ignore if map is mid-teardown or center is invalid for current style
+        }
+
+        return () => {
+            try {
+                if (map.getStyle() && map.getLayer(USER_AREA_LAYER_ID)) {
+                    map.removeLayer(USER_AREA_LAYER_ID)
+                }
+                if (map.getStyle() && map.getSource(USER_AREA_SOURCE_ID)) {
+                    map.removeSource(USER_AREA_SOURCE_ID)
+                }
+            } catch {
+                // style may already be destroyed during route change
+            }
+        }
+    }, [mapReady, userLngLat])
 
     const displayedClinics = useMemo(() => {
         if (searchText.trim()) {
@@ -300,14 +527,16 @@ export default function ClinicDiscoveryPage() {
         }
 
         if (clinicsWithCoords.length > 0 && !didFitBoundsRef.current) {
-            const bounds = new maplibregl.LngLatBounds()
-            clinicsWithCoords.forEach((c) => {
-                bounds.extend([c.longitude as number, c.latitude as number])
-            })
-            try {
-                map.fitBounds(bounds, { padding: 56, maxZoom: 14, duration: 500 })
-            } catch {
-                // ignore
+            if (!userLocationGrantedRef.current) {
+                const bounds = new maplibregl.LngLatBounds()
+                clinicsWithCoords.forEach((c) => {
+                    bounds.extend([c.longitude as number, c.latitude as number])
+                })
+                try {
+                    map.fitBounds(bounds, { padding: 56, maxZoom: 14, duration: 500 })
+                } catch {
+                    // ignore
+                }
             }
             didFitBoundsRef.current = true
         }

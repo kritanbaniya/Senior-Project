@@ -1560,7 +1560,8 @@ button:focus-visible {
   position: absolute;
   left: 1rem;
   bottom: 1rem;
-  z-index: 3;
+  z-index: 20;
+  pointer-events: auto;
   margin-top: 0;
   padding: 0.45rem 0.7rem;
   border-radius: 10px;
