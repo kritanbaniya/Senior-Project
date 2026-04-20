@@ -142,7 +142,6 @@ export default function DoctorDashBoard() {
   const [showTestForm, setShowTestForm] = useState(false)
   const [newTestResult, setNewTestResult] = useState({ type: '', result: '', notes: '' })
   const [saveNoteFeedback, setSaveNoteFeedback] = useState<string | null>(null)
-  const [flagFormsFeedback, setFlagFormsFeedback] = useState<string | null>(null)
 
   const selectedPatient = patients.find((p) => p.id === selectedPatientId)
   const { profile } = useAuth() 
@@ -252,11 +251,6 @@ export default function DoctorDashBoard() {
     setShowTestForm(false)
   }
 
-  const flagMissingForms = (patientId: string) => {
-    console.log('Flagging missing forms for patient:', patientId)
-    setFlagFormsFeedback(patientId)
-    setTimeout(() => setFlagFormsFeedback(null), 3000)
-  }
 
   return (
     <div className="w-full max-w-full p-6 space-y-6">
@@ -296,11 +290,6 @@ export default function DoctorDashBoard() {
                         <div className="text-xs text-gray-600 mt-0.5">
                           {patient.age}y • {patient.appointmentType}
                         </div>
-                        {!patient.formsComplete && (
-                          <div className="text-xs text-red-600 font-semibold mt-1">
-                            ⚠ Incomplete
-                          </div>
-                        )}
                         <span 
                           className={`inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-md ${
                             patient.stage === 'consultation' ? 'bg-green-100 text-green-800' :
@@ -325,7 +314,7 @@ export default function DoctorDashBoard() {
             
             {/* Patient Header */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex justify-between items-start mb-4">
+              <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">{selectedPatient.patientName}</h2>
                   <p className="text-sm text-gray-600 mt-1">
@@ -340,28 +329,8 @@ export default function DoctorDashBoard() {
                 )}
               </div>
 
-              <div className="p-3 bg-blue-50 border-l-4 border-blue-600 rounded">
-                <p className="text-xs font-semibold text-blue-700 uppercase">Chief Complaint:</p>
-                <p className="text-sm text-gray-900 mt-1">{selectedPatient.symptoms}</p>
-              </div>
-
-              {!selectedPatient.formsComplete && (
-                <div className="mt-3 flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => flagMissingForms(selectedPatient.id)}
-                  >
-                    Flag Incomplete Forms
-                  </Button>
-                  {flagFormsFeedback === selectedPatient.id && (
-                    <span className="text-xs text-green-600 font-medium">Nurse notified</span>
-                  )}
-                </div>
-              )}
-
               {selectedPatient.stage === 'completed' && (
-                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-sm text-green-700 font-semibold">✓ Visit completed</p>
                 </div>
               )}
