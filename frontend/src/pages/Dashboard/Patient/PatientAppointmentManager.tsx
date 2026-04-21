@@ -59,9 +59,8 @@ export default function PatientAppointmentManager() {
         } 
         const { data, error } = await supabase
             .schema('public')
-            .from('membernamerole')
-            .select('*')
-            .eq('user_id', authData.user.id) 
+            .from('clinics')
+            .select('*') 
 
         if (error || !data) {
             console.log('CLINIC ERROR:', error)
@@ -86,6 +85,7 @@ export default function PatientAppointmentManager() {
                 .select('*')
                 .eq('clinic_id', clinicId)
                 .eq('role', 'doctor')
+                console.log('clinicId for retrieving practicioners:', clinicId)
             if (error) {
                 console.log('DOCTORS ERROR:', error)
                 return
