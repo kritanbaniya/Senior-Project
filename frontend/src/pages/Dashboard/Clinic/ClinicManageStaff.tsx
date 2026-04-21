@@ -2,7 +2,8 @@
 //
 // lets the admin view nurses and doctors associated with their clinic,
 // manage queue access for nurses, add staff by email, and remove staff.
-// all data comes from public.staff_permissions joined with public.profiles.
+// nurses come from public.staff_permissions joined with public.profiles.
+// doctors come from public.Memberships joined with public.profiles.
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../../../lib/supabase'
@@ -25,11 +26,6 @@ function formatInvitationStatus(s: InvitationStatus): string {
   if (s === 'pending') return 'Pending'
   if (s === 'accepted') return 'Accepted'
   return 'Rejected'
-}
-
-function formatRole(role: StaffRole): string {
-  if (role === 'doctor') return 'Doctor'
-  return 'Nurse'
 }
 
 type PendingAction = {
@@ -59,59 +55,99 @@ export default function ClinicManageStaff() {
     })
   }, [])
 
-  const fetchStaff = useCallback(async () => {
-    if (!clinicId) return
+const fetchStaff = useCallback(async () => {
+  if (!clinicId) return
 
-    setStaffLoading(true)
+  setStaffLoading(true)
 
-    const { data: permRows, error: permErr } = await supabase
-      .from('staff_permissions')
-      .select('*')
-      .eq('clinic_id', clinicId)
+  // Nurses come from staff_permissions
+  const { data: permRows, error: permErr } = await supabase
+    .from('staff_permissions')
+    .select('*')
+    .eq('clinic_id', clinicId)
 
-    if (permErr || !permRows || permRows.length === 0) {
-      setStaffList([])
-      setStaffLoading(false)
-      return
-    }
+  // Doctors come directly from Memberships
+  const { data: membershipRows, error: membershipErr } = await supabase
+    .from('Memberships')
+    .select('clinic_id, user_id, created_at')
+    .eq('clinic_id', clinicId)
 
-    const userIds = permRows.map((r) => r.user_id as string)
-
-    const { data: profiles, error: profilesErr } = await supabase
-      .from('profiles')
-      .select('id, email, full_name, role')
-      .in('id', userIds)
-      .in('role', ['nurse', 'doctor'])
-
-    if (profilesErr) {
-      setStaffList([])
-      setStaffLoading(false)
-      return
-    }
-
-    const profileMap = new Map(
-      (profiles ?? []).map((p) => [p.id as string, p]),
-    )
-
-    const merged: StaffMember[] = permRows
-      .map((r) => {
-        const prof = profileMap.get(r.user_id as string)
-        if (!prof) return null
-        return {
-          id: r.id as string,
-          user_id: r.user_id as string,
-          role: prof.role as StaffRole,
-          manage_queue: r.manage_queue as boolean,
-          invitation_status: (r.invitation_status as InvitationStatus) ?? 'pending',
-          full_name: (prof.full_name as string | null) ?? null,
-          email: (prof.email as string | null) ?? null,
-        }
-      })
-      .filter((row): row is StaffMember => row !== null)
-
-    setStaffList(sortStaff(merged))
+  if (permErr || membershipErr) {
+    setStaffList([])
     setStaffLoading(false)
-  }, [clinicId, sortStaff])
+    return
+  }
+
+  const nurseIds = (permRows ?? []).map((r) => r.user_id as string)
+  const doctorIds = (membershipRows ?? []).map((r) => r.user_id as string)
+
+  const allUserIds = Array.from(new Set([...nurseIds, ...doctorIds]))
+  if (allUserIds.length === 0) {
+    setStaffList([])
+    setStaffLoading(false)
+    return
+  }
+
+  const { data: profiles, error: profilesErr } = await supabase
+    .from('profiles')
+    .select('id, email, full_name, role')
+    .in('id', allUserIds)
+    .in('role', ['nurse', 'doctor'])
+
+  if (profilesErr) {
+    setStaffList([])
+    setStaffLoading(false)
+    return
+  }
+
+  const profileMap = new Map(
+    (profiles ?? []).map((p) => [p.id as string, p]),
+  )
+
+  const nurseRows = (permRows ?? []).map((r) => {
+  const prof = profileMap.get(r.user_id as string)
+  if (!prof || prof.role !== 'nurse') return null
+
+  return {
+    id: r.id as string,
+    user_id: r.user_id as string,
+    role: 'nurse' as const,
+    manage_queue: r.manage_queue as boolean,
+    invitation_status: (r.invitation_status as InvitationStatus) ?? 'pending',
+    full_name: (prof.full_name as string | null) ?? null,
+    email: (prof.email as string | null) ?? null,
+  }
+})
+
+const nurses: StaffMember[] = nurseRows.filter(
+  (row): row is NonNullable<typeof row> => row !== null
+)
+
+  const nurseIdSet = new Set(nurses.map((n) => n.user_id))
+
+  const doctorRows = (membershipRows ?? []).map((r) => {
+  const prof = profileMap.get(r.user_id as string)
+  if (!prof || prof.role !== 'doctor') return null
+  if (nurseIdSet.has(r.user_id as string)) return null
+
+  return {
+    id: r.user_id as string,
+    user_id: r.user_id as string,
+    role: 'doctor' as const,
+    manage_queue: false,
+    invitation_status: 'accepted' as InvitationStatus,
+    full_name: (prof.full_name as string | null) ?? null,
+    email: (prof.email as string | null) ?? null,
+  }
+})
+
+const doctors: StaffMember[] = doctorRows.filter(
+  (row): row is NonNullable<typeof row> => row !== null
+)
+
+  setStaffList(sortStaff([...nurses, ...doctors]))
+  setStaffLoading(false)
+}, [clinicId, sortStaff])
 
   useEffect(() => {
     if (clinicId) {
@@ -132,38 +168,36 @@ export default function ClinicManageStaff() {
   )
 
   const doAddStaff = async (email: string, role: StaffRole) => {
-    if (!clinicId) return
+  if (!clinicId) return
 
-    setAddLoading(true)
+  setAddLoading(true)
 
-    // 1. Look up the user in the profiles table
-    const { data: staffUser, error: lookupErr } = await supabase
-      .from('profiles')
-      .select('id, email, full_name, role')
-      .eq('email', email)
-      .eq('role', role)
-      .maybeSingle()
+  const { data: staffUser, error: lookupErr } = await supabase
+    .from('profiles')
+    .select('id, email, full_name, role')
+    .eq('email', email)
+    .eq('role', role)
+    .maybeSingle()
 
-    if (lookupErr) {
-      setAddLoading(false)
-      setStaffMessage({ type: 'error', text: lookupErr.message })
-      return
-    }
+  if (lookupErr) {
+    setAddLoading(false)
+    setStaffMessage({ type: 'error', text: lookupErr.message })
+    return
+  }
 
-    if (!staffUser) {
-      setAddLoading(false)
-      setStaffMessage({ type: 'error', text: `no ${role} found with that email address` })
-      return
-    }
+  if (!staffUser) {
+    setAddLoading(false)
+    setStaffMessage({ type: 'error', text: `no ${role} found with that email address` })
+    return
+  }
 
-    if (staffList.some((s) => s.user_id === (staffUser.id as string))) {
-      setAddLoading(false)
-      setStaffMessage({ type: 'error', text: `this ${role} is already on your staff` })
-      return
-    }
+  if (staffList.some((s) => s.user_id === (staffUser.id as string))) {
+    setAddLoading(false)
+    setStaffMessage({ type: 'error', text: `this ${role} is already on your staff` })
+    return
+  }
 
-    // 2. Insert into staff_permissions (existing logic)
-    if (role === 'nurse') {
+  if (role === 'nurse') {
     const { data: inserted, error: insertErr } = await supabase
       .from('staff_permissions')
       .insert({
@@ -181,31 +215,11 @@ export default function ClinicManageStaff() {
       setStaffMessage({ type: 'error', text: insertErr.message })
       return
     }
-    }
-
-    // 3. NEW: If the user is a doctor, add them to the Memberships table
-    else if (role === 'doctor') {
-      const { error: membershipErr } = await supabase
-        .from('Memberships') // Ensure this table name matches your schema exactly
-        .insert({
-          clinic_id: clinicId,
-          user_id: staffUser.id,
-          //console.log('Adding doctor to memberships with clinic_id:', clinicId, 'and user_id:', staffUser.id)
-          
-          // Add other fields here if your schema requires them (e.g., joined_at, role)
-        })
-
-      if (membershipErr) {
-        console.error('Error adding to memberships:', membershipErr.message)
-      }
-    }
-
-    setAddLoading(false)
 
     const newMember: StaffMember = {
       id: inserted.id as string,
       user_id: staffUser.id as string,
-      role,
+      role: 'nurse',
       manage_queue: false,
       invitation_status: (inserted.invitation_status as InvitationStatus) ?? 'pending',
       full_name: (staffUser.full_name as string | null) ?? null,
@@ -215,8 +229,39 @@ export default function ClinicManageStaff() {
     setStaffList((prev) => sortStaff([...prev, newMember]))
     setAddEmail('')
     setAddRole('nurse')
-    setStaffMessage({ type: 'success', text: `${formatRole(role).toLowerCase()} added to staff` })
+    setStaffMessage({ type: 'success', text: 'nurse added to staff' })
+    return
   }
+
+  const { error: membershipErr } = await supabase
+    .from('Memberships')
+    .insert({
+      clinic_id: clinicId,
+      user_id: staffUser.id,
+    })
+
+  setAddLoading(false)
+
+  if (membershipErr) {
+    setStaffMessage({ type: 'error', text: membershipErr.message })
+    return
+  }
+
+  const newMember: StaffMember = {
+    id: staffUser.id as string,
+    user_id: staffUser.id as string,
+    role: 'doctor',
+    manage_queue: false,
+    invitation_status: 'accepted',
+    full_name: (staffUser.full_name as string | null) ?? null,
+    email: (staffUser.email as string | null) ?? null,
+  }
+
+  setStaffList((prev) => sortStaff([...prev, newMember]))
+  setAddEmail('')
+  setAddRole('nurse')
+  setStaffMessage({ type: 'success', text: 'doctor added to staff' })
+}
 
   const handleAddStaff = (e: React.FormEvent) => {
     e.preventDefault()
@@ -274,11 +319,12 @@ export default function ClinicManageStaff() {
     })
   }
 
-  const doRemoveStaff = async (member: StaffMember) => {
-    setStaffMessage(null)
-    const fallbackLabel = member.role === 'doctor' ? 'this doctor' : 'this nurse'
-    const label = member.full_name ?? member.email ?? fallbackLabel
+const doRemoveStaff = async (member: StaffMember) => {
+  setStaffMessage(null)
+  const fallbackLabel = member.role === 'doctor' ? 'this doctor' : 'this nurse'
+  const label = member.full_name ?? member.email ?? fallbackLabel
 
+  if (member.role === 'nurse') {
     const { error } = await supabase
       .from('staff_permissions')
       .delete()
@@ -288,10 +334,27 @@ export default function ClinicManageStaff() {
       setStaffMessage({ type: 'error', text: error.message })
       return
     }
+  } else {
+    const { error } = await supabase
+      .from('Memberships')
+      .delete()
+      .eq('clinic_id', clinicId)
+      .eq('user_id', member.user_id)
 
-    setStaffList((prev) => prev.filter((s) => s.id !== member.id))
-    setStaffMessage({ type: 'success', text: `${label} removed` })
+    if (error) {
+      setStaffMessage({ type: 'error', text: error.message })
+      return
+    }
   }
+
+  setStaffList((prev) =>
+    prev.filter(
+      (s) => !(s.role === member.role && s.user_id === member.user_id)
+    )
+  )
+
+  setStaffMessage({ type: 'success', text: `${label} removed` })
+}
 
   const renderStaffTable = (members: StaffMember[], role: StaffRole) => {
     if (members.length === 0) {
