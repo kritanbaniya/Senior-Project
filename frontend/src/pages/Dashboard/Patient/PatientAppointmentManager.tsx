@@ -85,7 +85,7 @@ export default function PatientAppointmentManager() {
                 .select('*')
                 .eq('clinic_id', clinicId)
                 .eq('role', 'doctor')
-                console.log('clinicId for retrieving practicioners:', clinicId)
+                console.log
             if (error) {
                 console.log('DOCTORS ERROR:', error)
                 return
@@ -148,7 +148,7 @@ export default function PatientAppointmentManager() {
         date: '',
         time: '',
         type: '',
-        appointment_status: 'requested',
+        appointment_status: 'pending',
         nurse_note: '',
         patient_note: '' 
     })
@@ -243,7 +243,7 @@ export default function PatientAppointmentManager() {
             date: `${yyyy}-${mm}-${dd}`,
             time: `${hh}:${min}`,  
             patientId: patientInfo.id,
-            appointment_status: 'requested' 
+            appointment_status: 'pending', 
         }))
         // setShowAptUpdateForm(false)     // make sure updateForm is not open 
         setCreateStatus('idle')     // for UI 
@@ -268,7 +268,7 @@ export default function PatientAppointmentManager() {
         searchValue: '',
         showReqs: [ 
             'pending',
-            'requested',
+            'unseen',
             'canceled',
             'deserted',
             'active',
