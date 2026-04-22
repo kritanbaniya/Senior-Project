@@ -4,7 +4,6 @@ import type { QueueEntryRow } from '../types'
 type PatientQueueCardProps = {
   clinicSelected: boolean
   clinicid: string | null
-  selectedClinicName: string | null
   loading: boolean
   row: QueueEntryRow | null
   activePosition: number | null
@@ -12,13 +11,11 @@ type PatientQueueCardProps = {
   exitState: 'left' | 'removed_from_active' | null
   onJoin: () => void
   onLeave: () => void
-  onClearClinic: () => void
 }
 
 export default function PatientQueueCard({
   clinicSelected,
   clinicid,
-  selectedClinicName,
   loading,
   row,
   activePosition,
@@ -26,7 +23,6 @@ export default function PatientQueueCard({
   exitState,
   onJoin,
   onLeave,
-  onClearClinic,
 }: PatientQueueCardProps) {
   const hasActiveQueueEntry = row?.is_active === true
 
@@ -86,10 +82,7 @@ export default function PatientQueueCard({
                 : 'You were called and moved out of active queue.'}
             </p>
           )}
-          <p className="pd-card-desc">Choose a clinic first to join queue.</p>
-          <Link to="/clinic-discovery" className="pd-btn pd-btn-secondary">
-            browse clinics
-          </Link>
+          <p className="pd-card-desc">Choose a clinic first to join a queue.</p>
         </>
       ) : (
         <>
@@ -100,15 +93,6 @@ export default function PatientQueueCard({
                 : 'You were called and moved out of active queue.'}
             </p>
           )}
-          <p className="pd-card-desc">Selected clinic: {selectedClinicName ?? 'Clinic selected'}</p>
-          <div className="pd-checkin-buttons">
-            <button type="button" className="pd-btn pd-btn-secondary" onClick={onClearClinic}>
-              Remove Selected Clinic
-            </button>
-            <Link to="/clinic-discovery" className="pd-btn pd-btn-secondary">
-              browse clinics
-            </Link>
-          </div>
           <p className="pd-card-desc">Join this clinic queue to get started.</p>
           <button type="button" className="pd-btn pd-btn-primary" onClick={onJoin}>
             join queue
