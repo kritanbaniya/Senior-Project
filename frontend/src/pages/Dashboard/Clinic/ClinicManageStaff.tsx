@@ -1,18 +1,21 @@
 // manage staff page for the clinic admin dashboard.
 //
-// lets the admin view nurses associated with their clinic, toggle the
-// manage_queue permission, add new nurses by email, and remove nurses.
-// all data comes from public.staff_permissions joined with public.profiles.
+// lets the admin view nurses and doctors associated with their clinic,
+// manage queue access for nurses, add staff by email, and remove staff.
+// nurses come from public.staff_permissions joined with public.profiles.
+// doctors come from public.Memberships joined with public.profiles.
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useClinicDashboard } from './ClinicADashBoard'
 
 type InvitationStatus = 'pending' | 'accepted' | 'rejected'
+type StaffRole = 'nurse' | 'doctor'
 
 type StaffMember = {
   id: string
   user_id: string
+  role: StaffRole
   manage_queue: boolean
   invitation_status: InvitationStatus
   full_name: string | null
@@ -36,60 +39,115 @@ export default function ClinicManageStaff() {
   const [staffList, setStaffList] = useState<StaffMember[]>([])
   const [staffLoading, setStaffLoading] = useState(true)
   const [addEmail, setAddEmail] = useState('')
+  const [addRole, setAddRole] = useState<StaffRole>('nurse')
   const [addLoading, setAddLoading] = useState(false)
   const [staffMessage, setStaffMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
 
   const clinicId = clinicRow?.clinic_id
 
-  const fetchStaff = useCallback(async () => {
-    if (!clinicId) return
-
-    setStaffLoading(true)
-
-    const { data: permRows, error: permErr } = await supabase
-      .from('staff_permissions')
-      .select('*')
-      .eq('clinic_id', clinicId)
-
-    if (permErr || !permRows || permRows.length === 0) {
-      setStaffList([])
-      setStaffLoading(false)
-      return
-    }
-
-    const userIds = permRows.map((r) => r.user_id as string)
-
-    const { data: profiles, error: profilesErr } = await supabase
-      .from('profiles')
-      .select('id, email, full_name')
-      .in('id', userIds)
-
-    if (profilesErr) {
-      setStaffList([])
-      setStaffLoading(false)
-      return
-    }
-
-    const profileMap = new Map(
-      (profiles ?? []).map((p) => [p.id as string, p]),
-    )
-
-    const merged: StaffMember[] = permRows.map((r) => {
-      const prof = profileMap.get(r.user_id as string)
-      return {
-        id: r.id as string,
-        user_id: r.user_id as string,
-        manage_queue: r.manage_queue as boolean,
-        invitation_status: (r.invitation_status as InvitationStatus) ?? 'pending',
-        full_name: (prof?.full_name as string | null) ?? null,
-        email: (prof?.email as string | null) ?? null,
-      }
+  const sortStaff = useCallback((list: StaffMember[]) => {
+    return [...list].sort((a, b) => {
+      if (a.role !== b.role) return a.role === 'nurse' ? -1 : 1
+      const nameA = (a.full_name ?? a.email ?? '').toLowerCase()
+      const nameB = (b.full_name ?? b.email ?? '').toLowerCase()
+      return nameA.localeCompare(nameB)
     })
+  }, [])
 
-    setStaffList(merged)
+const fetchStaff = useCallback(async () => {
+  if (!clinicId) return
+
+  setStaffLoading(true)
+
+  // Nurses come from staff_permissions
+  const { data: permRows, error: permErr } = await supabase
+    .from('staff_permissions')
+    .select('*')
+    .eq('clinic_id', clinicId)
+
+  // Doctors come directly from Memberships
+  const { data: membershipRows, error: membershipErr } = await supabase
+    .from('Memberships')
+    .select('clinic_id, user_id, created_at')
+    .eq('clinic_id', clinicId)
+
+  if (permErr || membershipErr) {
+    setStaffList([])
     setStaffLoading(false)
-  }, [clinicId])
+    return
+  }
+
+  const nurseIds = (permRows ?? []).map((r) => r.user_id as string)
+  const doctorIds = (membershipRows ?? []).map((r) => r.user_id as string)
+
+  const allUserIds = Array.from(new Set([...nurseIds, ...doctorIds]))
+  if (allUserIds.length === 0) {
+    setStaffList([])
+    setStaffLoading(false)
+    return
+  }
+
+  const { data: profiles, error: profilesErr } = await supabase
+    .from('profiles')
+    .select('id, email, full_name, role')
+    .in('id', allUserIds)
+    .in('role', ['nurse', 'doctor'])
+
+  if (profilesErr) {
+    setStaffList([])
+    setStaffLoading(false)
+    return
+  }
+
+  const profileMap = new Map(
+    (profiles ?? []).map((p) => [p.id as string, p]),
+  )
+
+  const nurseRows = (permRows ?? []).map((r) => {
+  const prof = profileMap.get(r.user_id as string)
+  if (!prof || prof.role !== 'nurse') return null
+
+  return {
+    id: r.id as string,
+    user_id: r.user_id as string,
+    role: 'nurse' as const,
+    manage_queue: r.manage_queue as boolean,
+    invitation_status: (r.invitation_status as InvitationStatus) ?? 'pending',
+    full_name: (prof.full_name as string | null) ?? null,
+    email: (prof.email as string | null) ?? null,
+  }
+})
+
+const nurses: StaffMember[] = nurseRows.filter(
+  (row): row is NonNullable<typeof row> => row !== null
+)
+
+  const nurseIdSet = new Set(nurses.map((n) => n.user_id))
+
+  const doctorRows = (membershipRows ?? []).map((r) => {
+  const prof = profileMap.get(r.user_id as string)
+  if (!prof || prof.role !== 'doctor') return null
+  if (nurseIdSet.has(r.user_id as string)) return null
+
+  return {
+    id: r.user_id as string,
+    user_id: r.user_id as string,
+    role: 'doctor' as const,
+    manage_queue: false,
+    invitation_status: 'accepted' as InvitationStatus,
+    full_name: (prof.full_name as string | null) ?? null,
+    email: (prof.email as string | null) ?? null,
+  }
+})
+
+const doctors: StaffMember[] = doctorRows.filter(
+  (row): row is NonNullable<typeof row> => row !== null
+)
+
+  setStaffList(sortStaff([...nurses, ...doctors]))
+  setStaffLoading(false)
+}, [clinicId, sortStaff])
 
   useEffect(() => {
     if (clinicId) {
@@ -99,41 +157,52 @@ export default function ClinicManageStaff() {
     }
   }, [clinicId, fetchStaff])
 
-  const doAddStaff = async (email: string) => {
-    if (!clinicId) return
+  const nurseList = useMemo(
+    () => staffList.filter((member) => member.role === 'nurse'),
+    [staffList],
+  )
 
-    setAddLoading(true)
+  const doctorList = useMemo(
+    () => staffList.filter((member) => member.role === 'doctor'),
+    [staffList],
+  )
 
-    const { data: nurse, error: lookupErr } = await supabase
-      .from('profiles')
-      .select('id, email, full_name')
-      .eq('email', email)
-      .eq('role', 'nurse')
-      .maybeSingle()
+  const doAddStaff = async (email: string, role: StaffRole) => {
+  if (!clinicId) return
 
-    if (lookupErr) {
-      setAddLoading(false)
-      setStaffMessage({ type: 'error', text: lookupErr.message })
-      return
-    }
+  setAddLoading(true)
 
-    if (!nurse) {
-      setAddLoading(false)
-      setStaffMessage({ type: 'error', text: 'no nurse found with that email address' })
-      return
-    }
+  const { data: staffUser, error: lookupErr } = await supabase
+    .from('profiles')
+    .select('id, email, full_name, role')
+    .eq('email', email)
+    .eq('role', role)
+    .maybeSingle()
 
-    if (staffList.some((s) => s.user_id === (nurse.id as string))) {
-      setAddLoading(false)
-      setStaffMessage({ type: 'error', text: 'this nurse is already on your staff' })
-      return
-    }
+  if (lookupErr) {
+    setAddLoading(false)
+    setStaffMessage({ type: 'error', text: lookupErr.message })
+    return
+  }
 
+  if (!staffUser) {
+    setAddLoading(false)
+    setStaffMessage({ type: 'error', text: `no ${role} found with that email address` })
+    return
+  }
+
+  if (staffList.some((s) => s.user_id === (staffUser.id as string))) {
+    setAddLoading(false)
+    setStaffMessage({ type: 'error', text: `this ${role} is already on your staff` })
+    return
+  }
+
+  if (role === 'nurse') {
     const { data: inserted, error: insertErr } = await supabase
       .from('staff_permissions')
       .insert({
         clinic_id: clinicId,
-        user_id: nurse.id,
+        user_id: staffUser.id,
         manage_queue: false,
         invitation_status: 'pending',
       })
@@ -147,20 +216,52 @@ export default function ClinicManageStaff() {
       return
     }
 
-    setStaffList((prev) => [
-      ...prev,
-      {
-        id: inserted.id as string,
-        user_id: nurse.id as string,
-        manage_queue: false,
-        invitation_status: (inserted.invitation_status as InvitationStatus) ?? 'pending',
-        full_name: (nurse.full_name as string | null) ?? null,
-        email: (nurse.email as string | null) ?? null,
-      },
-    ])
+    const newMember: StaffMember = {
+      id: inserted.id as string,
+      user_id: staffUser.id as string,
+      role: 'nurse',
+      manage_queue: false,
+      invitation_status: (inserted.invitation_status as InvitationStatus) ?? 'pending',
+      full_name: (staffUser.full_name as string | null) ?? null,
+      email: (staffUser.email as string | null) ?? null,
+    }
+
+    setStaffList((prev) => sortStaff([...prev, newMember]))
     setAddEmail('')
+    setAddRole('nurse')
     setStaffMessage({ type: 'success', text: 'nurse added to staff' })
+    return
   }
+
+  const { error: membershipErr } = await supabase
+    .from('Memberships')
+    .insert({
+      clinic_id: clinicId,
+      user_id: staffUser.id,
+    })
+
+  setAddLoading(false)
+
+  if (membershipErr) {
+    setStaffMessage({ type: 'error', text: membershipErr.message })
+    return
+  }
+
+  const newMember: StaffMember = {
+    id: staffUser.id as string,
+    user_id: staffUser.id as string,
+    role: 'doctor',
+    manage_queue: false,
+    invitation_status: 'accepted',
+    full_name: (staffUser.full_name as string | null) ?? null,
+    email: (staffUser.email as string | null) ?? null,
+  }
+
+  setStaffList((prev) => sortStaff([...prev, newMember]))
+  setAddEmail('')
+  setAddRole('nurse')
+  setStaffMessage({ type: 'success', text: 'doctor added to staff' })
+}
 
   const handleAddStaff = (e: React.FormEvent) => {
     e.preventDefault()
@@ -173,13 +274,13 @@ export default function ClinicManageStaff() {
     }
 
     setPendingAction({
-      message: `Add nurse with email "${email}" to your staff?`,
-      onConfirm: () => void doAddStaff(email),
+      message: `Add ${addRole} with email "${email}" to your staff?`,
+      onConfirm: () => void doAddStaff(email, addRole),
     })
   }
 
   const handleToggleQueue = (member: StaffMember) => {
-    if (member.invitation_status !== 'accepted') return
+    if (member.role !== 'nurse' || member.invitation_status !== 'accepted') return
     const newValue = !member.manage_queue
     const label = member.full_name ?? member.email ?? 'this nurse'
     const action = newValue ? 'Grant' : 'Revoke'
@@ -209,7 +310,8 @@ export default function ClinicManageStaff() {
   }
 
   const handleRemoveStaff = (member: StaffMember) => {
-    const label = member.full_name ?? member.email ?? 'this nurse'
+    const fallbackLabel = member.role === 'doctor' ? 'this doctor' : 'this nurse'
+    const label = member.full_name ?? member.email ?? fallbackLabel
 
     setPendingAction({
       message: `Remove ${label} from your staff? This cannot be undone.`,
@@ -217,10 +319,12 @@ export default function ClinicManageStaff() {
     })
   }
 
-  const doRemoveStaff = async (member: StaffMember) => {
-    setStaffMessage(null)
-    const label = member.full_name ?? member.email ?? 'this nurse'
+const doRemoveStaff = async (member: StaffMember) => {
+  setStaffMessage(null)
+  const fallbackLabel = member.role === 'doctor' ? 'this doctor' : 'this nurse'
+  const label = member.full_name ?? member.email ?? fallbackLabel
 
+  if (member.role === 'nurse') {
     const { error } = await supabase
       .from('staff_permissions')
       .delete()
@@ -230,9 +334,101 @@ export default function ClinicManageStaff() {
       setStaffMessage({ type: 'error', text: error.message })
       return
     }
+  } else {
+    const { error } = await supabase
+      .from('Memberships')
+      .delete()
+      .eq('clinic_id', clinicId)
+      .eq('user_id', member.user_id)
 
-    setStaffList((prev) => prev.filter((s) => s.id !== member.id))
-    setStaffMessage({ type: 'success', text: `${label} removed` })
+    if (error) {
+      setStaffMessage({ type: 'error', text: error.message })
+      return
+    }
+  }
+
+  setStaffList((prev) =>
+    prev.filter(
+      (s) => !(s.role === member.role && s.user_id === member.user_id)
+    )
+  )
+
+  setStaffMessage({ type: 'success', text: `${label} removed` })
+}
+
+  const renderStaffTable = (members: StaffMember[], role: StaffRole) => {
+    if (members.length === 0) {
+      return (
+        <p className="pd-empty" style={{ marginTop: '0.75rem' }}>
+          No {role === 'nurse' ? 'nurses' : 'doctors'} added yet.
+        </p>
+      )
+    }
+
+    return (
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: role === 'nurse' ? '620px' : '560px' }}>
+          <thead>
+            <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border, #e2e8f0)' }}>
+              <th style={{ padding: '0.5rem 0.75rem' }}>Name</th>
+              <th style={{ padding: '0.5rem 0.75rem' }}>Email</th>
+              <th style={{ padding: '0.5rem 0.75rem' }}>Status</th>
+              {role === 'nurse' && <th style={{ padding: '0.5rem 0.75rem' }}>Queue Access</th>}
+              <th style={{ padding: '0.5rem 0.75rem' }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {members.map((member) => (
+              <tr
+                key={member.id}
+                style={{ borderBottom: '1px solid var(--border, #e2e8f0)' }}
+              >
+                <td style={{ padding: '0.5rem 0.75rem' }}>
+                  {member.full_name ?? '-'}
+                </td>
+                <td style={{ padding: '0.5rem 0.75rem' }}>
+                  {member.email ?? '-'}
+                </td>
+                <td style={{ padding: '0.5rem 0.75rem' }}>
+                  <span className="pd-status-badge">{formatInvitationStatus(member.invitation_status)}</span>
+                </td>
+                {role === 'nurse' && (
+                  <td style={{ padding: '0.5rem 0.75rem' }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        cursor: member.invitation_status === 'accepted' ? 'pointer' : 'not-allowed',
+                        opacity: member.invitation_status === 'accepted' ? 1 : 0.5,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={member.manage_queue}
+                        disabled={member.invitation_status !== 'accepted'}
+                        onChange={() => handleToggleQueue(member)}
+                      />
+                      {member.manage_queue ? 'Yes' : 'No'}
+                    </label>
+                  </td>
+                )}
+                <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
+                  <button
+                    type="button"
+                    className="pd-btn"
+                    style={{ color: 'var(--danger, #e53e3e)' }}
+                    onClick={() => handleRemoveStaff(member)}
+                  >
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
   }
 
   if (loading) {
@@ -308,22 +504,33 @@ export default function ClinicManageStaff() {
 
       <section className="pd-card" style={{ gridColumn: '1 / -1' }}>
         <h2 className="pd-card-title">Manage Staff</h2>
-        <p className="pd-card-desc">Add nurses to your clinic and manage their permissions.</p>
+        <p className="pd-card-desc">Add nurses and doctors to your clinic and manage their permissions.</p>
 
         <form
           className="pd-form"
           onSubmit={handleAddStaff}
           style={{ marginBottom: '1.5rem' }}
         >
-          <div className="pd-form-row" style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-            <div style={{ flex: 1 }}>
-              <label htmlFor="add-email">Add nurse by email</label>
+          <div className="pd-form-row" style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div style={{ minWidth: '180px' }}>
+              <label htmlFor="add-role">Staff role</label>
+              <select
+                id="add-role"
+                value={addRole}
+                onChange={(e) => setAddRole(e.target.value as StaffRole)}
+              >
+                <option value="nurse">Nurse</option>
+                <option value="doctor">Doctor</option>
+              </select>
+            </div>
+            <div style={{ flex: 1, minWidth: '260px' }}>
+              <label htmlFor="add-email">Add staff by email</label>
               <input
                 id="add-email"
                 type="email"
                 value={addEmail}
                 onChange={(e) => setAddEmail(e.target.value)}
-                placeholder="nurse@example.com"
+                placeholder={addRole === 'doctor' ? 'doctor@example.com' : 'nurse@example.com'}
                 required
               />
             </div>
@@ -349,68 +556,24 @@ export default function ClinicManageStaff() {
 
         {staffLoading ? (
           <p className="pd-empty">Loading staff...</p>
-        ) : staffList.length === 0 ? (
-          <p className="pd-empty">No staff added yet.</p>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '620px' }}>
-              <thead>
-                <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border, #e2e8f0)' }}>
-                  <th style={{ padding: '0.5rem 0.75rem' }}>Name</th>
-                  <th style={{ padding: '0.5rem 0.75rem' }}>Email</th>
-                  <th style={{ padding: '0.5rem 0.75rem' }}>Status</th>
-                  <th style={{ padding: '0.5rem 0.75rem' }}>Queue Access</th>
-                  <th style={{ padding: '0.5rem 0.75rem' }}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {staffList.map((member) => (
-                  <tr
-                    key={member.id}
-                    style={{ borderBottom: '1px solid var(--border, #e2e8f0)' }}
-                  >
-                    <td style={{ padding: '0.5rem 0.75rem' }}>
-                      {member.full_name ?? '-'}
-                    </td>
-                    <td style={{ padding: '0.5rem 0.75rem' }}>
-                      {member.email ?? '-'}
-                    </td>
-                    <td style={{ padding: '0.5rem 0.75rem' }}>
-                      <span className="pd-status-badge">{formatInvitationStatus(member.invitation_status)}</span>
-                    </td>
-                    <td style={{ padding: '0.5rem 0.75rem' }}>
-                      <label
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          cursor: member.invitation_status === 'accepted' ? 'pointer' : 'not-allowed',
-                          opacity: member.invitation_status === 'accepted' ? 1 : 0.5,
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={member.manage_queue}
-                          disabled={member.invitation_status !== 'accepted'}
-                          onChange={() => handleToggleQueue(member)}
-                        />
-                        {member.manage_queue ? 'Yes' : 'No'}
-                      </label>
-                    </td>
-                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
-                      <button
-                        type="button"
-                        className="pd-btn"
-                        style={{ color: 'var(--danger, #e53e3e)' }}
-                        onClick={() => handleRemoveStaff(member)}
-                      >
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div style={{ display: 'grid', gap: '1.5rem' }}>
+            <div>
+              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
+                Nurses
+              </h3>
+              <p className="pd-card-desc" style={{ marginBottom: '0.75rem' }}>
+                Nurses can be granted queue access after they accept the clinic invitation.
+              </p>
+              {renderStaffTable(nurseList, 'nurse')}
+            </div>
+
+            <div>
+              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
+                Doctors
+              </h3>
+              {renderStaffTable(doctorList, 'doctor')}
+            </div>
           </div>
         )}
       </section>

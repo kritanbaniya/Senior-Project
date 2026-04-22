@@ -28,7 +28,7 @@ export default function AppointmentSwitch({
 
     const viewRequests : any[] = [
         'pending',  // patient needs to make changes 
-        'requested',   // nurse/clinic has not seen it 
+        'unseen',   // nurse/clinic has not seen it 
         'canceled', // appointment was canceled 
         'deserted',  // patient did not show up 
         'active',   // active = APPOINTMENTS 
