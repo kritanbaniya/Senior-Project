@@ -148,7 +148,7 @@ export default function PatientAppointmentManager() {
         date: '',
         time: '',
         type: '',
-        appointment_status: 'pending',
+        appointment_status: 'unseen',
         nurse_note: '',
         patient_note: '' 
     })
@@ -243,7 +243,7 @@ export default function PatientAppointmentManager() {
             date: `${yyyy}-${mm}-${dd}`,
             time: `${hh}:${min}`,  
             patientId: patientInfo.id,
-            appointment_status: 'pending', 
+            appointment_status: 'unseen', 
         }))
         // setShowAptUpdateForm(false)     // make sure updateForm is not open 
         setCreateStatus('idle')     // for UI 
