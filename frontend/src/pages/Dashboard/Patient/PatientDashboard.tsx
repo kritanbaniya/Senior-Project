@@ -165,11 +165,11 @@ function getAppointmentBadgeClasses(status: AppointmentStatus) {
 function formatAppointmentStatus(status: AppointmentStatus) {
   switch (status) {
     case 'unseen':
-      return 'scheduled'
+      return 'requested - unseen'
     case 'active':
-      return 'checked in'
+      return 'scheduled'
     case 'canceled':
-      return 'cancelled'
+      return 'canceled'
     default:
       return status.replace('_', ' ')
   }
