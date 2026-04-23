@@ -1,11 +1,8 @@
 {
   "dependencies": {
-    "radix-ui": "^1.4.3"
+    "@supabase/supabase-js": "^2.103.3"
   },
   "devDependencies": {
     "supabase": "^2.89.0"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.103.0"
   }
 }
