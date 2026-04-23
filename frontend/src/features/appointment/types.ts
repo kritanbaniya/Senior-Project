@@ -7,6 +7,7 @@ export type AppointmentType = ''
     | 'Consultation'
     | 'Vaccination'
     | 'Lab Work'
+    | 'Walk-in'
 
 
 

@@ -170,6 +170,8 @@ export default function AppointmentCalendar({
             backgroundColor = '#d97706'
           } else if (event.raw.visit_type === 'Lab Work') {
             backgroundColor = '#dc2626'
+          } else if (event.raw.visit_type === 'Walk-in') {
+            backgroundColor = '#0e7490'
           }
 
           return {
