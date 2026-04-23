@@ -242,7 +242,7 @@ export default function NurseAppointmentManager() {
         searchValue: '',
         showReqs: [ 
             'pending',
-            'requested',
+            'unseen',
             'canceled',
             'deserted',
             'active',
