@@ -4,6 +4,7 @@ import { Menu } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClinicContext } from '../../../context/ClinicContext'
 import { usePatientQueue } from '../../../features/queue/usePatientQueue'
+import ClinicSelectionCard from '../../../features/queue/components/ClinicSelectionCard'
 import PatientQueueCard from '../../../features/queue/components/PatientQueueCard'
 import PatientSidebar from './components/PatientSidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
@@ -567,10 +568,19 @@ export default function PatientDashboard() {
             </div>
 
             <div>
+              <ClinicSelectionCard
+                selectedClinicName={selectedClinicName}
+                onClearClinic={() => {
+                  setSelectedClinicId(null)
+                  setSelectedClinicName(null)
+                }}
+              />
+            </div>
+
+            <div>
               <PatientQueueCard
                 clinicSelected={Boolean(activeClinicId && selectedClinicName?.trim())}
                 clinicid={activeClinicId ?? null}
-                selectedClinicName={selectedClinicName}
                 loading={queueLoading}
                 row={queueRow}
                 activePosition={activePosition}
@@ -578,10 +588,6 @@ export default function PatientDashboard() {
                 exitState={exitState}
                 onJoin={join}
                 onLeave={leave}
-                onClearClinic={() => {
-                  setSelectedClinicId(null)
-                  setSelectedClinicName(null)
-                }}
               />
               {queueError && (
                 <p className="mt-3 text-sm text-slate-500">{queueError}</p>
