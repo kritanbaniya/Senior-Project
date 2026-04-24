@@ -193,7 +193,6 @@ export default function DoctorDashBoard() {
   const [fetchedHistory, setFetchedHistory] = useState<MedicalHistoryRecord[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [clinicalNote, setClinicalNote] = useState<ClinicalNote>(INITIAL_CLINICAL_NOTE)
-  const [activeTab, setActiveTab] = useState<'intake' | 'history' | 'tests'>('intake')
   const [showTestForm, setShowTestForm] = useState(false)
   const [newTestResult, setNewTestResult] = useState({ type: '', result: '', notes: '' })
   const [saveNoteFeedback, setSaveNoteFeedback] = useState<string | null>(null)
