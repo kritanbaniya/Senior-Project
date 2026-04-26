@@ -38,42 +38,23 @@ export default function ClinicInfo() {
       fetchQueueData();
     }
   }, [clinicid, isLoggedIn]);
-
   const fetchQueueData = async () => {
     try {
       setLoading(true);
 
-      const { count, error: countError } = await supabase
-        .from('queue_entries')
-        .select('*', { count: 'exact', head: true })
-        .eq('clinic_id', clinicid)
-        .eq('is_active', false)
-        .neq('status', 'completed'); 
-      if (countError) throw countError;
-      setWaitingCount(count || 0);
+      const { data, error } = await supabase.rpc('get_queue_stats', {
+        cid: clinicid
+      });
 
-     const { data: completedData, error: avgError } = await supabase
-      .from('queue_entries')
-      .select('started_at, completed_at')
-      .eq('clinic_id', clinicid)
-      .eq('status', 'completed')
-      .not('started_at', 'is', null)
-      .not('completed_at', 'is', null)
-      .limit(50);
+      if (error) throw error;
 
-      if (avgError) throw avgError;
+      if (data && data.length > 0) {
+        const stats = data[0];
 
-      if (completedData && completedData.length > 0) {
-        const totalSeconds = completedData.reduce((acc, entry) => {
-        const start = new Date(entry.started_at).getTime();
-        const end = new Date(entry.completed_at).getTime();
-        return acc + (end - start) / 1000;
-      }, 0);
-
-      const avgSeconds = totalSeconds / completedData.length;
-
-      setAvgServiceTime(Math.round(avgSeconds));
+        setWaitingCount(stats.waiting_count);
+        setAvgServiceTime(stats.avg_service_seconds);
       }
+
     } catch (error) {
       console.error('Error fetching queue stats:', error);
     } finally {
