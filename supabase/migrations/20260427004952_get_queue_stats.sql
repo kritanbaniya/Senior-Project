@@ -12,7 +12,7 @@ as $$
       from queue_entries
       where clinic_id = cid
         and is_active = true
-        status NOT IN ('completed', 'pending')
+        and status NOT IN ('completed', 'pending')
     ),
     (
       select coalesce(
