@@ -222,7 +222,24 @@ export default function AppointmentList({
         }
     }
 
-
+    function getRowColor(status: string): string {
+        switch (status) {
+        case "pending":
+            return "bg-slate-400"
+        case "requested":
+            return "bg-slate-400"
+        case "canceled":
+            return "bg-slate-400 border-[#F5F3EE]"
+        case "deserted":
+            return "bg-slate-400 border-[#F5F3EE]"
+        case "active":
+            return ""
+        case "completed":
+            return "bg-[#7c86ff] border-[#F5F3EE]"
+        default:
+            return "bg-slate-300 border-[#F5F3EE]"
+        }
+    }
 
 
 
@@ -294,7 +311,7 @@ export default function AppointmentList({
         <div className="overflow-x-auto rounded-md m-3">
             <ul className="appointment-list min-w-[760px]">
             {/* header */}
-            <div className="bg-[#90a1b9] grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm font-semibold text-slate-500">
+            <div className="bg-[#90a1b9] grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_160px] items-center px-2 py-1 text-sm font-semibold text-slate-500">
                 <button className = "text-black text-start"
                     onClick={() => {
                             const { nextState, newRules } = tristate('appointment_status', iterStatus)
@@ -387,7 +404,9 @@ export default function AppointmentList({
                 return (
                 <li
                     key={apt.Appointment_id}
-                    className="bg-[#F5F3EE] grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_140px] items-center px-2 py-1 text-sm text-slate-700"
+                    className={`${
+                        getRowColor(apt.appointment_status)
+                    } grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_180px] items-center px-2 py-1 text-sm text-slate-700`}
                 > 
                     {nurse? (<>
                         <div className="flex"> {/* justify-center*/}
@@ -399,7 +418,21 @@ export default function AppointmentList({
                         <span>{apt.visit_type}</span>
                         <span>{apt.patient_name}</span>
                         {/* ACTIONS TO EACH APPOINTMENT ROW */}
-                        <span className="flex gap-2 justify-around">
+                        <span className="grid grid-cols-[33%_33%_33%]">
+                            {onSelectAppointment && (apt.appointment_status == 'unseen' ?
+                                (<>
+                                    <button 
+                                    type="button"
+                                    className="btn-small"
+                                    onClick={() => onSelectAppointment(apt)}
+                                    >
+                                    Approve
+                                    </button>
+                                </>):
+                                (<div>
+
+                                </div>)
+                            )}
                             {onSelectAppointment && (
                                 <button
                                 type="button"
@@ -421,7 +454,7 @@ export default function AppointmentList({
                         </span>
                     </>):(<>
                         <div className="flex"> {/* justify-center*/}
-                        <span className={`inline-block h-3 w-3 rounded-full border border-solid ${getStatusColor(apt.appointment_status)}`} />
+                            <span className={`inline-block h-3 w-3 rounded-full border border-solid ${getStatusColor(apt.appointment_status)}`} />
                         </div>
                         <span className = "font-bold">{dateText}</span>
                         <span>{timeText}</span>
@@ -429,23 +462,27 @@ export default function AppointmentList({
                         <span>{apt.visit_type}</span>
                         <span>{apt.clinic_name}</span>
                         {/* ACTIONS TO EACH APPOINTMENT ROW */}
-                        <span className="flex gap-2 justify-around">
-                            {onSelectAppointment && (
-                                <button
-                                type="button"
-                                className="btn-small"
-                                onClick={() => onSelectAppointment(apt)}
-                                >
-                                Edit
-                                </button>
-                            )}
+                        <span className="grid grid-cols-[50%_50%]"> 
+                            {onSelectAppointment && (apt.appointment_status == 'active' ?
+                                (<>
+                                    <button 
+                                    type="button"
+                                    className="btn-small"
+                                    onClick={() => onSelectAppointment(apt)}
+                                    >
+                                        Upload
+                                    </button>
+                                </>):
+                                (<div>
+                                </div>)
+                            )} 
                             {onDeleteAppointment && (
                                 <button
                                 type="button"
                                 className="btn-small"
                                 onClick={() => onDeleteAppointment(apt)}
                                 >
-                                Delete
+                                Cancel
                                 </button>
                             )}
                         </span> 

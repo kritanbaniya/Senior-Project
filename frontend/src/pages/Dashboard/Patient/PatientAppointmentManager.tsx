@@ -432,6 +432,18 @@ export default function PatientAppointmentManager() {
         loadPatientInfo()
     }, [])
 
+    useEffect(() => {
+        if (createStatus !== 'success') return
+
+        const timer = setTimeout(() => {
+            setShowCreateForm(false)
+            setCreateStatus('idle')
+            setCreateMessage('')
+        }, 1200) // closes after 1.2 seconds
+
+        return () => clearTimeout(timer)
+    }, [createStatus])
+
     useEffect(() => { // Show Clinic Selector 
         if (!clinicView)  return  
         setShowClinicSelector(true)  

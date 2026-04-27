@@ -169,6 +169,7 @@ button:focus-visible {
   margin-bottom: 1.25rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: auto;
 }
 .info-box-title {
   font-size: 1.1rem;
@@ -645,6 +646,7 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   flex: 1;
+  overflow-y: auto;
 }
 
 .pd-header {

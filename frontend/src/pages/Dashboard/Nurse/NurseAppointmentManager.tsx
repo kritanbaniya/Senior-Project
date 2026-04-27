@@ -521,6 +521,17 @@ export default function NurseAppointmentManager() {
         readAppointments(clinic, viewPrefs)
     }, [clinic, viewPrefs])
 
+    useEffect(() => {
+        if (createStatus !== 'success') return
+
+        const timer = setTimeout(() => {
+            setShowCreateForm(false)
+            setCreateStatus('idle')
+            setCreateMessage('')
+        }, 1200) // closes after 1.2 seconds
+
+        return () => clearTimeout(timer)
+    }, [createStatus])
 
     // Rerender components when these values are retrieved/updated 
     useEffect(() => {
