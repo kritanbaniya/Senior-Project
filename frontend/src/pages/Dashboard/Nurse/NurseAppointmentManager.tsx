@@ -49,7 +49,7 @@ export default function NurseAppointmentManager() {
         if(debuglog.includes('initial')){
             console.log(appointmentTypes)
         }
-    }
+    } // archiac. need to delete 
   
     // Retrieve CLINIC ID
     const [ showClinicSelector ] = useState<boolean>(false) // will not change.

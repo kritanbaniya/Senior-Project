@@ -7,7 +7,7 @@ import type {
 } from "./types.ts"; 
 import { Button } from "@/components/ui/button.tsx";
 import { Switch } from "radix-ui";
-
+import { statusColor } from "./ApptUtil.ts";
 
 
 // NEXT THING TO DO: 
@@ -222,24 +222,7 @@ export default function AppointmentList({
         }
     }
 
-    function getRowColor(status: string): string {
-        switch (status) {
-        case "pending":
-            return "bg-slate-400"
-        case "requested":
-            return "bg-slate-400"
-        case "canceled":
-            return "bg-slate-400 border-[#F5F3EE]"
-        case "deserted":
-            return "bg-slate-400 border-[#F5F3EE]"
-        case "active":
-            return ""
-        case "completed":
-            return "bg-[#7c86ff] border-[#F5F3EE]"
-        default:
-            return "bg-slate-300 border-[#F5F3EE]"
-        }
-    }
+    
 
 
 
@@ -404,13 +387,21 @@ export default function AppointmentList({
                 return (
                 <li
                     key={apt.Appointment_id}
-                    className={`${
-                        getRowColor(apt.appointment_status)
-                    } grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_180px] items-center px-2 py-1 text-sm text-slate-700`}
-                > 
+                    style={{
+                        // backgroundColor: statusColor(apt.appointment_status),
+                    }}
+                    className={`
+                    grid grid-cols-[22px_80px_80px_1fr_1fr_1fr_180px] 
+                    items-center px-2 py-1 text-sm text-slate-700`}> 
                     {nurse? (<>
                         <div className="flex"> {/* justify-center*/}
-                        <span className={`inline-block h-3 w-3 rounded-full border border-solid ${getStatusColor(apt.appointment_status)}`} />
+                        <span className={
+                            `inline-block h-3 w-3 rounded-full border border-solid 
+                            ${getStatusColor(apt.appointment_status)}
+                            `}
+                            style={{
+                                backgroundColor: statusColor(apt.appointment_status),
+                            }} />
                         </div>
                         <span className = "font-bold">{dateText}</span>
                         <span>{timeText}</span>
@@ -454,7 +445,11 @@ export default function AppointmentList({
                         </span>
                     </>):(<>
                         <div className="flex"> {/* justify-center*/}
-                            <span className={`inline-block h-3 w-3 rounded-full border border-solid ${getStatusColor(apt.appointment_status)}`} />
+                            <span className={`inline-block h-3 w-3 rounded-full border border-solid 
+                                ${getStatusColor(apt.appointment_status)}`} 
+                                style={{
+                                    backgroundColor: statusColor(apt.appointment_status),
+                                }} />
                         </div>
                         <span className = "font-bold">{dateText}</span>
                         <span>{timeText}</span>

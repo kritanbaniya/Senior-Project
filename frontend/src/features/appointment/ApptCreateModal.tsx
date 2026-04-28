@@ -7,7 +7,7 @@ import type {
     AppointmentType 
 } from "@/features/appointment/types.ts"; 
 import { Button } from '@/components/ui/button'; 
-
+import { statusColor } from './ApptUtil';
 
 
 
@@ -249,7 +249,7 @@ export default function ApptCreateModal({
                         >
                             {appointmentTypes.map((t) => (
                             <option key={t} value={t}>
-                                {t}
+                                {t} 
                             </option>
                             ))}
                         </select>
@@ -270,6 +270,11 @@ export default function ApptCreateModal({
                             >
                                 {apptStatusTypes.map((t) => (
                                 <option key={t} value={t}>
+                                    <span className={
+                                        `inline-block h-3 w-3 rounded-full border border-solid`}
+                                        style={{
+                                            backgroundColor: statusColor(t),
+                                        }} />
                                     {t}
                                 </option>
                                 ))}

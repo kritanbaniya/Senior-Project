@@ -16,6 +16,7 @@ import {
 import { enUS } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import type { Appointment  , ApptProps} from "./types.ts"; 
+import { statusColor } from "./ApptUtil.ts";
 
 
 
@@ -160,17 +161,7 @@ export default function AppointmentCalendar({
           onSelectSlot?.(slotInfo.start as Date)
         }}
         eventPropGetter={(event : CalendarEvent) => {
-          let backgroundColor = '#3174ad' // default
-          // COLOR BY VISIT TYPE 
-          if (event.raw.visit_type === 'Vaccination') {
-            backgroundColor = '#2e8b57'
-          } else if (event.raw.visit_type === 'Consultation') {
-            backgroundColor = '#8b5cf6'
-          } else if (event.raw.visit_type === 'Follow-up') {
-            backgroundColor = '#d97706'
-          } else if (event.raw.visit_type === 'Lab Work') {
-            backgroundColor = '#dc2626'
-          }
+          let backgroundColor = statusColor(event.raw.appointment_status)
 
           return {
             style: {

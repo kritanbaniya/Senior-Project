@@ -431,6 +431,37 @@ export default function PatientAppointmentManager() {
     }
     
 
+    /////////////////////////////////////////////////////
+    //// c: Cancel Appt   
+    //// U: UPDATE EXISTING APPOINTMENT
+    // const updateAppointments = async () => { // relies on updateForm data 
+    //     if(debuglog.includes('update')){console.log('UPDATEFORM SUBMITTED:', updateForm)}
+ 
+        
+    //     ////// EXIT CASES  
+    //     // UPDATE IT 
+    //     try {
+    //         const updated = await apiUpdateAppt(updateForm)
+    //         if(debuglog.includes('update')) console.log('UPDATED:', updated)
+    //         // TAIL UI CHANGES  
+    //         const patientName = patientList.find((p) => p.user_id === updateForm.patientId)?.full_name ?? 'Unknown patient'
+    //         const doctorName = practicionerList.find((d) => d.user_id === updateForm.doctorId)?.full_name ?? 'Unknown provider' 
+    //         setUpdateStatus('success')
+    //         setUpdateMessage(`Appointment created for ${patientName} on ${updateForm.date} at ${updateForm.time} with ${doctorName}.`)
+    //         // since appt list changed, re-call readAppt
+    //         if(clinic) await readAppointments(clinic, viewPrefs)
+    //     } catch (error) {
+    //         console.log('UPDATE ERROR:', error)
+    //         // TAIL UI CHANGES  
+    //         setUpdateStatus('failed')
+    //         setUpdateMessage('Appointment update failed.') 
+    //     } finally {
+    //         // if(clinic) await readAppointments(clinic, viewPrefs)
+    //     }
+    // }
+
+
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// REACT HOOKS !
