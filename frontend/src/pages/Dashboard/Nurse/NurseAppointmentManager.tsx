@@ -240,15 +240,15 @@ export default function NurseAppointmentManager() {
         ], 
         searchBy: '',
         searchValue: '',
-        showReqs: [ 
+        showReqs: [
             'pending',
             'unseen',
             'canceled',
             'deserted',
             'active',
-            'completed'  
-        ], 
-        showPast: false, 
+            'completed'
+        ],
+        showPast: true,
         rangeStart: '',
         rangeEnd: '',
     })

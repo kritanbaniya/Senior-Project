@@ -22,6 +22,8 @@ import ClinicMyClinic from './pages/Dashboard/Clinic/ClinicMyClinic'
 import ClinicManageStaff from './pages/Dashboard/Clinic/ClinicManageStaff'
 import Support from './pages/Support'
 import HomeGate from './pages/HomeGate'
+import SystemAdminDashboard from './pages/Dashboard/SystemAdmin/SystemAdminDashboard'
+import SystemAdminClinicApprovals from './pages/Dashboard/SystemAdmin/SystemAdminClinicApprovals'
 
 import PatientAppointmentManager from './pages/Dashboard/Patient/PatientAppointmentManager'
 import NurseAppointmentManager from './pages/Dashboard/Nurse/NurseAppointmentManager'
@@ -69,6 +71,11 @@ export default function App() {
                   <Route index element={<ClinicOverview />} />
                   <Route path="my-clinic" element={<ClinicMyClinic />} />
                   <Route path="manage-staff" element={<ClinicManageStaff />} />
+                </Route>
+              </Route>
+              <Route path="system-admin" element={<RoleGuard allowedRole="system_admin" />}>
+                <Route element={<SystemAdminDashboard />}>
+                  <Route index element={<SystemAdminClinicApprovals />} />
                 </Route>
               </Route>
             </Route>

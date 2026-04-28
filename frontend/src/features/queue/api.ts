@@ -183,6 +183,18 @@ export async function completeVisit(entryId: string): Promise<void> {
   if (error) throw error
 }
 
+export async function joinQueueForAppointment(
+  appointmentId: string,
+  notes?: string,
+): Promise<string> {
+  const { data, error } = await supabase.rpc('join_queue_for_appointment', {
+    p_appointment_id: appointmentId,
+    p_notes: notes ?? null,
+  })
+  if (error) throw error
+  return data as string
+}
+
 export function activeQueueStatuses(): readonly string[] {
   return ACTIVE_QUEUE_STATUSES
 }

@@ -273,7 +273,7 @@ export default function PatientAppointmentManager() {
             'active',
             'completed'  
         ], 
-        showPast: false, 
+        showPast: true, 
         rangeStart: '',
         rangeEnd: '',
     }) 
