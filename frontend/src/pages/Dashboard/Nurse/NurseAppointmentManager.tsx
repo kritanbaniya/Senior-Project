@@ -49,7 +49,7 @@ export default function NurseAppointmentManager() {
         if(debuglog.includes('initial')){
             console.log(appointmentTypes)
         }
-    }
+    } // archiac. need to delete 
   
     // Retrieve CLINIC ID
     const [ showClinicSelector ] = useState<boolean>(false) // will not change.
@@ -475,23 +475,23 @@ export default function NurseAppointmentManager() {
 
 
 
-  /////////////////////////////////////////////////////
-  //// D: DELETE APPOINTMENT
-  const deleteAppointments = async (aptid: string, clinicId: string) => {
-    const { data, error } = await supabase
-      .schema('public')
-      .from('Appointments')
-      .delete()
-      .eq('Appointment_id', aptid)
+    /////////////////////////////////////////////////////
+    //// D: DELETE APPOINTMENT
+    const deleteAppointments = async (aptid: string, clinicId: string) => {
+        const { data, error } = await supabase
+        .schema('public')
+        .from('Appointments')
+        .delete()
+        .eq('Appointment_id', aptid)
 
 
-    if(debuglog.includes('delete')){console.log('DELETE DATA:', data)}
-    if (error) {
-      console.log('DELETE ERROR:', error)
-      return
+        if(debuglog.includes('delete')){console.log('DELETE DATA:', data)}
+        if (error) {
+        console.log('DELETE ERROR:', error)
+        return
+        }
+        await readAppointments(clinicId, viewPrefs)
     }
-    await readAppointments(clinicId, viewPrefs)
-  }
 
 
 
@@ -521,6 +521,17 @@ export default function NurseAppointmentManager() {
         readAppointments(clinic, viewPrefs)
     }, [clinic, viewPrefs])
 
+    useEffect(() => {
+        if (createStatus !== 'success') return
+
+        const timer = setTimeout(() => {
+            setShowCreateForm(false)
+            setCreateStatus('idle')
+            setCreateMessage('')
+        }, 1200) // closes after 1.2 seconds
+
+        return () => clearTimeout(timer)
+    }, [createStatus])
 
     // Rerender components when these values are retrieved/updated 
     useEffect(() => {
@@ -636,6 +647,37 @@ return (
             />
           </div>
 
+        {/* VIEW APPT DETAILS */}
+          <div className = "flex items-center">
+            <ApptEditModal
+                showClinicSelector = {showClinicSelector} 
+                // display and change selected clinic 
+                clinicList = {clinicList} 
+                selectedClinic = { clinic ? clinic : '' }
+                setSelectedClinic={ setClinic } // should not be used 
+                
+                // UPDATE : form for UI and submission | display it 
+                showAptUpdateForm = {showAptUpdateForm} 
+                setShowAptUpdateForm = {setShowAptUpdateForm}
+                updateForm = {updateForm}
+                setUpdateForm = {setUpdateForm}
+                
+                // UPDATE : STATUS and MESSAGE 
+                updateStatus = {updateStatus} 
+                setUpdateStatus = {setUpdateStatus}
+                updateMessage = {updateMessage} 
+                setUpdateMessage = {setUpdateMessage} 
+
+                openUpdateForm = {openUpdateForm} 
+                updateAppointments = {updateAppointments} 
+
+                nurse = {true}
+                patientName = {undefined}
+                patientList = {patientList} 
+                practicionerList = {practicionerList}
+                appointmentTypes = {appointmentTypes} 
+            />
+          </div>
 
           {/* VIEWING APPOINTMENTS */}
           {(!clinic || !viewPrefs) ? (<p>Loading clinic...</p>) : (<>

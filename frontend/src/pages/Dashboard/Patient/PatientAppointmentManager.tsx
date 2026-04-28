@@ -12,7 +12,7 @@ import PatientSidebar from './components/PatientSidebar.tsx'
 import ApptCreateModal from '@/features/appointment/ApptCreateModal.tsx';
 import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
 import { SidebarProvider } from '@/components/ui/sidebar'
-
+import ApptDetailModal from '@/features/appointment/ApptDetailModal.tsx';
  
 
 // CAN ONLY EDIT REQUESTS OR PENDING 
@@ -24,8 +24,7 @@ export default function PatientAppointmentManager() {
     var debuglog: debuglogType[] = []
     type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed' 
 
- 
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// HELPER FUNCTIONS: 
     // Retrieve Appointment Types  
@@ -370,7 +369,9 @@ export default function PatientAppointmentManager() {
         
             // show past 
             if (prefs.showPast === false && prefs.searchBy !== 'date range'){ 
-                query = query.gte('appointment_date', new Date().toISOString())
+                const now = new Date();
+                const formatted = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+                query = query.gte('appointment_date', formatted) //  new Date().toISOString())
             } 
             
             // search by date range 
@@ -422,6 +423,43 @@ export default function PatientAppointmentManager() {
 
 
 
+    const [showApptDetails, setShowApptDetails ] = useState<boolean>(false)
+    const [selectApptDetails, setSelectApptDetails ] = useState<Appointment>()
+    const openAppointmentDetails = (appt: Appointment) => {
+        setShowApptDetails(true)
+        setSelectApptDetails(appt)
+    }
+    
+
+    /////////////////////////////////////////////////////
+    //// c: Cancel Appt   
+    //// U: UPDATE EXISTING APPOINTMENT
+    // const updateAppointments = async () => { // relies on updateForm data 
+    //     if(debuglog.includes('update')){console.log('UPDATEFORM SUBMITTED:', updateForm)}
+ 
+        
+    //     ////// EXIT CASES  
+    //     // UPDATE IT 
+    //     try {
+    //         const updated = await apiUpdateAppt(updateForm)
+    //         if(debuglog.includes('update')) console.log('UPDATED:', updated)
+    //         // TAIL UI CHANGES  
+    //         const patientName = patientList.find((p) => p.user_id === updateForm.patientId)?.full_name ?? 'Unknown patient'
+    //         const doctorName = practicionerList.find((d) => d.user_id === updateForm.doctorId)?.full_name ?? 'Unknown provider' 
+    //         setUpdateStatus('success')
+    //         setUpdateMessage(`Appointment created for ${patientName} on ${updateForm.date} at ${updateForm.time} with ${doctorName}.`)
+    //         // since appt list changed, re-call readAppt
+    //         if(clinic) await readAppointments(clinic, viewPrefs)
+    //     } catch (error) {
+    //         console.log('UPDATE ERROR:', error)
+    //         // TAIL UI CHANGES  
+    //         setUpdateStatus('failed')
+    //         setUpdateMessage('Appointment update failed.') 
+    //     } finally {
+    //         // if(clinic) await readAppointments(clinic, viewPrefs)
+    //     }
+    // }
+
 
 
 
@@ -431,6 +469,18 @@ export default function PatientAppointmentManager() {
         loadClinics() 
         loadPatientInfo()
     }, [])
+
+    useEffect(() => {
+        if (createStatus !== 'success') return
+
+        const timer = setTimeout(() => {
+            setShowCreateForm(false)
+            setCreateStatus('idle')
+            setCreateMessage('')
+        }, 1200) // closes after 1.2 seconds
+
+        return () => clearTimeout(timer)
+    }, [createStatus])
 
     useEffect(() => { // Show Clinic Selector 
         if (!clinicView)  return  
@@ -521,6 +571,17 @@ export default function PatientAppointmentManager() {
 
 
 
+                    {/* VIEW APPT DETAILS */}
+                    <div className = "flex items-center">
+                        <ApptDetailModal
+                            AppointmentDetails = {selectApptDetails} 
+                            // UPDATE : form for UI and submission | display it 
+                            showApptDetails = {showApptDetails} 
+                            setShowApptDetails = {setShowApptDetails} 
+                             
+                            nurse = {true} 
+                        />
+                    </div>
                         
                         
                         {(!clinicView || !viewPrefs) ? (<p>Loading clinic...</p>) 
@@ -529,7 +590,7 @@ export default function PatientAppointmentManager() {
                             <AppointmentSwitch
                                 appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments 
                                 // functions to handle appointment CRUD actions 
-                                onSelectAppointment={emptyf} 
+                                onSelectAppointment={(apt) => openAppointmentDetails(apt)} 
                                 onDeleteAppointment={emptyf}
                                 onSelectSlot={openCreateForm}
                                 // function to handle appointment view changes (changing query)

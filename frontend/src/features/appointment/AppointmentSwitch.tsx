@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button.tsx";
 // import { Switch } from "radix-ui"; 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { CheckIcon } from "@radix-ui/react-icons"
-
+import { statusColor } from "./ApptUtil.ts";
 
 
 
@@ -93,6 +93,11 @@ export default function AppointmentSwitch({
                             <DropdownMenu.ItemIndicator className="absolute right-2 inline-flex items-center border-2 rounded-lg">
                                 <CheckIcon />
                             </DropdownMenu.ItemIndicator>
+                        <span className={
+                            `inline-block h-3 w-3 rounded-full border border-solid`}
+                            style={{
+                                backgroundColor: statusColor(status),
+                            }} />
                             {status}
                         </DropdownMenu.CheckboxItem>
                     )
