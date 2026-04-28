@@ -4,7 +4,7 @@ import type {
     Appointment
 } from "@/features/appointment/types.ts"; 
 import { Button } from '@/components/ui/button'; 
-
+import { statusColor } from "./ApptUtil";
 
  
   
@@ -110,7 +110,13 @@ export default function ApptDetailModal({
                       <label
                         className='p-2 w-70 '
                             >Appointment Status</label>
-                        <p>{AppointmentDetails.appointment_status}</p> 
+                        <p className="flex items-center">
+                            <span
+                            className="inline-block h-3 w-3 mr-1 rounded-full border border-solid"
+                            style={{
+                            backgroundColor: statusColor(AppointmentDetails.appointment_status),
+                            }}
+                            />{AppointmentDetails.appointment_status}</p> 
                     </div>
   
 
