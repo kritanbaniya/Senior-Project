@@ -30,7 +30,7 @@ export default function ClinicInfo() {
   const [waitingCount, setWaitingCount] = useState(0);
   const [avgServiceTime, setAvgServiceTime] = useState<number | null>(null);
 
-  const { profile: authProfile, loading: authLoading } = useAuth();
+  const { profile: authProfile} = useAuth();
   const isLoggedIn = !!authProfile;
 
   useEffect(() => {
