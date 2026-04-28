@@ -26,7 +26,6 @@ const PatientPDFUpload: React.FC = () => {
       setSelectedClinicId(defaultClinic);
     }
   }, [defaultClinic, setSelectedClinicId]);
-  // 获取诊所列表
   useEffect(() => {
     const fetchClinics = async () => {
       const { data: userData } = await supabase.auth.getUser();
@@ -41,7 +40,6 @@ const PatientPDFUpload: React.FC = () => {
     fetchClinics();
   }, []);
 
-  // 获取 PDF 预览链接
   useEffect(() => {
     const fetchPdfUrl = async () => {
       if (!selectedClinicId) return;
@@ -61,14 +59,12 @@ const PatientPDFUpload: React.FC = () => {
         const userId = userData?.user?.id;
         if (!userId) return;
 
-        // 1. 获取诊所提供的空白表单 (供下载)
         const clinicFilePath = `${clinicId}/form/clinic_form.pdf`;
         const { data: clinicUrl } = await supabase.storage
           .from('clinic-forms')
           .createSignedUrl(clinicFilePath, 3600);
         setClinicPdfUrl(clinicUrl?.signedUrl || null);
 
-        // 2. 获取用户已上传的表单 (供预览)
         const patientFilePath = `${clinicId}/${userId}/user_form.pdf`;
         const { data: patientUrl } = await supabase.storage
           .from('patient-forms')
@@ -119,7 +115,6 @@ const PatientPDFUpload: React.FC = () => {
       if (error) throw error;
 
       setUploadSuccess(true);
-      // 刷新预览
       const { data: newUrl } = await supabase.storage
         .from('patient-forms')
         .createSignedUrl(filePath, 3600);
