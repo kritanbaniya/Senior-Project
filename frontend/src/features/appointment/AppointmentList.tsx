@@ -88,7 +88,8 @@ export default function AppointmentList({
         { label: 'Follow-up', value: 'Follow-up' },
         { label: 'Consultation', value: 'Consultation' },
         { label: 'Vaccination', value: 'Vaccination' },
-        { label: 'Lab Work', value: 'Lab Work' } 
+        { label: 'Lab Work', value: 'Lab Work' },
+        { label: 'Walk-in', value: 'Walk-in' },
     ]
     const [ searchApptType , setSearchApptType ] = 
         useState<AppointmentType>('')

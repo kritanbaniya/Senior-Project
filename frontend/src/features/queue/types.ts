@@ -24,6 +24,7 @@ export type QueueEntryRow = {
   updated_at: string
   is_active: boolean
   patient_name: string | null
+  appointment_id: string | null
 }
 
 export type ClinicListItem = {

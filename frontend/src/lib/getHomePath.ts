@@ -1,4 +1,4 @@
-export type UserRole = "patient" | "nurse" | "doctor" | "clinic" | null | undefined;
+export type UserRole = "patient" | "nurse" | "doctor" | "clinic" | "system_admin" | null | undefined;
 
 export function getHomePath(role: UserRole): string {
   switch (role) {
@@ -10,6 +10,8 @@ export function getHomePath(role: UserRole): string {
       return "/dashboard/doctor";
     case "clinic":
       return "/dashboard/clinic";
+    case "system_admin":
+      return "/dashboard/system-admin";
     default:
       return "/";
   }
