@@ -16,6 +16,7 @@ const ROLE_TO_PATH: Record<DefinedUserRole, string> = {
   nurse: '/dashboard/nurse',
   doctor: '/dashboard/doctor',
   clinic: '/dashboard/clinic',
+  system_admin: '/dashboard/system-admin',
 }
 
 // returns the dashboard path for a given role, or "/" if the role is unknown.
