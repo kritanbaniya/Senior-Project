@@ -13,21 +13,26 @@ export default function PendingQueuePanel({ rows, onApprove }: PendingQueuePanel
         {!rows.length ? (
           <p className="no-queue">No pending patients.</p>
         ) : (
-          <ul className="appointment-list">
-            {rows.map((row) => (
-              <li key={row.id} className="appointment-item nurse-apt-item">
-                <span className="apt-patient">{row.patient_name ?? 'patient'}</span>
-                <span className="apt-type">{row.status}</span>
-                <button
-                  type="button"
-                  className="btn-small"
-                  onClick={() => onApprove(row.id)}
-                >
-                  approve to waiting
-                </button>
+          <ol className="nurse-queue-list">
+            {rows.map((row, index) => (
+              <li key={row.id} className="nurse-queue-item stage-pending">
+                <span className="queue-order">#{index + 1}</span>
+                <div className="queue-patient-info">
+                  <span className="queue-patient-name">{row.patient_name ?? 'patient'}</span>
+                  <span className="queue-apt-type">{row.status}</span>
+                </div>
+                <div className="queue-actions">
+                  <button
+                    type="button"
+                    className="btn-small"
+                    onClick={() => onApprove(row.id)}
+                  >
+                    approve to waiting
+                  </button>
+                </div>
               </li>
             ))}
-          </ul>
+          </ol>
         )}
       </div>
     </div>
