@@ -227,7 +227,6 @@ export default function PatientDashboard() {
     row: queueRow,
     exitState,
     activePosition,
-    peopleAhead,
     join,
     joinForAppointment,
     leave,
@@ -596,7 +595,6 @@ export default function PatientDashboard() {
                 loading={queueLoading}
                 row={queueRow}
                 activePosition={activePosition}
-                peopleAhead={peopleAhead}
                 exitState={exitState}
                 onJoin={join}
                 onLeave={leave}
