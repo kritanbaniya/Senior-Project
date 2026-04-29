@@ -9,7 +9,7 @@ import type {
 import { Button } from '@/components/ui/button'; 
 import { statusColor } from './ApptUtil';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import ClinicSelector from '../queue/components/ClinicSelector';
+// import ClinicSelector from '../queue/components/ClinicSelector';
 
 type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
