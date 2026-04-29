@@ -101,7 +101,6 @@ export function usePatientQueue(clinicId: string | null) {
     currentRow && (currentRow.status === 'waiting' || currentRow.status === 'called')
       ? currentRow.queue_order ?? null
       : null
-  const peopleAhead = activePosition != null ? Math.max(0, activePosition - 1) : null
 
   return {
     loading,
@@ -109,7 +108,6 @@ export function usePatientQueue(clinicId: string | null) {
     row: currentRow,
     exitState,
     activePosition,
-    peopleAhead,
     join,
     joinForAppointment,
     leave,
