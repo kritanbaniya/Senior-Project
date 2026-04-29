@@ -87,7 +87,7 @@ export default function AppointmentCalendar({
     // if (viewPrefs.showReqs === 'all'){ 
     // const merged = [...eventsReq, ...events]; 
     //   return merged}
-    // else if (viewPrefs.showReqs === 'unseen'){ 
+    // else if (viewPrefs.showReqs === 'requested'){ 
     //   return eventsReq}
     // else if (viewPrefs.showReqs === 'active'){ 
     //   return events}
