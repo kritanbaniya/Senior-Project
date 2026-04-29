@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { QueueEntryRow } from '../types'
+import QueuePositionDots from './QueuePositionDots'
 
 type PatientQueueCardProps = {
   clinicSelected: boolean
@@ -92,12 +93,9 @@ export default function PatientQueueCard({
             ) : row?.status === 'waiting' ? (
               <>
                 <p className="pd-card-desc">You are in active queue.</p>
-                <div className="pd-queue-stats">
-                  <div className="pd-queue-stat">
-                    <span className="pd-queue-label">Position</span>
-                    <span className="pd-queue-value">{activePosition ?? '-'}</span>
-                  </div>
-                </div>
+                {activePosition != null && (
+                  <QueuePositionDots position={activePosition} status="waiting" />
+                )}
                 <button type="button" className="pd-btn pd-btn-secondary" onClick={onLeave}>
                   leave queue
                 </button>
@@ -105,12 +103,9 @@ export default function PatientQueueCard({
             ) : row?.status === 'called' ? (
               <>
                 <p className="pd-card-desc">You have been called! Please proceed to the front desk.</p>
-                <div className="pd-queue-stats">
-                  <div className="pd-queue-stat">
-                    <span className="pd-queue-label">Position</span>
-                    <span className="pd-queue-value">{activePosition ?? '-'}</span>
-                  </div>
-                </div>
+                {activePosition != null && (
+                  <QueuePositionDots position={activePosition} status="called" />
+                )}
               </>
             ) : row?.status === 'in_progress' ? (
               <p className="pd-card-desc">Your visit is in progress.</p>
