@@ -411,7 +411,7 @@ export default function AppointmentList({
                         <span>{apt.patient_name}</span>
                         {/* ACTIONS TO EACH APPOINTMENT ROW */}
                         <span className="grid grid-cols-[33%_33%_33%]">
-                            {onSelectAppointment && (apt.appointment_status == 'unseen' ?
+                            {onSelectAppointment && (apt.appointment_status == 'requested' ?
                                 (<>
                                     <button 
                                     type="button"

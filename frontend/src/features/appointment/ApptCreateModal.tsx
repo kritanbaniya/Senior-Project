@@ -9,7 +9,7 @@ import type {
 import { Button } from '@/components/ui/button'; 
 import { statusColor } from './ApptUtil';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-
+// import ClinicSelector from '../queue/components/ClinicSelector';
 
 type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
@@ -131,26 +131,32 @@ export default function ApptCreateModal({
 
 
                         {/* CLINIC SELECT */}
-                        { showClinicSelector ? (
-                        <div  className="flex justify-between">
-                        <label
-                            className='p-3 w-40 '
-                                >Clinic</label> 
-                        <select 
-                                className='p-2 w-full bg-[#F5F3EE] rounded-lg border border-solid text-end'
-                                value={selectedClinic}
-                                onChange={(e) =>{
-                            setSelectedClinic( e.target.value ) }
-                            }
-                        >
-                            {clinicList.map((d) => (
-                            <option key={d.clinic_id} value={d.clinic_id}>
-                                {d.clinic_name}
-                            </option>
-                            ))}
-                        </select>
-                        </div>
-                        ) : (<>
+                        { showClinicSelector ? ( <>
+                            <div  className="flex justify-between">
+                            <label
+                                className='p-3 w-40 '
+                                    >Clinic</label> 
+                            <select 
+                                    className='p-2 w-full bg-[#F5F3EE] rounded-lg border border-solid text-end'
+                                    value={selectedClinic}
+                                    onChange={(e) =>{
+                                setSelectedClinic( e.target.value ) }
+                                }
+                            >
+                                {clinicList.map((d) => (
+                                <option key={d.clinic_id} value={d.clinic_id}>
+                                    {d.clinic_name}
+                                </option>
+                                ))}
+                            </select>
+                            </div>
+                            {/* Proving difficult because of it's management specification to Queue */}
+                            {/* <ClinicSelector 
+                                clinics = {clinicList} 
+                                selectedClinicId = {selectedClinic}
+                                onSelect = {setSelectedClinic}
+                            />   */}
+                        </>) : (<>
                             <div  className="flex justify-between">
                                 <label className='p-3 w-40 '>
                                     Clinic</label> 
