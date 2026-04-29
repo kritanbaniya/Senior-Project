@@ -12,7 +12,7 @@ import { useAuth } from '../../../context/AuthContext'
 
 type AppointmentStatus =
   | 'pending'
-  | 'unseen'
+  | 'requested'
   | 'canceled'
   | 'deserted'
   | 'active'
@@ -152,7 +152,7 @@ function getAppointmentBadgeClasses(status: AppointmentStatus) {
     case 'active':
       return 'bg-sky-100 text-sky-700'
     case 'pending':
-    case 'unseen':
+    case 'requested':
       return 'bg-indigo-100 text-indigo-700'
     case 'canceled':
     case 'deserted':
@@ -164,8 +164,8 @@ function getAppointmentBadgeClasses(status: AppointmentStatus) {
 
 function formatAppointmentStatus(status: AppointmentStatus) {
   switch (status) {
-    case 'unseen':
-      return 'requested - unseen'
+    case 'requested':
+      return 'requested'
     case 'active':
       return 'scheduled'
     case 'canceled':
@@ -314,7 +314,7 @@ export default function PatientDashboard() {
               }),
               doctor: row.clinician_name ?? 'Clinic Staff',
               type: row.visit_type ?? 'Appointment',
-              status: (row.appointment_status ?? 'unseen') as AppointmentStatus,
+              status: (row.appointment_status ?? 'requested') as AppointmentStatus,
               rawDate: row.appointment_date as string,
             }
           })
@@ -370,7 +370,7 @@ export default function PatientDashboard() {
   const upcomingAppointments = useMemo(
     () =>
       appointments.filter((a) =>
-        ['pending', 'unseen', 'active'].includes(a.status),
+        ['pending', 'requested', 'active'].includes(a.status),
       ),
     [appointments],
   )
