@@ -101,6 +101,9 @@ export default function PatientQueueCard({
                 <button type="button" className="pd-btn pd-btn-secondary" onClick={onLeave}>
                   leave queue
                 </button>
+                <Link to="/dashboard/patient/pdf-upload" state={{ clinicId: clinicid ?? '' }} className="pd-btn pd-btn-primary">
+              upload form
+              </Link>
               </>
             ) : row?.status === 'called' ? (
               <>

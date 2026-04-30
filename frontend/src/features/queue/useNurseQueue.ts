@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   acceptPendingQueueEntry,
   callPatient,
@@ -187,6 +188,13 @@ export function useNurseQueue(selectedClinicId: string | null) {
     },
     [refreshQueue]
   )
+  const navigate = useNavigate();
+  const Checkform = useCallback(
+    (entry: QueueEntryRow) => {
+      navigate(`/form/patient-form/${entry.patient_id}/${entry.clinic_id}`);
+    },
+    [navigate]
+  )
 
   return {
     loading,
@@ -206,5 +214,6 @@ export function useNurseQueue(selectedClinicId: string | null) {
     beginVisit,
     noShow,
     markCompleted,
+    Checkform,
   }
 }

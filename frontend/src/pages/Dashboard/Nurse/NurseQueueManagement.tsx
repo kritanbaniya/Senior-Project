@@ -23,6 +23,7 @@ export default function NurseQueueManagement() {
     beginVisit,
     noShow,
     markCompleted,
+    Checkform,
   } = useNurseQueue(selectedClinicId)
 
   return (
@@ -76,6 +77,7 @@ export default function NurseQueueManagement() {
                   onCallPatient={callSinglePatient}
                   onStartVisit={beginVisit}
                   onNoShow={noShow}
+                  onCheckForm={Checkform}
                 />
                 <InProgressQueuePanel rows={inProgressRows} onComplete={markCompleted} />
               </>

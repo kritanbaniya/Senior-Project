@@ -7,6 +7,7 @@ type ActiveQueuePanelProps = {
   onCallPatient: (entryId: string) => void
   onStartVisit: (entryId: string) => void
   onNoShow: (entryId: string) => void
+  onCheckForm: (entryId: QueueEntryRow) => void
 }
 
 export default function ActiveQueuePanel({
@@ -16,6 +17,7 @@ export default function ActiveQueuePanel({
   onCallPatient,
   onStartVisit,
   onNoShow,
+  onCheckForm,
 }: ActiveQueuePanelProps) {
   return (
     <div className="info-box queue-section">
@@ -43,6 +45,13 @@ export default function ActiveQueuePanel({
                   <span className="queue-apt-type">{row.status}</span>
                 </div>
                 <div className="queue-actions">
+                  <button
+                    type="button"
+                    className="btn-small"
+                    onClick={() => onCheckForm(row)}
+                  >
+                    Check form
+                  </button>
                   <button
                     type="button"
                     className="btn-small"
