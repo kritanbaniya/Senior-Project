@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'  
 import { useAuth } from '@/context/AuthContext'  
 import { saveMedicalHistory, fetchMedicalHistory, type MedicalHistoryRecord } from '@/features/medical/medicalHistoryApi'  
+import { saveLabResult, fetchLabResults, type LabResultRecord } from '@/features/medical/labResultsApi' 
 import { SidebarProvider } from "@/components/ui/sidebar" 
 import DoctorSidebar from "./DoctorSideBar" 
 
@@ -71,6 +72,37 @@ const INITIAL_CLINICAL_NOTE: ClinicalNote = {
   followUpRecommended: false,
   followUpNotes: '',
 }
+
+// Most common and important test types only
+const TEST_CATEGORIES = {
+  'Blood Tests': [
+    'Complete Blood Count (CBC)',
+    'Basic Metabolic Panel',
+    'Lipid Panel',
+    'Hemoglobin A1C',
+    'Blood Glucose',
+  ],
+  'Imaging': [
+    'X-Ray',
+    'CT Scan',
+    'MRI',
+    'Ultrasound',
+  ],
+  'Cardiac': [
+    'ECG/EKG',
+    'Echocardiogram',
+  ],
+  'Other': [
+    'Urinalysis',
+    'COVID-19 Test',
+    'Strep Test',
+  ]
+}
+
+// Flatten for dropdown
+const ALL_TEST_TYPES = Object.entries(TEST_CATEGORIES).flatMap(([category, tests]) =>
+  tests.map(test => ({ category, test }))
+)
 
 type ChartSectionProps = {
   title: string
@@ -145,15 +177,6 @@ export default function DoctorDashBoard() {
         medicalHistory: 'Hypertension (diagnosed 2020)',
         emergencyContact: 'John Doe (spouse) - 555-0123',
       },
-      testResults: [
-        {
-          id: 't1',
-          type: 'Blood Panel',
-          date: '2024-08-22',
-          result: 'Normal',
-          notes: 'All values within normal range',
-        },
-      ],
     },
     {
       id: '2',
@@ -197,6 +220,8 @@ export default function DoctorDashBoard() {
   const [clinicalNote, setClinicalNote] = useState<ClinicalNote>(INITIAL_CLINICAL_NOTE)
   const [showTestForm, setShowTestForm] = useState(false)
   const [newTestResult, setNewTestResult] = useState({ type: '', result: '', notes: '' })
+  const [fetchedLabResults, setFetchedLabResults] = useState<LabResultRecord[]>([])
+  const [loadingLabResults, setLoadingLabResults] = useState(false)
   const [saveNoteFeedback, setSaveNoteFeedback] = useState<string | null>(null)
 
   const selectedPatient = patients.find((p) => p.id === selectedPatientId)
@@ -222,6 +247,25 @@ export default function DoctorDashBoard() {
       setFetchedHistory([])
     }
   }, [selectedPatient])
+
+  // Fetch lab results when patient is selected
+useEffect(() => {
+  if (selectedPatient) {
+    const loadLabResults = async () => {
+      setLoadingLabResults(true)
+      const { data, error } = await fetchLabResults(selectedPatient.id)
+      if (!error && data) {
+        setFetchedLabResults(data)
+      } else {
+        setFetchedLabResults([])
+      }
+      setLoadingLabResults(false)
+    }
+    void loadLabResults()
+  } else {
+    setFetchedLabResults([])
+  }
+}, [selectedPatient])
 
   const updateClinicalNote = (field: keyof ClinicalNote, value: string | boolean) => {
     setClinicalNote((prev) => ({ ...prev, [field]: value }))
@@ -286,25 +330,41 @@ export default function DoctorDashBoard() {
     setClinicalNote(INITIAL_CLINICAL_NOTE)
   }
 
-  const addTestResult = () => {
+  const addTestResult = async () => {
     if (!selectedPatient || !newTestResult.type || !newTestResult.result) return
 
-    const testResult: TestResult = {
-      id: `t${Date.now()}`,
-      type: newTestResult.type,
-      date: new Date().toISOString().split('T')[0],
-      result: newTestResult.result,
-      notes: newTestResult.notes,
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      alert('You must be logged in to add test results.')
+      return
     }
 
-    setPatients((prev) =>
-      prev.map((p) =>
-        p.id === selectedPatient.id
-          ? { ...p, testResults: [...(p.testResults || []), testResult] }
-          : p
-      )
-    )
+    // Parse test type to get category
+    const testInfo = ALL_TEST_TYPES.find(t => t.test === newTestResult.type)
+    
+    const { error } = await saveLabResult({
+      patientId: selectedPatient.id,
+      doctorId: user.id,
+      testType: newTestResult.type,
+      testCategory: testInfo?.category || 'Other',
+      result: newTestResult.result,
+      notes: newTestResult.notes || undefined,
+      orderedByDoctorName: profile?.full_name || 'Doctor',
+    })
 
+    if (error) {
+      console.error('Error saving lab result:', error)
+      alert('Failed to save test result: ' + error.message)
+      return
+    }
+
+    // Refresh lab results
+    const { data } = await fetchLabResults(selectedPatient.id)
+    if (data) {
+      setFetchedLabResults(data)
+    }
+
+    // Clear form and close
     setNewTestResult({ type: '', result: '', notes: '' })
     setShowTestForm(false)
   }
@@ -579,7 +639,7 @@ export default function DoctorDashBoard() {
                   <ChartSection 
                     title="Lab & Test Results" 
                     icon="🧪"
-                    badge={selectedPatient.testResults?.length || 0}
+                    badge={fetchedLabResults.length}
                     defaultExpanded={false}
                   >
                     <div className="space-y-3">
@@ -603,37 +663,62 @@ export default function DoctorDashBoard() {
                           className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200"
                         >
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Test Type</label>
-                            <input
-                              type="text"
-                              placeholder="X-Ray, Blood Test, ECG"
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Test Type *
+                            </label>
+                            <select
                               value={newTestResult.type}
                               onChange={(e) => setNewTestResult({ ...newTestResult, type: e.target.value })}
                               required
                               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                            >
+                              <option value="">Select test type...</option>
+                              {Object.entries(TEST_CATEGORIES).map(([category, tests]) => (
+                                <optgroup key={category} label={category}>
+                                  {tests.map((test) => (
+                                    <option key={test} value={test}>
+                                      {test}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              ))}
+                            </select>
                           </div>
+
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Result</label>
-                            <input
-                              type="text"
-                              placeholder="Normal, Abnormal"
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Result *
+                            </label>
+                            <select
                               value={newTestResult.result}
                               onChange={(e) => setNewTestResult({ ...newTestResult, result: e.target.value })}
                               required
                               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                            >
+                              <option value="">Select result...</option>
+                              <option value="Normal">Normal</option>
+                              <option value="Abnormal">Abnormal</option>
+                              <option value="Critical">Critical</option>
+                              <option value="Pending">Pending</option>
+                              <option value="Negative">Negative</option>
+                              <option value="Positive">Positive</option>
+                              <option value="Inconclusive">Inconclusive</option>
+                            </select>
                           </div>
+
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Notes (optional)</label>
-                            <input
-                              type="text"
-                              placeholder="Additional details"
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Notes (optional)
+                            </label>
+                            <textarea
+                              placeholder="Additional details, measurements, findings..."
                               value={newTestResult.notes}
                               onChange={(e) => setNewTestResult({ ...newTestResult, notes: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              rows={3}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                           </div>
+
                           <div className="flex gap-2">
                             <Button type="submit" size="sm">Add</Button>
                             <Button
@@ -651,16 +736,38 @@ export default function DoctorDashBoard() {
                         </form>
                       )}
 
-                      {selectedPatient.testResults && selectedPatient.testResults.length > 0 ? (
+                      {/* Display lab results from database */}
+                      {loadingLabResults ? (
+                        <p className="text-sm text-gray-500">Loading test results...</p>
+                      ) : fetchedLabResults.length > 0 ? (
                         <div className="space-y-4">
-                          {selectedPatient.testResults.map((test) => (
+                          {fetchedLabResults.map((test) => (
                             <div key={test.id} className="pb-4 border-b border-gray-200 last:border-b-0 last:pb-0">
                               <div className="flex items-baseline gap-3 mb-1">
-                                <span className="text-sm font-semibold text-blue-600">{test.date}</span>
-                                <span className="text-sm font-medium text-gray-900">{test.type}</span>
+                                <span className="text-sm font-semibold text-blue-600">{test.test_date}</span>
+                                <span className="text-sm font-medium text-gray-900">{test.test_type}</span>
+                                {test.test_category && (
+                                  <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                    {test.test_category}
+                                  </span>
+                                )}
                               </div>
                               <p className="text-sm text-gray-700">
-                                <strong>Result:</strong> {test.result}
+                                <strong>Result:</strong>{' '}
+                                <span className={
+                                  test.result === 'Normal' || test.result === 'Negative' ? 'text-green-600' :
+                                  test.result === 'Abnormal' || test.result === 'Positive' ? 'text-amber-600' :
+                                  test.result === 'Critical' ? 'text-red-600' :
+                                  'text-gray-900'
+                                }>
+                                  {test.result}
+                                </span>
+                                {test.result_details && (
+                                  <>
+                                    <br />
+                                    <strong>Details:</strong> {test.result_details}
+                                  </>
+                                )}
                                 {test.notes && (
                                   <>
                                     <br />
@@ -668,6 +775,7 @@ export default function DoctorDashBoard() {
                                   </>
                                 )}
                               </p>
+                              <p className="text-xs text-gray-500 mt-2">Ordered by {test.ordered_by_doctor_name}</p>
                             </div>
                           ))}
                         </div>
