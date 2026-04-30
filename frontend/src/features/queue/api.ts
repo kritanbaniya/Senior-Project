@@ -73,14 +73,39 @@ export async function fetchOwnActiveQueueRows(): Promise<QueueEntryRow[]> {
 export async function fetchActiveQueueForClinic(clinicId: string): Promise<QueueEntryRow[]> {
   const { data, error } = await supabase
     .from('queue_entries')
-    .select('*')
+    .select(`
+      *,
+      appointment:Appointments!queue_entries_appointment_fk(
+        Appointment_id,
+        clinician_id,
+        clinician:profiles!Appointments_clinician_id_fkey(
+          full_name,
+          role
+        )
+      )
+    `)
     .eq('clinic_id', clinicId)
     .eq('is_active', true)
     .in('status', [...ACTIVE_QUEUE_STATUSES])
     .order('queue_order', { ascending: true })
 
   if (error) throw error
-  return (data ?? []) as QueueEntryRow[]
+
+  return (data ?? []).map((row: any) => ({
+    ...row,
+    appointment: row.appointment
+      ? {
+          Appointment_id: row.appointment.Appointment_id,
+          clinician_id: row.appointment.clinician_id,
+          clinician_name: Array.isArray(row.appointment.clinician)
+            ? row.appointment.clinician[0]?.full_name ?? null
+            : row.appointment.clinician?.full_name ?? null,
+          clinician_role: Array.isArray(row.appointment.clinician)
+            ? row.appointment.clinician[0]?.role ?? null
+            : row.appointment.clinician?.role ?? null,
+        }
+      : null,
+  })) as QueueEntryRow[]
 }
 
 export async function fetchPendingQueueForClinic(clinicId: string): Promise<QueueEntryRow[]> {
