@@ -29,7 +29,6 @@ const ClinicPDFUpload: React.FC = () => {
         fetchClinics();
     }, []);
 
-    // 获取当前诊所已有的模版预览
     useEffect(() => {
         const fetchPdfUrl = async () => {
             if (!selectedClinicId) return;
@@ -100,12 +99,11 @@ const ClinicPDFUpload: React.FC = () => {
 
             setUploadSuccess(true);
             
-            // 重新获取链接以刷新预览
             const { data: newUrl } = await supabase.storage
                 .from('clinic-forms')
                 .createSignedUrl(filePath, 3600);
             setPdfUrl(newUrl?.signedUrl || null);
-            setFile(null); // 清除已选文件
+            setFile(null); 
         } catch (err: any) {
             alert('Error: ' + err.message);
         } finally {

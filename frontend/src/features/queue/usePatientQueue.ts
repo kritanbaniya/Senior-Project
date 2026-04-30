@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchOwnActiveQueueRows, joinQueue, leaveQueue } from './api'
+import { fetchOwnActiveQueueRows, joinQueue, joinQueueForAppointment, leaveQueue } from './api'
 import { subscribeToClinicQueue } from './realtime'
 import type { QueueEntryRow } from './types'
 
@@ -81,12 +81,26 @@ export function usePatientQueue(clinicId: string | null) {
     }
   }, [currentRow, loadSnapshot])
 
+  const joinForAppointment = useCallback(async (appointmentId: string) => {
+    if (currentRow?.is_active) {
+      setError('you already have an active queue entry')
+      return
+    }
+    setError(null)
+    try {
+      await joinQueueForAppointment(appointmentId)
+      setExitState(null)
+      await loadSnapshot()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'failed to check in')
+    }
+  }, [currentRow?.is_active, loadSnapshot])
+
   // use queue_order from own row; patients cannot see other rows (RLS) so we cannot derive position from active list
   const activePosition =
     currentRow && (currentRow.status === 'waiting' || currentRow.status === 'called')
       ? currentRow.queue_order ?? null
       : null
-  const peopleAhead = activePosition != null ? Math.max(0, activePosition - 1) : null
 
   return {
     loading,
@@ -94,8 +108,8 @@ export function usePatientQueue(clinicId: string | null) {
     row: currentRow,
     exitState,
     activePosition,
-    peopleAhead,
     join,
+    joinForAppointment,
     leave,
     refresh: loadSnapshot,
   }

@@ -169,6 +169,7 @@ button:focus-visible {
   margin-bottom: 1.25rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: auto;
 }
 .info-box-title {
   font-size: 1.1rem;
@@ -645,6 +646,7 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   flex: 1;
+  overflow-y: auto;
 }
 
 .pd-header {
@@ -868,7 +870,120 @@ button:focus-visible {
 }
 .pd-queue-label { font-size: 0.85rem; color: #64748b; }
 .pd-queue-value { font-size: 1.5rem; font-weight: 700; color: #0284c7; }
+.pd-queue-value-called { color: #16a34a; }
 .pd-checkin-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+
+/* queue position dot visualizer */
+.qpd-wrapper {
+  margin: 0.85rem 0 0.25rem;
+}
+.qpd-track {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.qpd-you-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.qpd-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: qpd-wave 1.4s ease-in-out infinite;
+}
+@keyframes qpd-wave {
+  0%, 55%, 100% { transform: translateY(0); }
+  27%            { transform: translateY(-6px); }
+}
+.qpd-dot-you {
+  background: #0284c7;
+  width: 14px;
+  height: 14px;
+}
+.qpd-dot-called {
+  background: #16a34a;
+}
+.qpd-dot-ahead {
+  background: #cbd5e1;
+  /* top-align with the slightly larger you-dot */
+  margin-top: 1px;
+}
+.qpd-overflow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  align-self: center;
+  margin-left: 1px;
+}
+.qpd-status-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 0.55rem;
+  margin-bottom: 0;
+}
+@media (max-width: 480px) {
+  .qpd-dot { width: 10px; height: 10px; }
+  .qpd-dot-you { width: 12px; height: 12px; }
+}
+
+/* queue notifications */
+.pd-queue-notification {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: #0284c7;
+  color: #fff;
+  padding: 0.75rem 1rem 0.75rem 1.25rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
+  max-width: calc(100vw - 2rem);
+  width: max-content;
+  font-size: 0.95rem;
+  font-weight: 500;
+  animation: pd-notif-in 0.2s ease;
+}
+@keyframes pd-notif-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.pd-queue-notification-text {
+  flex: 1;
+  line-height: 1.4;
+}
+.pd-queue-notification-close {
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0.1rem 0.25rem;
+  border-radius: 4px;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+.pd-queue-notification-close:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.15);
+}
+@media (max-width: 480px) {
+  .pd-queue-notification {
+    top: 0.5rem;
+    border-radius: 8px;
+    padding: 0.65rem 0.75rem 0.65rem 1rem;
+    font-size: 0.875rem;
+  }
+}
 
 .pd-btn {
   padding: 0.5rem 1rem;

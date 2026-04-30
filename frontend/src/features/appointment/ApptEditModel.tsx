@@ -8,8 +8,8 @@ import type {
     Appointment
 } from "@/features/appointment/types.ts"; 
 import { Button } from '@/components/ui/button'; 
-
-
+import { DropdownMenu } from 'radix-ui';
+import { statusColor } from './ApptUtil';
  
  
 type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
@@ -76,6 +76,8 @@ export default function ApptEditModal({
     
 }:updateFormProp){
  
+
+    const [menuOpen, setMenuOpen] = useState(false)
 
     const apptStatusTypes : any[] = [ 
         'pending',  // patient needs to make changes 
@@ -258,7 +260,7 @@ export default function ApptEditModal({
                       <label
                         className='p-3 w-70 '
                             >Appointment Status</label>
-                      <select
+                      {/* <select
                         className='p-3 w-50 bg-[#F5F3EE] rounded-lg border border-solid text-end'
                         name="type"
                         value={updateForm.appointment_status}
@@ -269,7 +271,59 @@ export default function ApptEditModal({
                             {t}
                           </option>
                         ))}
-                      </select>
+                      </select> */}
+
+                        <DropdownMenu.Root open={menuOpen} onOpenChange={setMenuOpen}>
+                            <DropdownMenu.Trigger asChild>
+                                <button className="border rounded-lg">
+                                    <div className="m-1 flex items-center">
+                                        <span
+                                        className="inline-block h-3 w-3 rounded-full border border-solid m-2"
+                                        style={{
+                                        backgroundColor: statusColor(updateForm.appointment_status),
+                                        }}
+                                        />
+                                        {updateForm.appointment_status} {menuOpen ? "↓" : "↑"}
+                                    </div>
+                                </button>
+                            </DropdownMenu.Trigger>
+
+                            <DropdownMenu.Content
+                                className="bg-white border rounded-lg shadow-lg p-2 w-56 z-10000"
+                                sideOffset={5}
+                                >
+                                <DropdownMenu.RadioGroup
+                                    value={updateForm.appointment_status}
+                                    onValueChange={(value) => {
+                                    setUpdateForm((f) => ({
+                                    ...f,
+                                    appointment_status: value as typeof updateForm.appointment_status,
+                                    }));
+
+                                    setMenuOpen(false);
+                                }}
+                                >
+                                    {apptStatusTypes.map((status) => (
+                                    <DropdownMenu.RadioItem
+                                        key={status}
+                                        value={status}
+                                        className="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer"
+                                        >
+                                        <span
+                                        className="inline-block h-3 w-3 rounded-full border border-solid"
+                                        style={{
+                                        backgroundColor: statusColor(status),
+                                        }}
+                                        />
+
+                                        {status}
+                                        <DropdownMenu.ItemIndicator>✓</DropdownMenu.ItemIndicator>
+
+                                    </DropdownMenu.RadioItem>
+                                ))}
+                                </DropdownMenu.RadioGroup>
+                            </DropdownMenu.Content>
+                        </DropdownMenu.Root>
                     </div>
 
 

@@ -14,7 +14,6 @@ type PatientInfoRow = {
   name: string | null
   birthday: string | null
   gender: string | null
-  age: number | null
   blood_type: string | null
 }
 
@@ -49,7 +48,7 @@ function DashboardPanel({
 }
 
 // renders the sidebar, header, and a form for personal details (name, birthday,
-// gender, age, blood type). on mount it loads existing data from patient_info;
+// gender, blood type). on mount it loads existing data from patient_info;
 // on submit it upserts the row keyed by the user's auth uid.
 export default function PatientYourInformation() {
   /*const { profile } = useAuth()
@@ -62,7 +61,6 @@ export default function PatientYourInformation() {
     name: '',
     birthday: '',
     gender: '',
-    age: '',
     blood_type: '',
   })
 
@@ -77,7 +75,7 @@ export default function PatientYourInformation() {
       }
       const { data, error } = await supabase
         .from('patient_info')
-        .select('id, name, birthday, gender, age, blood_type')
+        .select('id, name, birthday, gender, blood_type')
         .eq('id', user.id)
         .maybeSingle()
 
@@ -87,7 +85,6 @@ export default function PatientYourInformation() {
           name: row.name ?? '',
           birthday: row.birthday ?? '',
           gender: row.gender ?? '',
-          age: row.age != null ? String(row.age) : '',
           blood_type: row.blood_type ?? '',
         })
       } else {
@@ -95,7 +92,6 @@ export default function PatientYourInformation() {
           name: '',
           birthday: '',
           gender: '',
-          age: '',
           blood_type: '',
         })
       }
@@ -118,12 +114,6 @@ export default function PatientYourInformation() {
     }
 
     const trimmedName = form.name.trim()
-    const ageNum = form.age.trim() === '' ? null : parseInt(form.age, 10)
-
-    if (form.age.trim() !== '' && (ageNum === null || Number.isNaN(ageNum) || ageNum < 0 || ageNum > 150)) {
-      setMessage({ type: 'error', text: 'age must be a number between 0 and 150' })
-      return
-    }
 
     setSaving(true)
 
@@ -135,7 +125,6 @@ export default function PatientYourInformation() {
           name: trimmedName || null,
           birthday: form.birthday || null,
           gender: form.gender.trim() || null,
-          age: ageNum,
           blood_type: form.blood_type.trim() || null,
         },
         { onConflict: 'id' }
@@ -224,22 +213,6 @@ export default function PatientYourInformation() {
               value={form.gender}
               onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
               placeholder="Gender"
-              className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none transition focus:border-indigo-400"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="pi-age" className="mb-1 block text-sm font-medium text-slate-700">
-              Age
-            </label>
-            <input
-              id="pi-age"
-              type="number"
-              min={0}
-              max={150}
-              value={form.age}
-              onChange={(e) => setForm((f) => ({ ...f, age: e.target.value }))}
-              placeholder="Age"
               className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none transition focus:border-indigo-400"
             />
           </div>

@@ -12,7 +12,7 @@ import { useAuth } from '../../../context/AuthContext'
 
 type AppointmentStatus =
   | 'pending'
-  | 'unseen'
+  | 'requested'
   | 'canceled'
   | 'deserted'
   | 'active'
@@ -25,6 +25,7 @@ type Appointment = {
   doctor: string
   type: string
   status: AppointmentStatus
+  rawDate: string
 }
 
 type VisitRecord = {
@@ -151,7 +152,7 @@ function getAppointmentBadgeClasses(status: AppointmentStatus) {
     case 'active':
       return 'bg-sky-100 text-sky-700'
     case 'pending':
-    case 'unseen':
+    case 'requested':
       return 'bg-indigo-100 text-indigo-700'
     case 'canceled':
     case 'deserted':
@@ -163,15 +164,24 @@ function getAppointmentBadgeClasses(status: AppointmentStatus) {
 
 function formatAppointmentStatus(status: AppointmentStatus) {
   switch (status) {
-    case 'unseen':
-      return 'scheduled'
+    case 'requested':
+      return 'requested'
     case 'active':
-      return 'checked in'
+      return 'scheduled'
     case 'canceled':
-      return 'cancelled'
+      return 'canceled'
     default:
       return status.replace('_', ' ')
   }
+}
+
+// returns true when the appointment is active and within the check-in window:
+// 2 hours before to 1 hour after the scheduled time.
+function isCheckInEligible(apt: { rawDate: string; status: AppointmentStatus }) {
+  if (apt.status !== 'active') return false
+  const t = new Date(apt.rawDate).getTime()
+  const now = Date.now()
+  return now >= t - 2 * 60 * 60 * 1000 && now <= t + 60 * 60 * 1000
 }
 
 export default function PatientDashboard() {
@@ -217,8 +227,8 @@ export default function PatientDashboard() {
     row: queueRow,
     exitState,
     activePosition,
-    peopleAhead,
     join,
+    joinForAppointment,
     leave,
   } = usePatientQueue(activeClinicId)
 
@@ -303,7 +313,8 @@ export default function PatientDashboard() {
               }),
               doctor: row.clinician_name ?? 'Clinic Staff',
               type: row.visit_type ?? 'Appointment',
-              status: (row.appointment_status ?? 'unseen') as AppointmentStatus,
+              status: (row.appointment_status ?? 'requested') as AppointmentStatus,
+              rawDate: row.appointment_date as string,
             }
           })
 
@@ -358,7 +369,7 @@ export default function PatientDashboard() {
   const upcomingAppointments = useMemo(
     () =>
       appointments.filter((a) =>
-        ['pending', 'unseen', 'active'].includes(a.status),
+        ['pending', 'requested', 'active'].includes(a.status),
       ),
     [appointments],
   )
@@ -584,7 +595,6 @@ export default function PatientDashboard() {
                 loading={queueLoading}
                 row={queueRow}
                 activePosition={activePosition}
-                peopleAhead={peopleAhead}
                 exitState={exitState}
                 onJoin={join}
                 onLeave={leave}
@@ -610,35 +620,58 @@ export default function PatientDashboard() {
                   </p>
                 ) : (
                   <ul className="flex flex-col gap-3">
-                    {upcomingAppointments.map((apt) => (
-                      <li
-                        key={apt.id}
-                        className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="font-semibold text-slate-800">
-                            {apt.date}
-                          </span>
-                          <span
-                            className={[
-                              'rounded-md px-2 py-1 text-xs font-semibold',
-                              getAppointmentBadgeClasses(apt.status),
-                            ].join(' ')}
-                          >
-                            {formatAppointmentStatus(apt.status)}
-                          </span>
-                        </div>
-                        <div className="mt-2 text-sm text-slate-600">
-                          {apt.time}
-                        </div>
-                        <div className="text-sm text-slate-700">
-                          {apt.doctor}
-                        </div>
-                        <div className="text-sm text-slate-500">
-                          {apt.type}
-                        </div>
-                      </li>
-                    ))}
+                    {upcomingAppointments.map((apt) => {
+                      const alreadyCheckedIn =
+                        queueRow?.is_active &&
+                        queueRow.appointment_id === apt.id
+                      const canCheckIn =
+                        isCheckInEligible(apt) &&
+                        !queueRow?.is_active
+
+                      return (
+                        <li
+                          key={apt.id}
+                          className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="font-semibold text-slate-800">
+                              {apt.date}
+                            </span>
+                            <span
+                              className={[
+                                'rounded-md px-2 py-1 text-xs font-semibold',
+                                getAppointmentBadgeClasses(apt.status),
+                              ].join(' ')}
+                            >
+                              {formatAppointmentStatus(apt.status)}
+                            </span>
+                          </div>
+                          <div className="mt-2 text-sm text-slate-600">
+                            {apt.time}
+                          </div>
+                          <div className="text-sm text-slate-700">
+                            {apt.doctor}
+                          </div>
+                          <div className="text-sm text-slate-500">
+                            {apt.type}
+                          </div>
+                          {alreadyCheckedIn && (
+                            <p className="mt-2 text-xs font-medium text-sky-600">
+                              You are checked in for this appointment.
+                            </p>
+                          )}
+                          {canCheckIn && (
+                            <button
+                              type="button"
+                              className="mt-2 rounded-lg bg-indigo-400 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-500"
+                              onClick={() => joinForAppointment(apt.id)}
+                            >
+                              Check in now
+                            </button>
+                          )}
+                        </li>
+                      )
+                    })}
                   </ul>
                 )}
 
