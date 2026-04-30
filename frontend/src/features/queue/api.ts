@@ -43,6 +43,30 @@ export async function reorderQueueEntry(
   if (error) throw error
 }
 
+export async function fetchDoctorsForClinic(clinicId: string) {
+  const { data, error } = await supabase
+    .from('membernamerole')
+    .select('*')
+    .eq('clinic_id', clinicId)
+    .eq('role', 'doctor')
+
+  if (error) throw error
+  return data ?? []
+}
+
+//Must replace with RPC function later
+export async function assignDoctorToAppointment(
+  appointmentId: string,
+  doctorId: string
+) {
+  const { error } = await supabase
+    .from('Appointments')
+    .update({ clinician_id: doctorId })
+    .eq('Appointment_id', appointmentId)
+
+  if (error) throw error
+}
+
 export async function fetchOwnQueueRowsForClinic(clinicId: string): Promise<QueueEntryRow[]> {
   const userId = await getCurrentUserId()
   const { data, error } = await supabase

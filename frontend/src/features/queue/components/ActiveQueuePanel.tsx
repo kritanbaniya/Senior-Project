@@ -2,6 +2,7 @@ import type { QueueEntryRow } from '../types'
 
 type ActiveQueuePanelProps = {
   rows: QueueEntryRow[]
+  doctors: any[]
   onMove: (row: QueueEntryRow, direction: 'up' | 'down') => void
   onCallNext: () => void
   onCallPatient: (entryId: string) => void
@@ -11,6 +12,7 @@ type ActiveQueuePanelProps = {
 
 export default function ActiveQueuePanel({
   rows,
+  doctors,
   onMove,
   onCallNext,
   onCallPatient,
@@ -20,6 +22,7 @@ export default function ActiveQueuePanel({
   return (
     <div className="info-box queue-section">
       <h2 className="info-box-title">Live service queue</h2>
+
       <div className="info-box-content">
         <div className="form-actions">
           <button
@@ -31,17 +34,58 @@ export default function ActiveQueuePanel({
             call next patient
           </button>
         </div>
+
         {!rows.length ? (
           <p className="no-queue">No patients waiting in active queue.</p>
         ) : (
           <ol className="nurse-queue-list">
             {rows.map((row, index) => (
-              <li key={row.id} className={`nurse-queue-item stage-${row.status}`}>
+              <li
+                key={row.id}
+                className={`nurse-queue-item stage-${row.status}`}
+              >
                 <span className="queue-order">#{index + 1}</span>
+
                 <div className="queue-patient-info">
-                  <span className="queue-patient-name">{row.patient_name ?? 'patient'}</span>
-                  <span className="queue-apt-type">{row.status}</span>
+                  <span className="queue-patient-name">
+                    {row.patient_name ?? 'patient'}
+                  </span>
+
+                  <span className="queue-apt-type">
+                    {row.status}
+                  </span>
+
+                  <span className="queue-doctor">
+                    Doctor:{' '}
+                    {row.appointment?.clinician_role === 'doctor'
+                      ? row.appointment.clinician_name ?? 'Assigned doctor'
+                      : 'Assignment required'}
+                  </span>
+
+                  {row.status === 'called' && (
+                    <select
+                      value={
+                        row.appointment?.clinician_role === 'doctor'
+                          ? row.appointment.clinician_id ?? ''
+                          : ''
+                      }
+                      onChange={(e) => {
+                        console.log('selected doctor:', e.target.value)
+                      }}
+                    >
+                      <option value="" disabled>
+                        Select a doctor
+                      </option>
+
+                      {doctors.map((doc) => (
+                        <option key={doc.user_id} value={doc.user_id}>
+                          {doc.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
+
                 <div className="queue-actions">
                   <button
                     type="button"
@@ -51,6 +95,7 @@ export default function ActiveQueuePanel({
                   >
                     up
                   </button>
+
                   <button
                     type="button"
                     className="btn-small"
@@ -59,6 +104,7 @@ export default function ActiveQueuePanel({
                   >
                     down
                   </button>
+
                   {row.status === 'waiting' && (
                     <button
                       type="button"
@@ -68,15 +114,24 @@ export default function ActiveQueuePanel({
                       call
                     </button>
                   )}
+
                   {row.status === 'called' && (
                     <>
                       <button
                         type="button"
                         className="btn-small"
-                        onClick={() => onStartVisit(row.id)}
+                        onClick={() => {
+                          if (row.appointment?.clinician_role !== 'doctor') {
+                            alert('Please assign a doctor before starting the visit.')
+                            return
+                          }
+
+                          onStartVisit(row.id)
+                        }}
                       >
                         start visit
                       </button>
+
                       <button
                         type="button"
                         className="btn-small"
