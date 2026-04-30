@@ -5,9 +5,23 @@ import type { QueueEntryRow } from './types'
 
 type ExitState = 'left' | 'removed_from_active' | null
 
+function parseRateLimitSeconds(message: string): number | null {
+  const match = message.match(/rate_limit:(\d+) seconds/)
+  return match ? parseInt(match[1], 10) : null
+}
+
+function extractErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error) return err.message
+  if (err && typeof err === 'object' && 'message' in err) {
+    return String((err as { message: unknown }).message)
+  }
+  return fallback
+}
+
 export function usePatientQueue(clinicId: string | null) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [rateLimitRetry, setRateLimitRetry] = useState<number | null>(null)
   const [currentRow, setCurrentRow] = useState<QueueEntryRow | null>(null)
   const [exitState, setExitState] = useState<ExitState>(null)
 
@@ -50,6 +64,20 @@ export function usePatientQueue(clinicId: string | null) {
     return unsubscribe
   }, [clinicId, currentRow?.clinic_id, loadSnapshot])
 
+  useEffect(() => {
+    if (!rateLimitRetry) return
+    const interval = setInterval(() => {
+      setRateLimitRetry((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval)
+          return null
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [rateLimitRetry])
+
   const join = useCallback(async () => {
     if (currentRow?.is_active) {
       setError('you already have an active queue entry')
@@ -65,7 +93,13 @@ export function usePatientQueue(clinicId: string | null) {
       setExitState(null)
       await loadSnapshot()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'failed to join queue')
+      const msg = extractErrorMessage(err, 'failed to join queue')
+      const seconds = parseRateLimitSeconds(msg)
+      if (seconds !== null) {
+        setRateLimitRetry(seconds)
+      } else {
+        setError(msg)
+      }
     }
   }, [clinicId, currentRow?.is_active, loadSnapshot])
 
@@ -92,7 +126,13 @@ export function usePatientQueue(clinicId: string | null) {
       setExitState(null)
       await loadSnapshot()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'failed to check in')
+      const msg = extractErrorMessage(err, 'failed to check in')
+      const seconds = parseRateLimitSeconds(msg)
+      if (seconds !== null) {
+        setRateLimitRetry(seconds)
+      } else {
+        setError(msg)
+      }
     }
   }, [currentRow?.is_active, loadSnapshot])
 
@@ -105,6 +145,7 @@ export function usePatientQueue(clinicId: string | null) {
   return {
     loading,
     error,
+    rateLimitRetry,
     row: currentRow,
     exitState,
     activePosition,

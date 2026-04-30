@@ -10,6 +10,7 @@ type PatientQueueCardProps = {
   row: QueueEntryRow | null
   activePosition: number | null
   exitState: 'left' | 'removed_from_active' | null
+  rateLimitRetry: number | null
   onJoin: () => void
   onLeave: () => void
 }
@@ -21,6 +22,7 @@ export default function PatientQueueCard({
   row,
   activePosition,
   exitState,
+  rateLimitRetry,
   onJoin,
   onLeave,
 }: PatientQueueCardProps) {
@@ -134,9 +136,17 @@ export default function PatientQueueCard({
               </p>
             )}
             <p className="pd-card-desc">Join this clinic queue to get started.</p>
-            <button type="button" className="pd-btn pd-btn-primary" onClick={onJoin}>
+            <button
+              type="button"
+              className="pd-btn pd-btn-primary"
+              onClick={onJoin}
+              disabled={!!rateLimitRetry}
+            >
               join queue
             </button>
+            {rateLimitRetry && (
+              <p className="pd-card-desc">too many attempts. please try again later.</p>
+            )}
             <Link to="/dashboard/patient/pdf-upload" state={{ clinicId: clinicid ?? '' }} className="pd-btn pd-btn-primary">
               upload form
             </Link>
