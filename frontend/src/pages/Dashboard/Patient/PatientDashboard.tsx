@@ -224,6 +224,7 @@ export default function PatientDashboard() {
   const {
     loading: queueLoading,
     error: queueError,
+    rateLimitRetry,
     row: queueRow,
     exitState,
     activePosition,
@@ -596,6 +597,7 @@ export default function PatientDashboard() {
                 row={queueRow}
                 activePosition={activePosition}
                 exitState={exitState}
+                rateLimitRetry={rateLimitRetry}
                 onJoin={join}
                 onLeave={leave}
               />
@@ -661,13 +663,21 @@ export default function PatientDashboard() {
                             </p>
                           )}
                           {canCheckIn && (
-                            <button
-                              type="button"
-                              className="mt-2 rounded-lg bg-indigo-400 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-500"
-                              onClick={() => joinForAppointment(apt.id)}
-                            >
-                              Check in now
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                className="mt-2 rounded-lg bg-indigo-400 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() => joinForAppointment(apt.id)}
+                                disabled={!!rateLimitRetry}
+                              >
+                                Check in now
+                              </button>
+                              {rateLimitRetry && (
+                                <p className="mt-1 text-xs text-slate-500">
+                                  too many attempts. please try again later.
+                                </p>
+                              )}
+                            </>
                           )}
                         </li>
                       )
