@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'  
 import { saveMedicalHistory, fetchMedicalHistory, type MedicalHistoryRecord } from '@/features/medical/medicalHistoryApi'  
 import { saveLabResult, fetchLabResults, type LabResultRecord } from '@/features/medical/labResultsApi' 
+import { savePrescription, fetchAllPrescriptions, type PrescriptionRecord } from '@/features/medical/prescriptionsApi'
 import { SidebarProvider } from "@/components/ui/sidebar" 
 import DoctorSidebar from "./DoctorSideBar" 
 
@@ -99,6 +100,56 @@ const TEST_CATEGORIES = {
   ]
 }
 
+// Prescription dropdown options
+const DOSAGE_OPTIONS = [
+  '250mg',
+  '500mg',
+  '750mg',
+  '1000mg (1g)',
+  '5mg',
+  '10mg',
+  '20mg',
+  '25mg',
+  '50mg',
+  '100mg',
+  '1 tablet',
+  '2 tablets',
+  '1 capsule',
+  '2 capsules',
+  '5ml',
+  '10ml',
+  '1 puff',
+  '2 puffs',
+]
+
+const FREQUENCY_OPTIONS = [
+  'Once daily',
+  'Twice daily',
+  'Three times daily',
+  'Four times daily',
+  'Every 4 hours',
+  'Every 6 hours',
+  'Every 8 hours',
+  'Every 12 hours',
+  'As needed',
+  'Before meals',
+  'After meals',
+  'At bedtime',
+]
+
+const DURATION_OPTIONS = [
+  '3 days',
+  '5 days',
+  '7 days',
+  '10 days',
+  '14 days',
+  '30 days',
+  '60 days',
+  '90 days',
+  'Ongoing',
+  'Until symptoms resolve',
+]
+
 // Flatten for dropdown
 const ALL_TEST_TYPES = Object.entries(TEST_CATEGORIES).flatMap(([category, tests]) =>
   tests.map(test => ({ category, test }))
@@ -157,6 +208,38 @@ function ChartSection({
       )}
     </div>
   )
+}
+
+// Helper function to calculate prescription status based on date and duration
+function calculatePrescriptionStatus(prescribedDate: string, duration: string, manualStatus: string): string {
+  // If manually discontinued, always show that
+  if (manualStatus === 'discontinued') {
+    return 'discontinued'
+  }
+
+  // If duration is "Ongoing", always active
+  if (duration === 'Ongoing' || duration === 'Until symptoms resolve') {
+    return 'active'
+  }
+
+  // Parse duration to days
+  const durationMatch = duration.match(/(\d+)\s*days?/)
+  if (!durationMatch) {
+    return manualStatus // Can't parse, use database status
+  }
+
+  const durationDays = parseInt(durationMatch[1], 10)
+  
+  // Calculate if prescription has expired
+  const prescribed = new Date(prescribedDate)
+  const today = new Date()
+  const daysSincePrescribed = Math.floor((today.getTime() - prescribed.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (daysSincePrescribed > durationDays) {
+    return 'completed'
+  }
+
+  return 'active'
 }
 
 export default function DoctorDashBoard() {
@@ -222,6 +305,16 @@ export default function DoctorDashBoard() {
   const [newTestResult, setNewTestResult] = useState({ type: '', result: '', notes: '' })
   const [fetchedLabResults, setFetchedLabResults] = useState<LabResultRecord[]>([])
   const [loadingLabResults, setLoadingLabResults] = useState(false)
+  const [showPrescriptionForm, setShowPrescriptionForm] = useState(false)
+  const [newPrescription, setNewPrescription] = useState({
+    medicationName: '',
+    dosage: '',
+    frequency: '',
+    duration: '',
+    instructions: '',
+  })
+  const [fetchedPrescriptions, setFetchedPrescriptions] = useState<PrescriptionRecord[]>([])
+  const [loadingPrescriptions, setLoadingPrescriptions] = useState(false)
   const [saveNoteFeedback, setSaveNoteFeedback] = useState<string | null>(null)
 
   const selectedPatient = patients.find((p) => p.id === selectedPatientId)
@@ -249,23 +342,42 @@ export default function DoctorDashBoard() {
   }, [selectedPatient])
 
   // Fetch lab results when patient is selected
-useEffect(() => {
-  if (selectedPatient) {
-    const loadLabResults = async () => {
-      setLoadingLabResults(true)
-      const { data, error } = await fetchLabResults(selectedPatient.id)
-      if (!error && data) {
-        setFetchedLabResults(data)
-      } else {
-        setFetchedLabResults([])
+  useEffect(() => {
+    if (selectedPatient) {
+      const loadLabResults = async () => {
+        setLoadingLabResults(true)
+        const { data, error } = await fetchLabResults(selectedPatient.id)
+        if (!error && data) {
+          setFetchedLabResults(data)
+        } else {
+          setFetchedLabResults([])
+        }
+        setLoadingLabResults(false)
       }
-      setLoadingLabResults(false)
+      void loadLabResults()
+    } else {
+      setFetchedLabResults([])
     }
-    void loadLabResults()
-  } else {
-    setFetchedLabResults([])
-  }
-}, [selectedPatient])
+  }, [selectedPatient])
+
+  // Fetch prescriptions when patient is selected
+  useEffect(() => {
+    if (selectedPatient) {
+      const loadPrescriptions = async () => {
+        setLoadingPrescriptions(true)
+        const { data, error } = await fetchAllPrescriptions(selectedPatient.id)
+        if (!error && data) {
+          setFetchedPrescriptions(data)
+        } else {
+          setFetchedPrescriptions([])
+        }
+        setLoadingPrescriptions(false)
+      }
+      void loadPrescriptions()
+    } else {
+      setFetchedPrescriptions([])
+    }
+  }, [selectedPatient])
 
   const updateClinicalNote = (field: keyof ClinicalNote, value: string | boolean) => {
     setClinicalNote((prev) => ({ ...prev, [field]: value }))
@@ -368,6 +480,58 @@ useEffect(() => {
     setNewTestResult({ type: '', result: '', notes: '' })
     setShowTestForm(false)
   }
+
+  const addPrescription = async () => {
+  if (
+    !selectedPatient ||
+    !newPrescription.medicationName ||
+    !newPrescription.dosage ||
+    !newPrescription.frequency ||
+    !newPrescription.duration
+  ) {
+    alert('Please fill in all required fields')
+    return
+  }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    alert('You must be logged in to add prescriptions.')
+    return
+  }
+
+  const { error } = await savePrescription({
+    patientId: selectedPatient.id,
+    doctorId: user.id,
+    medicationName: newPrescription.medicationName,
+    dosage: newPrescription.dosage,
+    frequency: newPrescription.frequency,
+    duration: newPrescription.duration,
+    instructions: newPrescription.instructions || undefined,
+    doctorName: profile?.full_name || 'Doctor',
+  })
+
+  if (error) {
+    console.error('Error saving prescription:', error)
+    alert('Failed to save prescription: ' + error.message)
+    return
+  }
+
+  // Refresh prescriptions
+  const { data } = await fetchAllPrescriptions(selectedPatient.id)
+  if (data) {
+    setFetchedPrescriptions(data)
+  }
+
+  // Clear form and close
+  setNewPrescription({
+    medicationName: '',
+    dosage: '',
+    frequency: '',
+    duration: '',
+    instructions: '',
+  })
+  setShowPrescriptionForm(false)
+}
 
 
   return (
@@ -594,45 +758,214 @@ useEffect(() => {
                   <ChartSection 
                     title="Prescriptions" 
                     icon="💊"
+                    badge={fetchedPrescriptions.filter(rx => 
+                      calculatePrescriptionStatus(rx.prescribed_date, rx.duration, rx.status) === 'active'
+                    ).length}
                     defaultExpanded={false}
                   >
-                    {(() => {
-                      const prescriptions = fetchedHistory
-                        .filter(visit => visit.prescriptions)
-                        .map(visit => ({
-                          date: visit.visit_date,
-                          medications: visit.prescriptions,
-                          doctor: visit.doctor_name
-                        }))
+                    <div className="space-y-3">
+                      {!showPrescriptionForm && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setShowPrescriptionForm(true)}
+                          className="w-full"
+                        >
+                          + Add Prescription
+                        </Button>
+                      )}
 
-                      if (prescriptions.length === 0) {
-                        return (
+                      {showPrescriptionForm && (
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault()
+                            addPrescription()
+                          }}
+                          className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200"
+                        >
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Medication Name *
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g., Ibuprofen, Lisinopril, Amoxicillin"
+                              value={newPrescription.medicationName}
+                              onChange={(e) => setNewPrescription({ ...newPrescription, medicationName: e.target.value })}
+                              required
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Dosage *
+                            </label>
+                            <select
+                              value={newPrescription.dosage}
+                              onChange={(e) => setNewPrescription({ ...newPrescription, dosage: e.target.value })}
+                              required
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="">Select dosage...</option>
+                              {DOSAGE_OPTIONS.map((dosage) => (
+                                <option key={dosage} value={dosage}>
+                                  {dosage}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Frequency *
+                            </label>
+                            <select
+                              value={newPrescription.frequency}
+                              onChange={(e) => setNewPrescription({ ...newPrescription, frequency: e.target.value })}
+                              required
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="">Select frequency...</option>
+                              {FREQUENCY_OPTIONS.map((frequency) => (
+                                <option key={frequency} value={frequency}>
+                                  {frequency}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Duration *
+                            </label>
+                            <select
+                              value={newPrescription.duration}
+                              onChange={(e) => setNewPrescription({ ...newPrescription, duration: e.target.value })}
+                              required
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="">Select duration...</option>
+                              {DURATION_OPTIONS.map((duration) => (
+                                <option key={duration} value={duration}>
+                                  {duration}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Instructions (optional)
+                            </label>
+                            <textarea
+                              placeholder="e.g., Take with food, Avoid alcohol, Take at bedtime"
+                              value={newPrescription.instructions}
+                              onChange={(e) => setNewPrescription({ ...newPrescription, instructions: e.target.value })}
+                              rows={2}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button type="submit" size="sm">Add</Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setShowPrescriptionForm(false)
+                                setNewPrescription({
+                                  medicationName: '',
+                                  dosage: '',
+                                  frequency: '',
+                                  duration: '',
+                                  instructions: '',
+                                })
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </form>
+                      )}
+
+                      {/* Display prescriptions from database */}
+                      {loadingPrescriptions ? (
+                        <p className="text-sm text-gray-500">Loading prescriptions...</p>
+                      ) : fetchedPrescriptions.length > 0 ? (
+                        <div className="space-y-3">
+                          {fetchedPrescriptions.map((rx) => {
+                            // Calculate actual status based on date and duration
+                            const actualStatus = calculatePrescriptionStatus(
+                              rx.prescribed_date, 
+                              rx.duration, 
+                              rx.status
+                            )
+                            
+                            return (
+                              <div 
+                                key={rx.id} 
+                                className={`p-3 rounded border ${
+                                  actualStatus === 'active' 
+                                    ? 'bg-green-50 border-green-200' 
+                                    : actualStatus === 'completed'
+                                    ? 'bg-gray-50 border-gray-200 opacity-60'
+                                    : 'bg-red-50 border-red-200 opacity-60'
+                                }`}
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <p className="text-sm font-semibold text-gray-900">
+                                      {rx.medication_name}
+                                    </p>
+                                    <p className="text-xs text-gray-600 mt-0.5">
+                                      {rx.dosage} • {rx.frequency}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="text-xs text-gray-500">{rx.prescribed_date}</span>
+                                    <span className={`block text-xs font-medium mt-0.5 ${
+                                      actualStatus === 'active' ? 'text-green-600' :
+                                      actualStatus === 'completed' ? 'text-gray-500' :
+                                      'text-red-600'
+                                    }`}>
+                                      {actualStatus === 'active' ? 'Active' :
+                                      actualStatus === 'completed' ? 'Completed' :
+                                      'Discontinued'}
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                <p className="text-xs text-gray-700">
+                                  <strong>Duration:</strong> {rx.duration}
+                                </p>
+                                
+                                {rx.instructions && (
+                                  <p className="text-xs text-gray-700 mt-1">
+                                    <strong>Instructions:</strong> {rx.instructions}
+                                  </p>
+                                )}
+                                
+                                <p className="text-xs text-gray-500 mt-2">
+                                  Prescribed by {rx.doctor_name}
+                                </p>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        !showPrescriptionForm && (
                           <div className="text-center py-8 text-gray-500">
                             <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                             </svg>
                             <p className="font-medium">No prescriptions on file</p>
-                            <p className="text-sm mt-1">Medications prescribed during visits will appear here</p>
+                            <p className="text-sm mt-1">Medications prescribed will appear here</p>
                           </div>
                         )
-                      }
-
-                      return (
-                        <div className="space-y-3">
-                          {prescriptions.map((rx, idx) => (
-                            <div key={idx} className="p-3 bg-gray-50 rounded border border-gray-200">
-                              <div className="flex justify-between items-start mb-1">
-                                <p className="text-sm font-semibold text-gray-900">
-                                  {rx.medications}
-                                </p>
-                                <span className="text-xs text-gray-500">{rx.date}</span>
-                              </div>
-                              <p className="text-xs text-gray-600">Prescribed by {rx.doctor}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    })()}
+                      )}
+                    </div>
                   </ChartSection>
 
                   {/* Section 3: Lab & Test Results */}
@@ -827,8 +1160,7 @@ useEffect(() => {
                         { label: 'Symptoms', field: 'symptoms', placeholder: 'Patient-reported symptoms...', rows: 2 },
                         { label: 'Observations', field: 'observations', placeholder: 'Exam findings...', rows: 2 },
                         { label: 'Assessment *', field: 'assessment', placeholder: 'Diagnosis...', rows: 3, required: true },
-                        { label: 'Treatment', field: 'treatmentPlan', placeholder: 'Treatment plan...', rows: 2 },
-                        { label: 'Prescriptions', field: 'prescriptions', placeholder: 'Medications...', rows: 2 }
+                        { label: 'Treatment', field: 'treatmentPlan', placeholder: 'Treatment plan...', rows: 2 }
                       ].map(({ label, field, placeholder, rows }) => (
                         <div key={field}>
                           <label className="block text-xs font-medium text-gray-700 mb-1">{label}</label>
