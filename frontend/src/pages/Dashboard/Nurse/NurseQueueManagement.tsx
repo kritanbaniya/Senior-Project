@@ -17,6 +17,7 @@ export default function NurseQueueManagement() {
     activeRows,
     inProgressRows,
     doctors,
+    assignDoctor,
     approvePending,
     moveRow,
     callNextPatient,
@@ -73,6 +74,7 @@ export default function NurseQueueManagement() {
                 <ActiveQueuePanel
                   rows={activeRows}
                   doctors={doctors}
+                  onAssignDoctor={assignDoctor}
                   onMove={moveRow}
                   onCallNext={callNextPatient}
                   onCallPatient={callSinglePatient}

@@ -54,6 +54,18 @@ export async function fetchDoctorsForClinic(clinicId: string) {
   return data ?? []
 }
 
+export async function assignQueueEntryDoctor(
+  entryId: string,
+  doctorId: string
+): Promise<void> {
+  const { error } = await supabase.rpc('assign_queue_entry_doctor', {
+    p_entry_id: entryId,
+    p_doctor_id: doctorId,
+  })
+
+  if (error) throw error
+}
+
 //Must replace with RPC function later
 export async function assignDoctorToAppointment(
   appointmentId: string,

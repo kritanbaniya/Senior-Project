@@ -11,6 +11,7 @@ import {
   reorderQueueEntry,
   startVisit,
   fetchDoctorsForClinic,
+  assignQueueEntryDoctor,
 } from './api'
 import { subscribeToClinicQueue } from './realtime'
 import type { ClinicListItem, QueueEntryRow, StaffPermissionRow } from './types'
@@ -195,6 +196,23 @@ const refreshQueue = useCallback(async () => {
     [refreshQueue]
   )
 
+  const assignDoctor = useCallback(
+  async (entryId: string, doctorId: string) => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      await assignQueueEntryDoctor(entryId, doctorId)
+      await refreshQueue()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'failed to assign doctor')
+    } finally {
+      setLoading(false)
+    }
+  },
+  [refreshQueue]
+)
+
   return {
     loading,
     error,
@@ -214,5 +232,6 @@ const refreshQueue = useCallback(async () => {
     noShow,
     markCompleted,
     doctors,
+    assignDoctor,
   }
 }

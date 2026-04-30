@@ -3,6 +3,7 @@ import type { QueueEntryRow } from '../types'
 type ActiveQueuePanelProps = {
   rows: QueueEntryRow[]
   doctors: any[]
+  onAssignDoctor: (entryId: string, doctorId: string) => void
   onMove: (row: QueueEntryRow, direction: 'up' | 'down') => void
   onCallNext: () => void
   onCallPatient: (entryId: string) => void
@@ -13,6 +14,7 @@ type ActiveQueuePanelProps = {
 export default function ActiveQueuePanel({
   rows,
   doctors,
+  onAssignDoctor,
   onMove,
   onCallNext,
   onCallPatient,
@@ -70,7 +72,15 @@ export default function ActiveQueuePanel({
                           : ''
                       }
                       onChange={(e) => {
-                        console.log('selected doctor:', e.target.value)
+                        const doctorId = e.target.value
+                        console.log('selected doctor:', doctorId)
+
+                        if (!doctorId) {
+                          alert('Please select a doctor to assign.')
+                          return
+                        }
+
+                        onAssignDoctor(row.id, doctorId)
                       }}
                     >
                       <option value="" disabled>
