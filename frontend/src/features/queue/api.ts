@@ -73,17 +73,7 @@ export async function fetchOwnActiveQueueRows(): Promise<QueueEntryRow[]> {
 export async function fetchActiveQueueForClinic(clinicId: string): Promise<QueueEntryRow[]> {
   const { data, error } = await supabase
     .from('queue_entries')
-    .select(`
-      *,
-      appointment:Appointments!queue_entries_appointment_fk(
-        Appointment_id,
-        clinician_id,
-        clinician:profiles!Appointments_clinician_id_fkey(
-          full_name,
-          role
-        )
-      )
-    `)
+    .select('*')
     .eq('clinic_id', clinicId)
     .eq('is_active', true)
     .in('status', [...ACTIVE_QUEUE_STATUSES])
@@ -91,21 +81,65 @@ export async function fetchActiveQueueForClinic(clinicId: string): Promise<Queue
 
   if (error) throw error
 
-  return (data ?? []).map((row: any) => ({
-    ...row,
-    appointment: row.appointment
-      ? {
-          Appointment_id: row.appointment.Appointment_id,
-          clinician_id: row.appointment.clinician_id,
-          clinician_name: Array.isArray(row.appointment.clinician)
-            ? row.appointment.clinician[0]?.full_name ?? null
-            : row.appointment.clinician?.full_name ?? null,
-          clinician_role: Array.isArray(row.appointment.clinician)
-            ? row.appointment.clinician[0]?.role ?? null
-            : row.appointment.clinician?.role ?? null,
-        }
-      : null,
-  })) as QueueEntryRow[]
+  const rows = data ?? []
+
+  const appointmentIds = rows
+    .map((r) => r.appointment_id)
+    .filter(Boolean)
+
+  if (appointmentIds.length === 0) {
+    return rows as QueueEntryRow[]
+  }
+
+  const { data: appointments, error: apptError } = await supabase
+    .from('Appointments')
+    .select('Appointment_id, clinician_id')
+    .in('Appointment_id', appointmentIds)
+
+  if (apptError) throw apptError
+
+  const clinicianIds = appointments
+    ?.map((a) => a.clinician_id)
+    .filter(Boolean)
+
+  const { data: clinicians, error: clinicianError } = await supabase
+    .from('profiles')
+    .select('id, full_name, role')
+    .in('id', clinicianIds ?? [])
+
+  if (clinicianError) throw clinicianError
+
+  const clinicianMap = new Map(
+    (clinicians ?? []).map((c) => [c.id, c])
+  )
+
+  const appointmentMap = new Map(
+    (appointments ?? []).map((a) => [
+      a.Appointment_id,
+      {
+        clinician_id: a.clinician_id,
+        clinician: clinicianMap.get(a.clinician_id),
+      },
+    ])
+  )
+
+  return rows.map((row) => {
+    const appt = row.appointment_id
+      ? appointmentMap.get(row.appointment_id)
+      : null
+
+    return {
+      ...row,
+      appointment: appt
+        ? {
+            Appointment_id: row.appointment_id!,
+            clinician_id: appt.clinician_id,
+            clinician_name: appt.clinician?.full_name ?? null,
+            clinician_role: appt.clinician?.role ?? null,
+          }
+        : null,
+    }
+  }) as QueueEntryRow[]
 }
 
 export async function fetchPendingQueueForClinic(clinicId: string): Promise<QueueEntryRow[]> {
