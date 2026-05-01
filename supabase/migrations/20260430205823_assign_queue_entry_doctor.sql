@@ -10,9 +10,12 @@ as $$
 declare
   v_clinic_id uuid;
   v_appointment_id uuid;
+  v_patient_id uuid;
+  v_checked_in_at timestamp with time zone;
+  v_new_appointment_id uuid;
 begin
-  select clinic_id, appointment_id
-    into v_clinic_id, v_appointment_id
+  select clinic_id, appointment_id, patient_id, checked_in_at
+    into v_clinic_id, v_appointment_id, v_patient_id, v_checked_in_at
   from public.queue_entries
   where id = p_entry_id
     and is_active = true
@@ -20,10 +23,6 @@ begin
 
   if v_clinic_id is null then
     raise exception 'active queue entry not found';
-  end if;
-
-  if v_appointment_id is null then
-    raise exception 'queue entry is not linked to an appointment';
   end if;
 
   if not exists (
@@ -48,10 +47,35 @@ begin
     raise exception 'selected user is not a doctor at this clinic';
   end if;
 
-  update public."Appointments"
-  set clinician_id = p_doctor_id
-  where "Appointment_id" = v_appointment_id
-    and clinic_id = v_clinic_id;
+  if v_appointment_id is null then
+    insert into public."Appointments" (
+      patient_id,
+      clinic_id,
+      clinician_id,
+      appointment_date,
+      checkin_at,
+      visit_type,
+      appointment_status
+    ) values (
+      v_patient_id,
+      v_clinic_id,
+      p_doctor_id,
+      now() at time zone 'utc',
+      v_checked_in_at at time zone 'utc',
+      'Walk-in',
+      'active'
+    )
+    returning "Appointment_id" into v_new_appointment_id;
+
+    update public.queue_entries
+       set appointment_id = v_new_appointment_id
+     where id = p_entry_id;
+  else
+    update public."Appointments"
+       set clinician_id = p_doctor_id
+     where "Appointment_id" = v_appointment_id
+       and clinic_id = v_clinic_id;
+  end if;
 end;
 $$;
 
