@@ -25,6 +25,14 @@ export type QueueEntryRow = {
   is_active: boolean
   patient_name: string | null
   appointment_id: string | null
+  appointment?: QueueAppointmentRow | null
+}
+
+export type QueueAppointmentRow = {
+  Appointment_id: string
+  clinician_id: string | null
+  clinician_name: string | null
+  clinician_role: string | null
 }
 
 export type ClinicListItem = {
