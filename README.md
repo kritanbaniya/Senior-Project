@@ -79,6 +79,17 @@ If any command is not found or the version is too old, install or upgrade using 
 >   Python is **only** used for the backend.
 
 ---
+## Supabase Local 
+Create a migration file 
+```bash
+npx supabase migration new <filename>
+```
+
+To see the changes your migration file has made, as well as re-seed the database: 
+```bash 
+npx supabase db reset 
+node --env-file=.env.local scripts/seed-auth-users.mjs
+```
 
 ## Getting Started
 
