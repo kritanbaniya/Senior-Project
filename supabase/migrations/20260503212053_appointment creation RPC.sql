@@ -17,8 +17,39 @@ security invoker
 as $$
 declare
   new_appt public."Appointments";
+  v_role text;
 begin
-  perform public.check_rate_limit('create_appt', 5, 60);
+  select role
+  into v_role
+  from public.profiles
+  where id = auth.uid();
+
+  if v_role is null then
+    raise exception 'user profile role not defined';
+  end if;
+
+  if v_role = 'patient' then
+    perform public.check_rate_limit('create_appt', 5, 60);
+
+    if p_patient_id <> auth.uid() then
+      raise exception 'patients can only create appointments for themselves';
+    end if;
+
+  elsif v_role = 'nurse' then
+  if not exists (
+    select 1
+    from public.staff_permissions sp
+    where sp.user_id = auth.uid()
+      and sp.clinic_id = p_clinic_id
+      and sp.manage_appointment = true
+  ) then
+    raise exception 'missing permission: manage_appointment';
+  end if;
+
+  else
+    raise exception 'role not allowed to create appointments';
+  end if;
+
   insert into public."Appointments" (
     appointment_date,
     patient_id,
