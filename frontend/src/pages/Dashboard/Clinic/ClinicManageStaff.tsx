@@ -17,6 +17,7 @@ type StaffMember = {
   user_id: string
   role: StaffRole
   manage_queue: boolean
+  manage_appointment: boolean | null
   invitation_status: InvitationStatus
   full_name: string | null
   email: string | null
@@ -113,6 +114,7 @@ const fetchStaff = useCallback(async () => {
     user_id: r.user_id as string,
     role: 'nurse' as const,
     manage_queue: r.manage_queue as boolean,
+    manage_appointment: r.manage_appointment as boolean,
     invitation_status: (r.invitation_status as InvitationStatus) ?? 'pending',
     full_name: (prof.full_name as string | null) ?? null,
     email: (prof.email as string | null) ?? null,
@@ -135,6 +137,7 @@ const nurses: StaffMember[] = nurseRows.filter(
     user_id: r.user_id as string,
     role: 'doctor' as const,
     manage_queue: false,
+    manage_appointment: false,
     invitation_status: 'accepted' as InvitationStatus,
     full_name: (prof.full_name as string | null) ?? null,
     email: (prof.email as string | null) ?? null,
@@ -204,6 +207,7 @@ const doctors: StaffMember[] = doctorRows.filter(
         clinic_id: clinicId,
         user_id: staffUser.id,
         manage_queue: false,
+        manage_appointment: false,
         invitation_status: 'pending',
       })
       .select()
@@ -221,6 +225,7 @@ const doctors: StaffMember[] = doctorRows.filter(
       user_id: staffUser.id as string,
       role: 'nurse',
       manage_queue: false,
+      manage_appointment: false,
       invitation_status: (inserted.invitation_status as InvitationStatus) ?? 'pending',
       full_name: (staffUser.full_name as string | null) ?? null,
       email: (staffUser.email as string | null) ?? null,
@@ -252,6 +257,7 @@ const doctors: StaffMember[] = doctorRows.filter(
     user_id: staffUser.id as string,
     role: 'doctor',
     manage_queue: false,
+    manage_appointment: false,
     invitation_status: 'accepted',
     full_name: (staffUser.full_name as string | null) ?? null,
     email: (staffUser.email as string | null) ?? null,
@@ -304,6 +310,41 @@ const doctors: StaffMember[] = doctorRows.filter(
     if (error) {
       setStaffList((prev) =>
         prev.map((s) => (s.id === member.id ? { ...s, manage_queue: !newValue } : s)),
+      )
+      setStaffMessage({ type: 'error', text: error.message })
+    }
+  }
+
+  const handleToggleAppointment = (member: StaffMember) => {
+    if (member.role !== 'nurse' || member.invitation_status !== 'accepted') return
+
+    const newValue = !member.manage_appointment
+
+    setPendingAction({
+      message: `${newValue ? 'Grant' : 'Revoke'} appointment access for ${
+        member.full_name ?? member.email ?? 'this nurse'
+      }?`,
+      onConfirm: () => void doToggleAppointment(member, newValue),
+    })
+  }
+
+  const doToggleAppointment = async (member: StaffMember, newValue: boolean) => {
+    setStaffList((prev) =>
+      prev.map((s) =>
+        s.id === member.id ? { ...s, manage_appointment: newValue } : s
+      )
+    )
+
+    const { error } = await supabase
+      .from('staff_permissions')
+      .update({ manage_appointment: newValue })
+      .eq('id', member.id)
+
+    if (error) {
+      setStaffList((prev) =>
+        prev.map((s) =>
+          s.id === member.id ? { ...s, manage_appointment: !newValue } : s
+        )
       )
       setStaffMessage({ type: 'error', text: error.message })
     }
@@ -374,6 +415,7 @@ const doRemoveStaff = async (member: StaffMember) => {
               <th style={{ padding: '0.5rem 0.75rem' }}>Email</th>
               <th style={{ padding: '0.5rem 0.75rem' }}>Status</th>
               {role === 'nurse' && <th style={{ padding: '0.5rem 0.75rem' }}>Queue Access</th>}
+              {role === 'nurse' && <th style={{ padding: '0.5rem 0.75rem' }}>Appointment Access</th>}
               <th style={{ padding: '0.5rem 0.75rem' }}></th>
             </tr>
           </thead>
@@ -410,6 +452,27 @@ const doRemoveStaff = async (member: StaffMember) => {
                         onChange={() => handleToggleQueue(member)}
                       />
                       {member.manage_queue ? 'Yes' : 'No'}
+                    </label>
+                  </td>
+                )}
+                {role === 'nurse' && (
+                  <td style={{ padding: '0.5rem 0.75rem' }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        cursor: member.invitation_status === 'accepted' ? 'pointer' : 'not-allowed',
+                        opacity: member.invitation_status === 'accepted' ? 1 : 0.5,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={member.manage_appointment || !!member.manage_appointment}
+                        disabled={member.invitation_status !== 'accepted'}
+                        onChange={() => handleToggleAppointment(member)}
+                      />
+                      {member.manage_appointment ? 'Yes' : 'No'}
                     </label>
                   </td>
                 )}

@@ -478,7 +478,7 @@ export default function PatientAppointmentManager() {
             setCreateStatus('idle')
             setCreateMessage('')
         }, 1200) // closes after 1.2 seconds
-
+        if(clinicView){readAppointments(clinicView, viewPrefs)}
         return () => clearTimeout(timer)
     }, [createStatus])
 

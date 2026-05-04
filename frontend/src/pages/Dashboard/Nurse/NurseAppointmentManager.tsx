@@ -529,7 +529,7 @@ export default function NurseAppointmentManager() {
             setCreateStatus('idle')
             setCreateMessage('')
         }, 1200) // closes after 1.2 seconds
-
+        if(clinic){readAppointments(clinic, viewPrefs)}
         return () => clearTimeout(timer)
     }, [createStatus])
 
