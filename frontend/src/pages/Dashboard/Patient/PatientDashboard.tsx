@@ -367,13 +367,18 @@ export default function PatientDashboard() {
 
   const todayStr = new Date().toISOString().slice(0, 10)
 
-  const upcomingAppointments = useMemo(
-    () =>
-      appointments.filter((a) =>
-        ['pending', 'requested', 'active'].includes(a.status),
-      ),
-    [appointments],
-  )
+  const upcomingAppointments = useMemo(() => {
+    const etFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' })
+    const todayET = etFormatter.format(new Date())
+
+    return appointments
+      .filter((a) => {
+        if (!['pending', 'requested', 'active'].includes(a.status)) return false
+        const aptDateET = etFormatter.format(new Date(a.rawDate))
+        return aptDateET >= todayET
+      })
+      .slice(0, 3)
+  }, [appointments])
 
   const recentRecords = useMemo(() => records.slice(0, 2), [records])
 
