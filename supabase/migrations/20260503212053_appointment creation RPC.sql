@@ -29,7 +29,7 @@ begin
   end if;
 
   if v_role = 'patient' then
-    perform public.check_rate_limit('create_appt', 5, 60);
+    perform public.check_rate_limit('create_appt', 2, 60);
 
     if p_patient_id <> auth.uid() then
       raise exception 'patients can only create appointments for themselves';
