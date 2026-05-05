@@ -14,7 +14,6 @@ const ClinicPDFUpload: React.FC = () => {
     const [clinics, setClinics] = useState<any[]>([]);
     const [uploadSuccess, setUploadSuccess] = useState(false);
 
-    // 获取护士所属的诊所列表
     useEffect(() => {
         const fetchClinics = async () => {
             const { data: userData } = await supabase.auth.getUser();
