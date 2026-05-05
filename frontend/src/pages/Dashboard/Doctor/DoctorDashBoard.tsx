@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { fetchDoctorInProgressQueue } from '@/features/queue/api'
+import type { DoctorQueuePatientRow } from '@/features/queue/api'
 
 type DoctorStage = 'waiting' | 'consultation' | 'completed'
 
@@ -67,91 +69,34 @@ const INITIAL_CLINICAL_NOTE: ClinicalNote = {
   followUpNotes: '',
 }
 
+
+function formatArrivalTime(startedAt: string | null) {
+  if (!startedAt) return 'Unknown'
+
+  return new Date(startedAt).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function mapQueueRowToDoctorPatient(row: DoctorQueuePatientRow): DoctorPatient {
+  return {
+    id: row.queue_entry_id,
+    patientName: row.patient_name ?? 'Unknown patient',
+    age: 0,
+    gender: 'Unknown',
+    appointmentType: row.visit_type ?? 'Visit',
+    symptoms: 'No visit reason provided.',
+    stage: 'consultation',
+    arrivalTime: formatArrivalTime(row.started_at),
+    formsComplete: true,
+  }
+}
+
 export default function DoctorDashBoard() {
-  const [patients, setPatients] = useState<DoctorPatient[]>([
-    {
-      id: '1',
-      patientName: 'Jane Doe',
-      age: 34,
-      gender: 'Female',
-      appointmentType: 'General Check-up',
-      symptoms: 'Persistent headache, fatigue for 3 days',
-      stage: 'consultation',
-      arrivalTime: '09:15 AM',
-      formsComplete: true,
-      intakeForm: {
-        allergies: 'Penicillin',
-        medications: 'Lisinopril 10mg daily',
-        medicalHistory: 'Hypertension (diagnosed 2020)',
-        emergencyContact: 'John Doe (spouse) - 555-0123',
-      },
-      medicalHistory: [
-        {
-          date: '2024-11-15',
-          diagnosis: 'Upper respiratory infection',
-          notes: 'Prescribed amoxicillin 500mg. Symptoms resolved after 7 days.',
-          doctor: 'Dr. Smith',
-        },
-        {
-          date: '2024-08-22',
-          diagnosis: 'Annual physical examination',
-          notes: 'All vitals normal. Continue current hypertension medication.',
-          doctor: 'Dr. Johnson',
-        },
-      ],
-      testResults: [
-        {
-          id: 't1',
-          type: 'Blood Panel',
-          date: '2024-08-22',
-          result: 'Normal',
-          notes: 'All values within normal range',
-        },
-      ],
-    },
-    {
-      id: '2',
-      patientName: 'John Smith',
-      age: 58,
-      gender: 'Male',
-      appointmentType: 'Follow-up',
-      symptoms: 'Chest discomfort, shortness of breath',
-      stage: 'waiting',
-      arrivalTime: '09:30 AM',
-      formsComplete: false,
-      intakeForm: {
-        allergies: 'None',
-        medications: 'Metformin 500mg twice daily, Atorvastatin 20mg',
-        medicalHistory: 'Type 2 Diabetes, High cholesterol',
-        emergencyContact: 'Sarah Smith (daughter) - 555-0456',
-      },
-      medicalHistory: [
-        {
-          date: '2024-12-01',
-          diagnosis: 'Type 2 Diabetes follow-up',
-          notes: 'HbA1c at 7.2%. Continue current regimen. Recommend dietary counseling.',
-          doctor: 'Dr. Martinez',
-        },
-      ],
-    },
-    {
-      id: '3',
-      patientName: 'Maria Garcia',
-      age: 42,
-      gender: 'Female',
-      appointmentType: 'Consultation',
-      symptoms: 'Lower back pain for 2 weeks',
-      stage: 'waiting',
-      arrivalTime: '09:45 AM',
-      formsComplete: true,
-      intakeForm: {
-        allergies: 'Latex',
-        medications: 'Ibuprofen as needed',
-        medicalHistory: 'No significant medical history',
-        emergencyContact: 'Carlos Garcia (husband) - 555-0789',
-      },
-    },
-  ])
+  const [patients, setPatients] = useState<DoctorPatient[]>([])
+  const [isLoadingQueue, setIsLoadingQueue] = useState(true)
+  const [queueError, setQueueError] = useState<string | null>(null)
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [clinicalNote, setClinicalNote] = useState<ClinicalNote>(INITIAL_CLINICAL_NOTE)
@@ -160,6 +105,45 @@ export default function DoctorDashBoard() {
   const [newTestResult, setNewTestResult] = useState({ type: '', result: '', notes: '' })
   const [saveNoteFeedback, setSaveNoteFeedback] = useState<string | null>(null)
   const [flagFormsFeedback, setFlagFormsFeedback] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadDoctorQueue() {
+      try {
+        setIsLoadingQueue(true)
+        setQueueError(null)
+
+        const rows = await fetchDoctorInProgressQueue()
+        const mappedPatients = rows.map(mapQueueRowToDoctorPatient)
+
+        if (!isMounted) return
+
+        setPatients(mappedPatients)
+        setSelectedPatientId((currentId) => {
+          if (!currentId) return currentId
+          return mappedPatients.some((patient) => patient.id === currentId)
+            ? currentId
+            : null
+        })
+      } catch (error) {
+        console.error('Failed to load doctor queue:', error)
+
+        if (!isMounted) return
+        setQueueError('Unable to load doctor queue.')
+      } finally {
+        if (isMounted) {
+          setIsLoadingQueue(false)
+        }
+      }
+    }
+
+    void loadDoctorQueue()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const selectedPatient = patients.find((p) => p.id === selectedPatientId)
 
@@ -243,8 +227,12 @@ export default function DoctorDashBoard() {
             <h2 className="text-lg font-semibold text-gray-900">Patient Queue</h2>
           </div>
           <div className="p-4">
-            {patients.length === 0 ? (
-              <p className="text-sm text-gray-500">No patients assigned.</p>
+            {isLoadingQueue ? (
+              <p className="text-sm text-gray-500">Loading doctor queue...</p>
+            ) : queueError ? (
+              <p className="text-sm text-red-600">{queueError}</p>
+            ) : patients.length === 0 ? (
+              <p className="text-sm text-gray-500">No patients currently in progress.</p>
             ) : (
               <div className="space-y-2">
                 {patients.map((patient, index) => (
