@@ -85,11 +85,9 @@ export default function ActiveQueuePanel({
                       {row.patient_name ?? 'patient'}
                     </span>
                     <span className={`badge ${
-                      row.status === 'waiting'      ? 'badge-warning' :
-                      row.status === 'called'       ? 'badge-info' :
-                      row.status === 'in_progress'  ? 'badge-success' :
-                      row.status === 'consultation' ? 'badge-success' :
-                      row.status === 'discharge'    ? 'badge-neutral' :
+                      row.status === 'waiting'     ? 'badge-warning' :
+                      row.status === 'called'      ? 'badge-info' :
+                      row.status === 'in_progress' ? 'badge-success' :
                       'badge-neutral'
                     }`} style={{ fontSize: '10px', padding: '2px 6px' }}>
                       {row.status.replace('_', ' ')}
