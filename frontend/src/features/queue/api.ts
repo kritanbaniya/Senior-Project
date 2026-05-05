@@ -43,6 +43,42 @@ export async function reorderQueueEntry(
   if (error) throw error
 }
 
+export async function fetchDoctorsForClinic(clinicId: string) {
+  const { data, error } = await supabase
+    .from('membernamerole')
+    .select('*')
+    .eq('clinic_id', clinicId)
+    .eq('role', 'doctor')
+
+  if (error) throw error
+  return data ?? []
+}
+
+export async function assignQueueEntryDoctor(
+  entryId: string,
+  doctorId: string
+): Promise<void> {
+  const { error } = await supabase.rpc('assign_queue_entry_doctor', {
+    p_entry_id: entryId,
+    p_doctor_id: doctorId,
+  })
+
+  if (error) throw error
+}
+
+//Must replace with RPC function later
+export async function assignDoctorToAppointment(
+  appointmentId: string,
+  doctorId: string
+) {
+  const { error } = await supabase
+    .from('Appointments')
+    .update({ clinician_id: doctorId })
+    .eq('Appointment_id', appointmentId)
+
+  if (error) throw error
+}
+
 export async function fetchOwnQueueRowsForClinic(clinicId: string): Promise<QueueEntryRow[]> {
   const userId = await getCurrentUserId()
   const { data, error } = await supabase
@@ -55,6 +91,23 @@ export async function fetchOwnQueueRowsForClinic(clinicId: string): Promise<Queu
 
   if (error) throw error
   return (data ?? []) as QueueEntryRow[]
+}
+
+export type DoctorQueuePatientRow = {
+  queue_entry_id: string
+  patient_id: string
+  patient_name: string | null
+  visit_type: string | null
+  status: string
+  started_at: string | null
+  appointment_id: string | null
+}
+
+export async function fetchDoctorInProgressQueue(): Promise<DoctorQueuePatientRow[]> {
+  const { data, error } = await supabase.rpc('get_doctor_in_progress_queue')
+
+  if (error) throw error
+  return (data ?? []) as DoctorQueuePatientRow[]
 }
 
 export async function fetchOwnActiveQueueRows(): Promise<QueueEntryRow[]> {
@@ -80,7 +133,66 @@ export async function fetchActiveQueueForClinic(clinicId: string): Promise<Queue
     .order('queue_order', { ascending: true })
 
   if (error) throw error
-  return (data ?? []) as QueueEntryRow[]
+
+  const rows = data ?? []
+
+  const appointmentIds = rows
+    .map((r) => r.appointment_id)
+    .filter(Boolean)
+
+  if (appointmentIds.length === 0) {
+    return rows as QueueEntryRow[]
+  }
+
+  const { data: appointments, error: apptError } = await supabase
+    .from('Appointments')
+    .select('Appointment_id, clinician_id')
+    .in('Appointment_id', appointmentIds)
+
+  if (apptError) throw apptError
+
+  const clinicianIds = appointments
+    ?.map((a) => a.clinician_id)
+    .filter(Boolean)
+
+  const { data: clinicians, error: clinicianError } = await supabase
+    .from('profiles')
+    .select('id, full_name, role')
+    .in('id', clinicianIds ?? [])
+
+  if (clinicianError) throw clinicianError
+
+  const clinicianMap = new Map(
+    (clinicians ?? []).map((c) => [c.id, c])
+  )
+
+  const appointmentMap = new Map(
+    (appointments ?? []).map((a) => [
+      a.Appointment_id,
+      {
+        clinician_id: a.clinician_id,
+        clinician: clinicianMap.get(a.clinician_id),
+      },
+    ])
+  )
+
+  return rows.map((row) => {
+    const appt = row.appointment_id
+      ? appointmentMap.get(row.appointment_id)
+      : null
+
+    return {
+      ...row,
+      appointment: appt
+        ? {
+            Appointment_id: row.appointment_id!,
+            clinician_id: appt.clinician_id,
+            clinician_name: appt.clinician?.full_name ?? null,
+            clinician_role: appt.clinician?.role ?? null,
+          }
+        : null,
+    }
+  }) as QueueEntryRow[]
 }
 
 export async function fetchPendingQueueForClinic(clinicId: string): Promise<QueueEntryRow[]> {

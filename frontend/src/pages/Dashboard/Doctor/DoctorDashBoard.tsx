@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'  
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'  
@@ -8,6 +8,8 @@ import { saveLabResult, fetchLabResults, type LabResultRecord } from '@/features
 import { savePrescription, fetchAllPrescriptions, type PrescriptionRecord } from '@/features/medical/prescriptionsApi'
 import { SidebarProvider } from "@/components/ui/sidebar" 
 import DoctorSidebar from "./DoctorSideBar" 
+import { fetchDoctorInProgressQueue } from '@/features/queue/api'
+import type { DoctorQueuePatientRow } from '@/features/queue/api'
 
 type DoctorStage = 'waiting' | 'consultation' | 'completed'
 
@@ -72,6 +74,30 @@ const INITIAL_CLINICAL_NOTE: ClinicalNote = {
   prescriptions: '',
   followUpRecommended: false,
   followUpNotes: '',
+}
+
+
+function formatArrivalTime(startedAt: string | null) {
+  if (!startedAt) return 'Unknown'
+
+  return new Date(startedAt).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function mapQueueRowToDoctorPatient(row: DoctorQueuePatientRow): DoctorPatient {
+  return {
+    id: row.queue_entry_id,
+    patientName: row.patient_name ?? 'Unknown patient',
+    age: 0,
+    gender: 'Unknown',
+    appointmentType: row.visit_type ?? 'Visit',
+    symptoms: 'No visit reason provided.',
+    stage: 'consultation',
+    arrivalTime: formatArrivalTime(row.started_at),
+    formsComplete: true,
+  }
 }
 
 // Most common and important test types only
@@ -243,59 +269,9 @@ function calculatePrescriptionStatus(prescribedDate: string, duration: string, m
 }
 
 export default function DoctorDashBoard() {
-  const [patients, setPatients] = useState<DoctorPatient[]>([
-    {
-      id: '1',
-      patientName: 'Jane Doe',
-      age: 34,
-      gender: 'Female',
-      appointmentType: 'General Check-up',
-      symptoms: 'Persistent headache, fatigue for 3 days',
-      stage: 'consultation',
-      arrivalTime: '09:15 AM',
-      formsComplete: true,
-      intakeForm: {
-        allergies: 'Penicillin',
-        medications: 'Lisinopril 10mg daily',
-        medicalHistory: 'Hypertension (diagnosed 2020)',
-        emergencyContact: 'John Doe (spouse) - 555-0123',
-      },
-    },
-    {
-      id: '2',
-      patientName: 'John Smith',
-      age: 58,
-      gender: 'Male',
-      appointmentType: 'Follow-up',
-      symptoms: 'Chest discomfort, shortness of breath',
-      stage: 'waiting',
-      arrivalTime: '09:30 AM',
-      formsComplete: false,
-      intakeForm: {
-        allergies: 'None',
-        medications: 'Metformin 500mg twice daily, Atorvastatin 20mg',
-        medicalHistory: 'Type 2 Diabetes, High cholesterol',
-        emergencyContact: 'Sarah Smith (daughter) - 555-0456',
-      },
-    },
-    {
-      id: '3',
-      patientName: 'Maria Garcia',
-      age: 42,
-      gender: 'Female',
-      appointmentType: 'Consultation',
-      symptoms: 'Lower back pain for 2 weeks',
-      stage: 'waiting',
-      arrivalTime: '09:45 AM',
-      formsComplete: true,
-      intakeForm: {
-        allergies: 'Latex',
-        medications: 'Ibuprofen as needed',
-        medicalHistory: 'No significant medical history',
-        emergencyContact: 'Carlos Garcia (husband) - 555-0789',
-      },
-    },
-  ])
+  const [patients, setPatients] = useState<DoctorPatient[]>([])
+  const [isLoadingQueue, setIsLoadingQueue] = useState(true)
+  const [queueError, setQueueError] = useState<string | null>(null)
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [fetchedHistory, setFetchedHistory] = useState<MedicalHistoryRecord[]>([])
@@ -316,6 +292,45 @@ export default function DoctorDashBoard() {
   const [fetchedPrescriptions, setFetchedPrescriptions] = useState<PrescriptionRecord[]>([])
   const [loadingPrescriptions, setLoadingPrescriptions] = useState(false)
   const [saveNoteFeedback, setSaveNoteFeedback] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadDoctorQueue() {
+      try {
+        setIsLoadingQueue(true)
+        setQueueError(null)
+
+        const rows = await fetchDoctorInProgressQueue()
+        const mappedPatients = rows.map(mapQueueRowToDoctorPatient)
+
+        if (!isMounted) return
+
+        setPatients(mappedPatients)
+        setSelectedPatientId((currentId) => {
+          if (!currentId) return currentId
+          return mappedPatients.some((patient) => patient.id === currentId)
+            ? currentId
+            : null
+        })
+      } catch (error) {
+        console.error('Failed to load doctor queue:', error)
+
+        if (!isMounted) return
+        setQueueError('Unable to load doctor queue.')
+      } finally {
+        if (isMounted) {
+          setIsLoadingQueue(false)
+        }
+      }
+    }
+
+    void loadDoctorQueue()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const selectedPatient = patients.find((p) => p.id === selectedPatientId)
   const { profile, logout } = useAuth() 
@@ -604,8 +619,12 @@ export default function DoctorDashBoard() {
                   <h2 className="text-lg font-semibold text-gray-900">Patient Queue</h2>
                 </div>
                 <div className="p-4">
-                  {patients.length === 0 ? (
-                    <p className="text-sm text-gray-500">No patients assigned.</p>
+                  {isLoadingQueue ? (
+              <p className="text-sm text-gray-500">Loading doctor queue...</p>
+            ) : queueError ? (
+              <p className="text-sm text-red-600">{queueError}</p>
+            ) : patients.length === 0 ? (
+                    <p className="text-sm text-gray-500">No patients currently in progress.</p>
                   ) : (
                     <div className="space-y-2">
                       {patients.map((patient, index) => (
