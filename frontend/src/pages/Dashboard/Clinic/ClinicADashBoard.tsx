@@ -557,6 +557,34 @@ export default function ClinicADashBoard() {
           </header>
 
           <main className="pd-main">
+            {/* Stat cards — values shown in child route pages; here we show layout placeholders */}
+            <div className="stat-grid" style={{ marginBottom: '1.5rem' }}>
+              <div className="stat-card">
+                <p className="stat-label">Total Staff</p>
+                <p className="stat-value">—</p>
+                <p className="stat-sub">clinic members</p>
+              </div>
+              <div className="stat-card">
+                <p className="stat-label">Active Appointments</p>
+                <p className="stat-value">—</p>
+                <p className="stat-sub">today</p>
+              </div>
+              <div className="stat-card">
+                <p className="stat-label">Queue Size</p>
+                <p className="stat-value">—</p>
+                <p className="stat-sub">patients waiting</p>
+              </div>
+              <div className="stat-card">
+                <p className="stat-label">Clinic Status</p>
+                <div style={{ marginTop: '6px' }}>
+                  {clinicRow?.approved
+                    ? <span className="badge badge-success">Approved</span>
+                    : <span className="badge badge-warning">Pending</span>
+                  }
+                </div>
+                <p className="stat-sub" style={{ marginTop: '6px' }}>operational</p>
+              </div>
+            </div>
             <div className="pd-grid">
               <Outlet context={ctx} />
             </div>

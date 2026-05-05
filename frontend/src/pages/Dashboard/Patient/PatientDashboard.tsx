@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu } from 'lucide-react'
+import { Menu, Search, Bell, ChevronDown } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { useClinicContext } from '../../../context/ClinicContext'
 import { usePatientQueue } from '../../../features/queue/usePatientQueue'
@@ -360,9 +360,7 @@ export default function PatientDashboard() {
 
           <div className="pd-header-actions">
             <div className="pd-search-wrap">
-              <span className="pd-search-icon" aria-hidden>
-                🔍
-              </span>
+              <Search className="pd-search-icon h-4 w-4" aria-hidden />
               <input
                 type="search"
                 className="pd-search"
@@ -376,7 +374,7 @@ export default function PatientDashboard() {
               className="pd-icon-btn"
               aria-label="Notifications"
             >
-              <span className="pd-bell">🔔</span>
+              <Bell className="pd-bell h-4 w-4" />
               {showWelcomeAlert && <span className="pd-badge">1</span>}
             </button>
 
@@ -392,7 +390,7 @@ export default function PatientDashboard() {
                   {displayName.slice(0, 2).toUpperCase()}
                 </span>
                 <span className="pd-profile-name">{displayName}</span>
-                <span className="pd-chevron">▼</span>
+                <ChevronDown className="pd-chevron h-3 w-3" />
               </button>
 
               {profileOpen && (
@@ -414,10 +412,41 @@ export default function PatientDashboard() {
         </header>
 
         <main className="pd-main">
+          {/* Stat cards */}
+          <div className="stat-grid">
+            <div className="stat-card">
+              <p className="stat-label">Upcoming Appointments</p>
+              <p className="stat-value">{loadingDashboard ? '—' : upcomingAppointments.length}</p>
+              <p className="stat-sub">scheduled</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-label">Queue Status</p>
+              <div style={{ marginTop: '6px' }}>
+                {queueRow
+                  ? <span className="badge badge-info">In queue</span>
+                  : <span className="badge badge-neutral">Not in queue</span>
+                }
+              </div>
+              <p className="stat-sub" style={{ marginTop: '6px' }}>current position</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-label">Records</p>
+              <p className="stat-value">{loadingDashboard ? '—' : records.length}</p>
+              <p className="stat-sub">documents on file</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-label">Medications</p>
+              <p className="stat-value">{loadingDashboard ? '—' : medications.length}</p>
+              <p className="stat-sub">active prescriptions</p>
+            </div>
+          </div>
+
           {showWelcomeAlert && (
-            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Welcome to ClinicIQ. Your dashboard is ready. Appointment history,
-              records, and other patient data will appear here as it becomes available.
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
+              <span className="badge badge-info">Welcome</span>
+              <span style={{ fontSize: '13px', color: 'var(--text-2)' }}>
+                Your dashboard is ready. Appointment history, records, and other data will appear here as it becomes available.
+              </span>
             </div>
           )}
 

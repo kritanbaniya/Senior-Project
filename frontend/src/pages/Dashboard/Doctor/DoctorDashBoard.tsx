@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
 
 type DoctorStage = 'waiting' | 'consultation' | 'completed'
 
@@ -230,9 +228,40 @@ export default function DoctorDashBoard() {
     setTimeout(() => setFlagFormsFeedback(null), 3000)
   }
 
+  const patientsToday = patients.length
+  const inConsultation = patients.filter(p => p.stage === 'consultation').length
+  const completed = patients.filter(p => p.stage === 'completed').length
+
   return (
     <div className="w-full max-w-full p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Doctor Dashboard</h1>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px' }}>
+        <h1 style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text-1)', margin: 0 }}>Doctor Dashboard</h1>
+        <span style={{ fontSize: '13px', color: 'var(--text-2)' }}>Overview</span>
+      </div>
+
+      {/* Stat cards */}
+      <div className="stat-grid">
+        <div className="stat-card">
+          <p className="stat-label">Patients Today</p>
+          <p className="stat-value">{patientsToday}</p>
+          <p className="stat-sub">in queue</p>
+        </div>
+        <div className="stat-card">
+          <p className="stat-label">In Consultation</p>
+          <p className="stat-value">{inConsultation}</p>
+          <p className="stat-sub">active visits</p>
+        </div>
+        <div className="stat-card">
+          <p className="stat-label">Completed</p>
+          <p className="stat-value">{completed}</p>
+          <p className="stat-sub">visits today</p>
+        </div>
+        <div className="stat-card">
+          <p className="stat-label">Pending Review</p>
+          <p className="stat-value">{patients.filter(p => p.stage === 'waiting').length}</p>
+          <p className="stat-sub">waiting</p>
+        </div>
+      </div>
 
       {/* Three-column grid layout */}
       <div className="grid grid-cols-[260px_1fr_420px] gap-6 items-start">
@@ -273,11 +302,11 @@ export default function DoctorDashBoard() {
                             ⚠ Incomplete
                           </div>
                         )}
-                        <span 
-                          className={`inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-md ${
-                            patient.stage === 'consultation' ? 'bg-green-100 text-green-800' :
-                            patient.stage === 'waiting' ? 'bg-amber-100 text-amber-800' :
-                            'bg-gray-100 text-gray-800'
+                        <span
+                          className={`badge mt-2 ${
+                            patient.stage === 'consultation' ? 'badge-success' :
+                            patient.stage === 'waiting' ? 'badge-warning' :
+                            'badge-neutral'
                           }`}
                         >
                           {STAGE_LABELS[patient.stage]}
@@ -606,24 +635,6 @@ export default function DoctorDashBoard() {
 
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-5 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Quick actions</h2>
-        </div>
-        <div className="p-5 flex gap-3">
-          <Button asChild>
-            <Link to="/">Home</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/dashboard/doctor/information">Your Information</Link>
-          </Button>
-        </div>
-      </div>
-
-      <Link to="/" className="inline-block text-blue-600 hover:text-blue-800 font-medium transition-colors">
-        ← Back to Home
-      </Link>
     </div>
   )
 }

@@ -21,11 +21,7 @@ type SidebarItem = {
 }
 
 const adminItems: SidebarItem[] = [
-  {
-    title: "Clinic Approvals",
-    url: "/dashboard/system-admin",
-    icon: LayoutDashboard,
-  },
+  { title: "Clinic Approvals", url: "/dashboard/system-admin", icon: LayoutDashboard },
 ]
 
 function SidebarLink({ item }: { item: SidebarItem }) {
@@ -39,14 +35,14 @@ function SidebarLink({ item }: { item: SidebarItem }) {
           end
           className={({ isActive }) =>
             [
-              "flex items-center gap-3 px-3 py-5 text-[16px] bg-white border border-slate-300 font-medium transition-colors rounded-lg",
+              "flex items-center gap-2 rounded-md px-3 py-2 text-[13px] transition-colors",
               isActive
-                ? "bg-white text-indigo-900 shadow-sm"
-                : "text-slate-700 hover:bg-indigo-200 hover:text-indigo-700",
+                ? "bg-[#eef2ff] text-[#4f46e5] font-[500]"
+                : "font-[400] text-[#6b7280] hover:bg-[#f5f5f7] hover:text-[#111827]",
             ].join(" ")
           }
         >
-          <Icon className="h-5 w-5 shrink-0" />
+          <Icon className="h-4 w-4 shrink-0" />
           <span>{item.title}</span>
         </NavLink>
       </SidebarMenuButton>
@@ -57,51 +53,43 @@ function SidebarLink({ item }: { item: SidebarItem }) {
 export default function SystemAdminSideBar() {
   const { profile, logout } = useAuth()
   const displayName = profile?.full_name?.trim() || "System Admin"
+  const initials = displayName.slice(0, 2).toUpperCase()
 
   return (
     <Sidebar
       collapsible="icon"
-      className="top-[115px] h-[calc(100vh-120px)] bg-white rounded-2xl"
+      className="top-[52px] h-[calc(100vh-52px)] bg-white"
+      style={{ borderRight: "0.5px solid rgba(0,0,0,0.08)" }}
     >
-      <SidebarHeader className="border bg-white rounded-xl border-slate-300 px-3 py-4">
-        <div className="flex items-start justify-between gap-3 group-data-[collapsible=icon]:justify-center">
-          <div className="flex min-w-0 items-center gap-3 group-data-[collapsible=icon]:hidden">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100">
-              <span className="text-sm font-bold text-indigo-700">
-                {displayName.slice(0, 2).toUpperCase()}
-              </span>
+      <SidebarHeader className="border-b border-black/[0.08] px-3 py-3">
+        <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center">
+          <div className="flex min-w-0 items-center gap-2 group-data-[collapsible=icon]:hidden">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#eef2ff] text-[12px] font-[600] text-[#4f46e5]">
+              {initials}
             </div>
-
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-900">
-                {displayName}
-              </p>
-              <p className="truncate text-xs font-semibold text-indigo-600">
-                System Admin
-              </p>
+              <p className="truncate text-[13px] font-[500] text-[#111827]">{displayName}</p>
+              <p className="truncate text-[11px] text-[#9ca3af]">System Admin</p>
             </div>
           </div>
 
           <div className="flex items-center justify-center group-data-[collapsible=icon]:w-full">
-            <SidebarTrigger className="h-9 w-9 shrink-0 rounded-md border border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-100" />
+            <SidebarTrigger className="h-7 w-7 rounded-md text-[#9ca3af] hover:bg-[#f5f5f7] hover:text-[#111827]" />
           </div>
         </div>
 
         <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100">
-            <span className="text-sm font-bold text-indigo-700">
-              {displayName.slice(0, 2).toUpperCase()}
-            </span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#eef2ff] text-[12px] font-[600] text-[#4f46e5]">
+            {initials}
           </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] font-bold uppercase tracking-wide text-slate-600">
+          <SidebarGroupLabel className="text-[10px] font-[500] uppercase tracking-[0.07em] text-[#9ca3af]">
             Management
           </SidebarGroupLabel>
-
           <SidebarMenu>
             {adminItems.map((item) => (
               <SidebarLink key={item.title} item={item} />
@@ -110,29 +98,15 @@ export default function SystemAdminSideBar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border rounded-xl border-slate-300/70 p-3 pb-4">
-        <div className="rounded-xl bg-white p-3 group-data-[collapsible=icon]:hidden">
-          <button
-            type="button"
-            onClick={() => void logout()}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-600"
-          >
-            <LogOut className="h-4 w-4" />
-            Log Out
-          </button>
-        </div>
-
-        <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-          <button
-            type="button"
-            onClick={() => void logout()}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500 text-white transition hover:bg-indigo-600"
-            aria-label="Log out"
-            title="Log out"
-          >
-            <LogOut className="h-4 w-8" />
-          </button>
-        </div>
+      <SidebarFooter className="border-t border-black/[0.08] p-2">
+        <button
+          type="button"
+          onClick={() => void logout()}
+          className="inline-flex w-full items-center gap-2 rounded-md px-3 py-2 text-[13px] text-[#6b7280] transition-colors hover:bg-[#fff0f0] hover:text-red-600 group-data-[collapsible=icon]:justify-center"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          <span className="group-data-[collapsible=icon]:hidden">Log Out</span>
+        </button>
       </SidebarFooter>
     </Sidebar>
   )

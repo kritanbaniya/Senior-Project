@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useClinicContext } from '../../../context/ClinicContext'
 import ClinicSelector from '../../../features/queue/components/ClinicSelector'
 import { fetchNurseClinicPermissions, updateNurseInvitationStatus } from '../../../features/queue/api'
@@ -126,14 +125,45 @@ export default function NurseDashBoard() {
         </header>
 
         <main className="pd-main nurse-dashboard nurse-overview-main">
+          {/* Stat cards */}
+          <div className="stat-grid">
+            <div className="stat-card">
+              <p className="stat-label">Accepted Clinics</p>
+              <p className="stat-value">{clinicsLoading ? '—' : acceptedClinics.length}</p>
+              <p className="stat-sub">clinics with access</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-label">Pending Invites</p>
+              <p className="stat-value">{clinicsLoading ? '—' : pendingInvites.length}</p>
+              <p className="stat-sub">awaiting response</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-label">Total Clinics</p>
+              <p className="stat-value">{clinicsLoading ? '—' : permissions.length}</p>
+              <p className="stat-sub">all memberships</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-label">Selected Clinic</p>
+              <p className="stat-value" style={{ fontSize: '16px', marginTop: '6px' }}>
+                {selectedClinicId
+                  ? (acceptedClinics.find(c => c.clinic_id === selectedClinicId)?.clinic_name ?? '—')
+                  : '—'}
+              </p>
+              <p className="stat-sub">active context</p>
+            </div>
+          </div>
+
+          {/* Clinic invitations */}
           {!clinicsLoading && !clinicsError && pendingInvites.length > 0 && (
-            <div className="info-box quick-actions-box" style={{ marginBottom: '1rem' }}>
-              <h2 className="info-box-title">Clinic invitations</h2>
-              <p className="pd-card-desc" style={{ marginBottom: '0.75rem' }}>
+            <div className="card" style={{ marginBottom: '1rem' }}>
+              <h2 style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 500, color: 'var(--text-1)' }}>
+                Clinic invitations
+              </h2>
+              <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--text-2)' }}>
                 Accept or decline invitations from clinics. You must accept before the clinic appears in your selection above.
               </p>
               {inviteError && (
-                <p className="no-queue" style={{ marginBottom: '0.75rem' }}>{inviteError}</p>
+                <p style={{ marginBottom: '0.75rem', fontSize: '13px', color: 'var(--danger-text)' }}>{inviteError}</p>
               )}
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                 {pendingInvites.map((row) => (
@@ -144,19 +174,23 @@ export default function NurseDashBoard() {
                       flexWrap: 'wrap',
                       alignItems: 'center',
                       gap: '0.5rem',
-                      padding: '0.5rem 0',
-                      borderBottom: '1px solid rgba(0,0,0,0.06)',
+                      padding: '10px 0',
+                      borderBottom: '0.5px solid var(--border)',
                     }}
                   >
-                    <span style={{ flex: '1 1 200px' }}>
-                      {row.clinic_name}
-                      <span className="small-label" style={{ marginLeft: '0.5rem' }}>
-                        ({row.city ?? 'city n/a'}, {row.state ?? 'state n/a'})
+                    <div style={{ flex: '1 1 200px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-1)' }}>
+                        {row.clinic_name}
                       </span>
-                    </span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-3)', marginLeft: '0.5rem' }}>
+                        {row.city ?? 'city n/a'}, {row.state ?? 'state n/a'}
+                      </span>
+                    </div>
+                    <span className="badge badge-warning">pending</span>
                     <button
                       type="button"
-                      className="btn-small"
+                      className="btn-primary"
+                      style={{ padding: '4px 12px', fontSize: '12px' }}
                       disabled={inviteBusyId === row.id}
                       onClick={() => openAcceptInvite(row)}
                     >
@@ -164,7 +198,8 @@ export default function NurseDashBoard() {
                     </button>
                     <button
                       type="button"
-                      className="btn-small"
+                      className="btn-ghost"
+                      style={{ padding: '4px 12px', fontSize: '12px' }}
                       disabled={inviteBusyId === row.id}
                       onClick={() => openDeclineInvite(row)}
                     >
@@ -175,24 +210,6 @@ export default function NurseDashBoard() {
               </ul>
             </div>
           )}
-
-          <div className="info-box quick-actions-box">
-            <h2 className="info-box-title">Quick actions</h2>
-            <div className="info-box-content quick-actions">
-              <Link to="/dashboard/nurse/appointments" className="action-link">
-                Appointments
-              </Link>
-              <Link to="/dashboard/nurse/queue" className="action-link">
-                Queue management
-              </Link>
-              <Link to="/dashboard/nurse/information" className="action-link">
-                Your information
-              </Link>
-              <Link to="/clinic" className="action-link">
-                Clinic info
-              </Link>
-            </div>
-          </div>
         </main>
       </div>
 

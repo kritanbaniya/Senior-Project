@@ -84,8 +84,15 @@ export default function ActiveQueuePanel({
                     <span className="queue-patient-name">
                       {row.patient_name ?? 'patient'}
                     </span>
-                    <span className="queue-apt-type">
-                      {row.status}
+                    <span className={`badge ${
+                      row.status === 'waiting'      ? 'badge-warning' :
+                      row.status === 'called'       ? 'badge-info' :
+                      row.status === 'in_progress'  ? 'badge-success' :
+                      row.status === 'consultation' ? 'badge-success' :
+                      row.status === 'discharge'    ? 'badge-neutral' :
+                      'badge-neutral'
+                    }`} style={{ fontSize: '10px', padding: '2px 6px' }}>
+                      {row.status.replace('_', ' ')}
                     </span>
 
                     <select

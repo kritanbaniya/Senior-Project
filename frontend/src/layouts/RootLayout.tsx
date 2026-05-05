@@ -12,16 +12,11 @@ import { useAuth } from '../context/AuthContext'
 // and to pass the login modal's open/close state. all child routes render
 // in place of <Outlet />.
 export default function RootLayout() {
-  const { profile, loading, loginOpen, closeLogin } = useAuth()
+  const { loginOpen, closeLogin } = useAuth()
 
   return (
     <>
       <Header />
-      {!loading && profile && (
-        <div className="welcome-banner">
-          Welcome! {profile.full_name ?? 'user'}
-        </div>
-      )}
       <Outlet />
       <LoginModal isOpen={loginOpen} onClose={closeLogin} />
     </>

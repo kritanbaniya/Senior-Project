@@ -43,18 +43,132 @@
   --chart-5: oklch(0.769 0.188 70.08);
 }
 
+/* ── ClinicIQ design tokens ── */
+:root {
+  --brand: #4f46e5;
+  --brand-light: #eef2ff;
+  --brand-text: #3730a3;
+  --page-bg: #f4f6fb;
+  --surface: #ffffff;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+  --text-1: #111827;
+  --text-2: #6b7280;
+  --text-3: #9ca3af;
+  --success-bg: #d1fae5;
+  --success-text: #065f46;
+  --warning-bg: #fef3c7;
+  --warning-text: #92400e;
+  --danger-bg: #fee2e2;
+  --danger-text: #991b1b;
+  --info-bg: #e0e7ff;
+  --info-text: #3730a3;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
 a {
   text-decoration: inherit;
 }
 
 body {
-  background-image: url('components/Hospital\ Background.webp');
-  background-repeat: no-repeat;
-  background-position: center, bottom center;
-  background-size: auto 100%;
+  background: var(--page-bg);
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  color: var(--text-1);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Utility: badges ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.badge-success { background: var(--success-bg); color: var(--success-text); }
+.badge-warning { background: var(--warning-bg); color: var(--warning-text); }
+.badge-danger  { background: var(--danger-bg);  color: var(--danger-text);  }
+.badge-info    { background: var(--info-bg);    color: var(--info-text);    }
+.badge-neutral { background: #f3f4f6; color: var(--text-2); }
+
+/* ── Utility: surface card ── */
+.card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+}
+
+/* ── Utility: buttons ── */
+.btn-primary {
+  background: var(--brand);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: #4338ca; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-2);
+  border: 0.5px solid var(--border-strong);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-ghost:hover { background: var(--page-bg); color: var(--text-1); }
+
+/* ── Utility: stat cards ── */
+.stat-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+}
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+  font-weight: 500;
+}
+.stat-value {
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--text-1);
+  margin-top: 4px;
+  line-height: 1.2;
+}
+.stat-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 3px;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 900px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: 1fr; }
 }
 
 h2 {
@@ -425,13 +539,13 @@ button:focus-visible {
 
 /* Nurse Dashboard */
 .nurse-dashboard .btn-primary {
-  background: #000;
+  background: var(--brand);
   color: #fff;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: none;
   padding: 0.6rem 1.2rem;
 }
-.nurse-dashboard .btn-primary:hover { background: #333; border-color: #333; }
+.nurse-dashboard .btn-primary:hover { background: #4338ca; border-color: #4338ca; }
 .nurse-dashboard .btn-secondary {
   background: #eee;
   color: #333;
@@ -550,16 +664,16 @@ button:focus-visible {
 .quick-actions .action-link {
   display: inline-block;
   padding: 0.5rem 1rem;
-  background: #000;
+  background: var(--brand);
   color: #fff;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   text-decoration: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: background 0.2s, color 0.2s;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: background 0.15s, color 0.15s;
 }
 .quick-actions .action-link:hover {
-  background: #ff9b29;
+  background: #4338ca;
   color: #fff;
 }
 
@@ -1748,13 +1862,7 @@ button:focus-visible {
 }
 
 .welcome-banner {
-  padding: 0.5rem 0.5em;
-  background-color: #0f0f79;
-  color: #ffffff;
-  font-size: 1.5rem;
-  font-weight: 500;
-  text-align: center;
-
+  display: none;
 }
 
 @media (prefers-color-scheme: light) {
