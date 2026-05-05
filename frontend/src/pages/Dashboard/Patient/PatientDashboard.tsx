@@ -80,26 +80,6 @@ type MedicalHistoryRow = {
   patient_id: string
 }
 
-type DoctorOption = {
-  id: string
-  full_name: string | null
-}
-
-type MemberNameRoleRow = {
-  clinic_id: string
-  user_id: string
-  full_name: string | null
-  role: string | null
-  clinic_name: string | null
-}
-
-const APPOINTMENT_TYPES = [
-  'General Check-up',
-  'Follow-up',
-  'Consultation',
-  'Vaccination',
-  'Lab Work',
-]
 
 function DashboardPanel({
   title,
@@ -206,19 +186,6 @@ export default function PatientDashboard() {
   const [records, setRecords] = useState<VisitRecord[]>([])
   const [medications] = useState<Medication[]>([])
   const [labs] = useState<LabPoint[]>([])
-  const [doctorOptions, setDoctorOptions] = useState<DoctorOption[]>([])
-  const [appointmentRequestNotice, setAppointmentRequestNotice] = useState<string | null>(null)
-
-  const [showScheduleForm, setShowScheduleForm] = useState(false)
-
-  const [scheduleForm, setScheduleForm] = useState({
-    date: '',
-    time: '',
-    doctorId: '',
-    type: APPOINTMENT_TYPES[0],
-    reason: '',
-  })
-
   const activeClinicId = selectedClinicId
 
   const {
@@ -275,20 +242,11 @@ export default function PatientDashboard() {
         .order('visit_date', { ascending: false })
         .limit(5)
 
-      const doctorsPromise = activeClinicId
-        ? supabase
-            .from('membernamerole')
-            .select('clinic_id, user_id, full_name, role, clinic_name')
-            .eq('clinic_id', activeClinicId)
-            .eq('role', 'doctor')
-        : Promise.resolve({ data: [], error: null })
-
-      const [patientInfoRes, appointmentsRes, recordsRes, doctorsRes] =
+      const [patientInfoRes, appointmentsRes, recordsRes] =
         await Promise.all([
           patientInfoPromise,
           appointmentsPromise,
           recordsPromise,
-          doctorsPromise,
         ])
 
       if (!patientInfoRes.error) {
@@ -339,23 +297,6 @@ export default function PatientDashboard() {
         setRecords([])
       }
 
-      if (!doctorsRes.error && doctorsRes.data) {
-        const mappedDoctors: DoctorOption[] = (
-          doctorsRes.data as MemberNameRoleRow[]
-        ).map((row) => ({
-          id: row.user_id,
-          full_name: row.full_name ?? 'Doctor',
-        }))
-
-        setDoctorOptions(mappedDoctors)
-        setScheduleForm((prev) => ({
-          ...prev,
-          doctorId: prev.doctorId || mappedDoctors[0]?.id || '',
-        }))
-      } else {
-        setDoctorOptions([])
-      }
-
       setLoadingDashboard(false)
     }
 
@@ -365,15 +306,18 @@ export default function PatientDashboard() {
   const displayName =
     info?.name?.trim() || profile?.full_name?.trim() || 'New Patient'
 
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const upcomingAppointments = useMemo(() => {
+    const etFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' })
+    const todayET = etFormatter.format(new Date())
 
-  const upcomingAppointments = useMemo(
-    () =>
-      appointments.filter((a) =>
-        ['pending', 'requested', 'active'].includes(a.status),
-      ),
-    [appointments],
-  )
+    return appointments
+      .filter((a) => {
+        if (!['pending', 'requested', 'active'].includes(a.status)) return false
+        const aptDateET = etFormatter.format(new Date(a.rawDate))
+        return aptDateET >= todayET
+      })
+      .slice(0, 3)
+  }, [appointments])
 
   const recentRecords = useMemo(() => records.slice(0, 2), [records])
 
@@ -382,43 +326,6 @@ export default function PatientDashboard() {
     records.length === 0 &&
     medications.length === 0 &&
     labs.length === 0
-
-  const handleScheduleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setAppointmentRequestNotice(null)
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user || !activeClinicId || !scheduleForm.doctorId) return
-
-    const appointmentDate = `${scheduleForm.date}T${scheduleForm.time}:00`
-
-    const { error } = await supabase.from('appt_creation_requests').insert({
-      appointment_date: appointmentDate,
-      patient_id: user.id,
-      clinic_id: activeClinicId,
-      clinician_id: scheduleForm.doctorId,
-      visit_type: scheduleForm.type,
-      patient_notes: scheduleForm.reason || null,
-    })
-
-    if (error) {
-      setAppointmentRequestNotice(error.message)
-      return
-    }
-
-    setAppointmentRequestNotice('Appointment request submitted successfully.')
-    setScheduleForm({
-      date: '',
-      time: '',
-      doctorId: doctorOptions[0]?.id ?? '',
-      type: APPOINTMENT_TYPES[0],
-      reason: '',
-    })
-    setShowScheduleForm(false)
-  }
 
   return (
     <SidebarProvider defaultOpen
@@ -685,154 +592,13 @@ export default function PatientDashboard() {
                   </ul>
                 )}
 
-                {appointmentRequestNotice && (
-                  <p className="mt-3 text-sm text-slate-500">
-                    {appointmentRequestNotice}
-                  </p>
-                )}
-
                 <div className="mt-4">
-                  {!showScheduleForm ? (
-                    <button
-                      type="button"
-                      className="rounded-lg bg-indigo-400 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
-                      onClick={() => setShowScheduleForm(true)}
-                      disabled={!activeClinicId}
-                    >
-                      Book appointment
-                    </button>
-                  ) : (
-                    <form
-                      className="flex flex-col gap-3"
-                      onSubmit={handleScheduleSubmit}
-                    >
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">
-                          Date
-                        </label>
-                        <input
-                          type="date"
-                          value={scheduleForm.date}
-                          onChange={(e) =>
-                            setScheduleForm((f) => ({
-                              ...f,
-                              date: e.target.value,
-                            }))
-                          }
-                          min={todayStr}
-                          required
-                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">
-                          Time
-                        </label>
-                        <input
-                          type="time"
-                          value={scheduleForm.time}
-                          onChange={(e) =>
-                            setScheduleForm((f) => ({
-                              ...f,
-                              time: e.target.value,
-                            }))
-                          }
-                          required
-                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">
-                          Provider
-                        </label>
-                        <select
-                          value={scheduleForm.doctorId}
-                          onChange={(e) =>
-                            setScheduleForm((f) => ({
-                              ...f,
-                              doctorId: e.target.value,
-                            }))
-                          }
-                          required
-                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
-                        >
-                          {doctorOptions.length === 0 ? (
-                            <option value="">No providers available</option>
-                          ) : (
-                            doctorOptions.map((doctor) => (
-                              <option key={doctor.id} value={doctor.id}>
-                                {doctor.full_name ?? 'Doctor'}
-                              </option>
-                            ))
-                          )}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">
-                          Visit type
-                        </label>
-                        <select
-                          value={scheduleForm.type}
-                          onChange={(e) =>
-                            setScheduleForm((f) => ({
-                              ...f,
-                              type: e.target.value,
-                            }))
-                          }
-                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
-                        >
-                          {APPOINTMENT_TYPES.map((type) => (
-                            <option key={type} value={type}>
-                              {type}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">
-                          Reason
-                        </label>
-                        <input
-                          type="text"
-                          value={scheduleForm.reason}
-                          onChange={(e) =>
-                            setScheduleForm((f) => ({
-                              ...f,
-                              reason: e.target.value,
-                            }))
-                          }
-                          placeholder="Reason for visit"
-                          className="h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-400"
-                        />
-                      </div>
-
-                      <div className="mt-2 flex gap-3">
-                        <button
-                          type="submit"
-                          className="rounded-lg bg-indigo-400 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          type="button"
-                          className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-                          onClick={() => setShowScheduleForm(false)}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </form>
-                  )}
-
-                  {!activeClinicId && (
-                    <p className="mt-3 text-sm text-slate-500">
-                      Select a clinic first before booking.
-                    </p>
-                  )}
+                  <Link
+                    to="/dashboard/patient/appointments"
+                    className="inline-block rounded-lg bg-indigo-400 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                  >
+                    All appointments
+                  </Link>
                 </div>
               </DashboardPanel>
             </div>
