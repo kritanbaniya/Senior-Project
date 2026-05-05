@@ -54,26 +54,45 @@ export async function apiCreateAppt(
 }
 
 
-/////// UPDATE UTILITY 
-export async function apiUpdateAppt (input: UpdateApptForm):Promise<Appointment> {  
-    let appointmentDate = `${input.date} ${input.time}:00`
-    const { data, error } = await supabase
-        .schema('public')
-        .from('Appointments')
-        .update({
-            appointment_date: appointmentDate,
-            patient_id: input.patientId,
-            clinician_id: input.doctorId,
-            visit_type: input.type,
-            appointment_status: input.appointment_status, 
-            nurse_note: input.nurse_note 
-        })
-        .eq('Appointment_id', input.appointmentId)
-        .select('*')
-        .single() 
-    if (error) throw error
-    return data
+// /////// UPDATE UTILITY 
+// export async function apiUpdateAppt (input: UpdateApptForm):Promise<Appointment> {  
+//     let appointmentDate = `${input.date} ${input.time}:00`
+//     const { data, error } = await supabase
+//         .schema('public')
+//         .from('Appointments')
+//         .update({
+//             appointment_date: appointmentDate,
+//             patient_id: input.patientId,
+//             clinician_id: input.doctorId,
+//             visit_type: input.type,
+//             appointment_status: input.appointment_status, 
+//             nurse_note: input.nurse_note 
+//         })
+//         .eq('Appointment_id', input.appointmentId)
+//         .select('*')
+//         .single() 
+//     if (error) throw error
+//     return data
+// }
+export async function apiUpdateAppt(
+  input: UpdateApptForm
+): Promise<Appointment> {
+  const appointmentDate = `${input.date} ${input.time}:00`;
+
+  const { data, error } = await supabase.rpc("update_appt", {
+    p_appointment_id: input.appointmentId,
+    p_appointment_date: appointmentDate,
+    p_patient_id: input.patientId,
+    p_clinician_id: input.doctorId,
+    p_visit_type: input.type,
+    p_appointment_status: input.appointment_status,
+    p_nurse_note: input.nurse_note,
+  });
+
+  if (error) throw error;
+  return data;
 }
+
 export async function apiFetchSpecificAppt (input: Appointment):Promise<Appointment> {  
     const { data, error } = await supabase
       .schema('public')
