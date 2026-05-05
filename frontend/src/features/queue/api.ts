@@ -93,6 +93,23 @@ export async function fetchOwnQueueRowsForClinic(clinicId: string): Promise<Queu
   return (data ?? []) as QueueEntryRow[]
 }
 
+export type DoctorQueuePatientRow = {
+  queue_entry_id: string
+  patient_id: string
+  patient_name: string | null
+  visit_type: string | null
+  status: string
+  started_at: string | null
+  appointment_id: string | null
+}
+
+export async function fetchDoctorInProgressQueue(): Promise<DoctorQueuePatientRow[]> {
+  const { data, error } = await supabase.rpc('get_doctor_in_progress_queue')
+
+  if (error) throw error
+  return (data ?? []) as DoctorQueuePatientRow[]
+}
+
 export async function fetchOwnActiveQueueRows(): Promise<QueueEntryRow[]> {
   const userId = await getCurrentUserId()
   const { data, error } = await supabase
