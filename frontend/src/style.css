@@ -660,6 +660,7 @@ button:focus-visible {
   padding: 1rem 1.5rem;
   background: #fff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border-radius: 1rem;
   flex-shrink: 0;
 }
 .pd-header-left {
