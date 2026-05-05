@@ -11,6 +11,8 @@ import {
   markNoShow,
   reorderQueueEntry,
   startVisit,
+  fetchDoctorsForClinic,
+  assignQueueEntryDoctor,
 } from './api'
 import { subscribeToClinicQueue } from './realtime'
 import type { ClinicListItem, QueueEntryRow, StaffPermissionRow } from './types'
@@ -24,6 +26,7 @@ export function useNurseQueue(selectedClinicId: string | null) {
   const [pendingRows, setPendingRows] = useState<QueueEntryRow[]>([])
   const [activeRows, setActiveRows] = useState<QueueEntryRow[]>([])
   const [inProgressRows, setInProgressRows] = useState<QueueEntryRow[]>([])
+  const [doctors, setDoctors] = useState<any[]>([])
 
   const selectedClinicPermission = useMemo(
     () => clinics.find((c) => c.clinic_id === selectedClinicId) ?? null,
@@ -40,31 +43,36 @@ export function useNurseQueue(selectedClinicId: string | null) {
     }
   }, [])
 
-  const refreshQueue = useCallback(async () => {
-    if (!selectedClinicId || !canManageQueue) {
-      setPendingRows([])
-      setActiveRows([])
-      setInProgressRows([])
-      return
-    }
+const refreshQueue = useCallback(async () => {
+  if (!selectedClinicId || !canManageQueue) {
+    setPendingRows([])
+    setActiveRows([])
+    setInProgressRows([])
+    setDoctors([])
+    return
+  }
 
-    setLoading(true)
-    setError(null)
-    try {
-      const [pending, active, inProgress] = await Promise.all([
-        fetchPendingQueueForClinic(selectedClinicId),
-        fetchActiveQueueForClinic(selectedClinicId),
-        fetchInProgressQueueForClinic(selectedClinicId),
-      ])
-      setPendingRows(pending)
-      setActiveRows(active)
-      setInProgressRows(inProgress)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'failed to load queue')
-    } finally {
-      setLoading(false)
-    }
-  }, [canManageQueue, selectedClinicId])
+  setLoading(true)
+  setError(null)
+
+  try {
+    const [pending, active, inProgress, docs] = await Promise.all([
+      fetchPendingQueueForClinic(selectedClinicId),
+      fetchActiveQueueForClinic(selectedClinicId),
+      fetchInProgressQueueForClinic(selectedClinicId),
+      fetchDoctorsForClinic(selectedClinicId),
+    ])
+
+    setPendingRows(pending)
+    setActiveRows(active)
+    setInProgressRows(inProgress)
+    setDoctors(docs)
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'failed to load queue')
+  } finally {
+    setLoading(false)
+  }
+}, [canManageQueue, selectedClinicId])
 
   useEffect(() => {
     void refreshClinics()
@@ -196,6 +204,23 @@ export function useNurseQueue(selectedClinicId: string | null) {
     [navigate]
   )
 
+  const assignDoctor = useCallback(
+  async (entryId: string, doctorId: string) => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      await assignQueueEntryDoctor(entryId, doctorId)
+      await refreshQueue()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'failed to assign doctor')
+    } finally {
+      setLoading(false)
+    }
+  },
+  [refreshQueue]
+)
+
   return {
     loading,
     error,
@@ -215,5 +240,7 @@ export function useNurseQueue(selectedClinicId: string | null) {
     noShow,
     markCompleted,
     Checkform,
+    doctors,
+    assignDoctor,
   }
 }

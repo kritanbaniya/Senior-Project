@@ -16,6 +16,8 @@ export default function NurseQueueManagement() {
     pendingRows,
     activeRows,
     inProgressRows,
+    doctors,
+    assignDoctor,
     approvePending,
     moveRow,
     callNextPatient,
@@ -72,6 +74,8 @@ export default function NurseQueueManagement() {
                 <PendingQueuePanel rows={pendingRows} onApprove={approvePending} />
                 <ActiveQueuePanel
                   rows={activeRows}
+                  doctors={doctors}
+                  onAssignDoctor={assignDoctor}
                   onMove={moveRow}
                   onCallNext={callNextPatient}
                   onCallPatient={callSinglePatient}
