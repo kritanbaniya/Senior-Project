@@ -13,7 +13,7 @@ function Header() {
   const homePath = getHomePath(profile?.role);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white border-b border-black/[0.08]">
+    <header className="sticky top-0 z-50 w-full bg-[#ede9fc] border-b border-[rgba(124,111,224,0.22)]">
       <div className="mx-auto flex h-[52px] items-center justify-between px-4">
         <Link to={homePath} className="flex items-center gap-2">
           <img
@@ -21,8 +21,8 @@ function Header() {
             alt="ClinicIQ"
             className="h-7 w-8 object-contain"
           />
-          <span className="text-[15px] font-[500] text-slate-800">
-            Clinic<span className="text-indigo-500">IQ</span>
+          <span className="text-[15px] font-[500] text-[#1e1b3a]">
+            Clinic<span className="text-[#7c6fe0]">IQ</span>
           </span>
         </Link>
 
@@ -32,7 +32,7 @@ function Header() {
               type="button"
               variant="outline"
               onClick={() => void logout()}
-              className="h-8 rounded-md border-black/[0.14] px-3 text-[13px] font-[500] text-slate-600 shadow-none hover:bg-slate-50 hover:text-slate-900"
+              className="h-8 rounded-md border-[rgba(124,111,224,0.22)] px-3 text-[13px] font-[500] text-[#4a3fa8] shadow-none hover:bg-white hover:text-[#1e1b3a]"
             >
               Log Out
             </Button>
@@ -42,7 +42,7 @@ function Header() {
             <Button
               type="button"
               onClick={openLogin}
-              className="h-8 rounded-md bg-indigo-500 px-3 text-[13px] font-[500] text-white shadow-none hover:bg-indigo-600"
+              className="h-8 rounded-md bg-[#7c6fe0] px-3 text-[13px] font-[500] text-white shadow-none hover:bg-[#6457c6]"
             >
               Login
             </Button>

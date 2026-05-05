@@ -441,6 +441,23 @@ export default function PatientDashboard() {
             </div>
           </div>
 
+          {/* Dashboard hero */}
+          <div className="dashboard-hero">
+            <div className="dashboard-hero-content">
+              <p style={{ fontSize: 13, color: 'var(--brand-text)', fontWeight: 500, margin: 0, marginBottom: 4 }}>
+                Good morning
+              </p>
+              <h2 style={{ fontSize: 22, fontWeight: 500, color: 'var(--text-1)', margin: 0, lineHeight: 1.2 }}>
+                {displayName}
+              </h2>
+              <p style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 6, marginBottom: 0 }}>
+                {upcomingAppointments.length > 0
+                  ? `You have ${upcomingAppointments.length} upcoming appointment${upcomingAppointments.length !== 1 ? 's' : ''}.`
+                  : 'No upcoming appointments scheduled.'}
+              </p>
+            </div>
+          </div>
+
           {showWelcomeAlert && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
               <span className="badge badge-info">Welcome</span>

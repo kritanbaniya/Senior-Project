@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../../../context/AuthContext'
 import { useClinicContext } from '../../../context/ClinicContext'
 import ClinicSelector from '../../../features/queue/components/ClinicSelector'
 import { fetchNurseClinicPermissions, updateNurseInvitationStatus } from '../../../features/queue/api'
@@ -14,6 +15,8 @@ type PendingInviteAction = {
 }
 
 export default function NurseDashBoard() {
+  const { profile } = useAuth()
+  const nurseName = profile?.full_name?.split(' ')[0] ?? 'there'
   const { selectedClinicId, setSelectedClinicId, setSelectedClinicName } = useClinicContext()
   const [permissions, setPermissions] = useState<NurseClinicPermission[]>([])
   const [clinicsLoading, setClinicsLoading] = useState(true)
@@ -150,6 +153,23 @@ export default function NurseDashBoard() {
                   : '—'}
               </p>
               <p className="stat-sub">active context</p>
+            </div>
+          </div>
+
+          {/* Dashboard hero */}
+          <div className="dashboard-hero">
+            <div className="dashboard-hero-content">
+              <p style={{ fontSize: 13, color: 'var(--brand-text)', fontWeight: 500, margin: 0, marginBottom: 4 }}>
+                Good morning
+              </p>
+              <h2 style={{ fontSize: 22, fontWeight: 500, color: 'var(--text-1)', margin: 0, lineHeight: 1.2 }}>
+                {nurseName}
+              </h2>
+              <p style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 6, marginBottom: 0 }}>
+                {acceptedClinics.length > 0
+                  ? `You have access to ${acceptedClinics.length} clinic${acceptedClinics.length !== 1 ? 's' : ''}.`
+                  : 'Select a clinic to get started.'}
+              </p>
             </div>
           </div>
 
