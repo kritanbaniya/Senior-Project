@@ -355,30 +355,11 @@ export default function PatientDashboard() {
             </button>
 
             <h1 className="pd-header-title">Patient Dashboard</h1>
-            <span className="pd-header-patient">{displayName}</span>
+            
           </div>
 
           <div className="pd-header-actions">
-            <div className="pd-search-wrap">
-              <span className="pd-search-icon" aria-hidden>
-                🔍
-              </span>
-              <input
-                type="search"
-                className="pd-search"
-                placeholder="Search..."
-                aria-label="Search"
-              />
-            </div>
-
-            <button
-              type="button"
-              className="pd-icon-btn"
-              aria-label="Notifications"
-            >
-              <span className="pd-bell">🔔</span>
-              {showWelcomeAlert && <span className="pd-badge">1</span>}
-            </button>
+           
 
             <div className="pd-profile-wrap">
               <button

@@ -225,7 +225,7 @@ export async function fetchNurseClinicPermissions(): Promise<Array<StaffPermissi
   const userId = await getCurrentUserId()
   const { data: perms, error: permsError } = await supabase
     .from('staff_permissions')
-    .select('id, clinic_id, user_id, manage_queue, invitation_status')
+    .select('id, clinic_id, user_id, manage_queue, manage_appointment, invitation_status')
     .eq('user_id', userId)
 
   if (permsError) throw permsError
