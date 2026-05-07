@@ -2,52 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useClinicContext } from '../../context/ClinicContext';
 import { supabase } from '../../lib/supabase';
-import { Upload, FileText, CheckCircle, Download, AlertCircle, Loader2 } from 'lucide-react'; // 建议安装 lucide-react 图标库
-import { useLocation } from "react-router-dom";
+import { Upload, FileText, CheckCircle, Download, AlertCircle, Loader2 } from 'lucide-react';
 
 const PatientPDFUpload: React.FC = () => {
   const { profile } = useAuth();
-  const { selectedClinicId, setSelectedClinicId } = useClinicContext();
+  const { selectedClinicId, selectedClinicName } = useClinicContext();
   const [file, setFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [clinicPdfUrl, setClinicPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
-  const [clinics, setClinics] = useState<any[]>([]);
   const [uploadSuccess, setUploadSuccess] = useState(false);
-  const location = useLocation();
-  const defaultClinic = location.state?.clinicId;
-  const isLockedClinic = !!defaultClinic;
-  const selectedClinic = clinics.find(
-    (c) => c.clinic_id == selectedClinicId
-  );
-  useEffect(() => {
-    if (defaultClinic) {
-      setSelectedClinicId(defaultClinic);
-    }
-  }, [defaultClinic, setSelectedClinicId]);
-  useEffect(() => {
-    const fetchClinics = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user?.id) return;
-      const { data: queueData } = await supabase
-        .from('queue_entries')
-        .select('clinic_id')
-        .eq('patient_id', userData.user.id)
-        .eq('status', 'waiting');
-      if (!queueData || queueData.length === 0) {
-        setClinics([]);
-        return;
-      }
-      const clinicIds = queueData.map((item: any) => item.clinic_id);
-      const { data: clinicsData } = await supabase
-        .from('clinics')
-        .select('clinic_id, clinic_name')
-        .in('clinic_id', clinicIds);
-      setClinics(clinicsData || []);
-    };
-    fetchClinics();
-  }, []);
 
   useEffect(() => {
     const fetchPdfUrl = async () => {
@@ -143,57 +108,26 @@ const PatientPDFUpload: React.FC = () => {
         {/* Left Column: Controls */}
         <div className="lg:col-span-1 space-y-6">
 
+          {/* Selected Clinic Display */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-
-            <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-
-              <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-2 text-xs">1</span>
-
-              Select Clinic
-
-            </label>
-
-            {isLockedClinic ? (
+            <p className="block text-sm font-semibold text-gray-700 mb-3">Selected Clinic</p>
+            {selectedClinicId && selectedClinicName ? (
               <div className="w-full py-2.5 px-3 rounded-lg bg-gray-100 border border-gray-200 text-gray-700 font-medium">
-
-                {selectedClinic?.clinic_name || "Loading clinic..."}
-
+                {selectedClinicName}
               </div>
-
             ) : (
-              <select
-
-                value={selectedClinicId || ""}
-
-                onChange={(e) => setSelectedClinicId(e.target.value)}
-
-                className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 py-2.5"
-
-              >
-
-                <option value="">-- Choose a clinic --</option>
-
-                {clinics.map((clinic) => (
-
-                  <option key={clinic.clinic_id} value={clinic.clinic_id}>
-
-                    {clinic.clinic_name}
-
-                  </option>
-
-                ))}
-
-              </select>
-
+              <div className="flex items-start gap-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <p className="text-sm">No clinic selected. Go to the dashboard and select a clinic first to submit forms.</p>
+              </div>
             )}
-
           </div>
 
-          {/* Step 2: Download Form */}
+          {/* Step 1: Download Form */}
           {selectedClinicId && (
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 animate-in fade-in slide-in-from-bottom-4">
               <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-2 text-xs">2</span>
+                <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-2 text-xs">1</span>
                 Download Template
               </label>
               {clinicPdfUrl ? (
@@ -211,10 +145,10 @@ const PatientPDFUpload: React.FC = () => {
             </div>
           )}
 
-          {/* Step 3: Upload */}
+          {/* Step 2: Upload */}
           <div className={`bg-white p-6 rounded-xl shadow-sm border border-gray-200 ${!selectedClinicId && 'opacity-50 pointer-events-none'}`}>
             <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-              <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-2 text-xs">3</span>
+              <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-2 text-xs">2</span>
               Upload Signed Form
             </label>
 
