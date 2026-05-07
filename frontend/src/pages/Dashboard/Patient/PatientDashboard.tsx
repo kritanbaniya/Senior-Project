@@ -181,18 +181,6 @@ export default function PatientDashboard() {
   const [records, setRecords] = useState<VisitRecord[]>([])
   const [medications, setMedications] = useState<PrescriptionRecord[]>([])
   const [labs, setLabs] = useState<LabResultRecord[]>([])
-  const [doctorOptions, setDoctorOptions] = useState<DoctorOption[]>([])
-  const [appointmentRequestNotice, setAppointmentRequestNotice] = useState<string | null>(null)
-
-  const [showScheduleForm, setShowScheduleForm] = useState(false)
-
-  const [scheduleForm, setScheduleForm] = useState({
-    date: '',
-    time: '',
-    doctorId: '',
-    type: APPOINTMENT_TYPES[0],
-    reason: '',
-  })
 
   const activeClinicId = selectedClinicId
 
@@ -253,23 +241,14 @@ export default function PatientDashboard() {
       const labsPromise = fetchLabResults(user.id)
       const medicationsPromise = fetchAllPrescriptions(user.id)
 
-      const doctorsPromise = activeClinicId
-        ? supabase
-            .from('membernamerole')
-            .select('clinic_id, user_id, full_name, role, clinic_name')
-            .eq('clinic_id', activeClinicId)
-            .eq('role', 'doctor')
-        : Promise.resolve({ data: [], error: null })
-
-      const [patientInfoRes, appointmentsRes, recordsRes, doctorsRes, labsRes, medicationsRes] =
-        await Promise.all([
-          patientInfoPromise,
-          appointmentsPromise,
-          recordsPromise,
-          doctorsPromise,
-          labsPromise,
-          medicationsPromise,
-        ])
+      const [patientInfoRes, appointmentsRes, recordsRes, labsRes, medicationsRes] =
+      await Promise.all([
+        patientInfoPromise,
+        appointmentsPromise,
+        recordsPromise,
+        labsPromise,
+        medicationsPromise,
+      ])
 
       if (!patientInfoRes.error) {
         setInfo((patientInfoRes.data as PatientInfo | null) ?? null)
@@ -329,23 +308,6 @@ export default function PatientDashboard() {
         setMedications(medicationsRes.data)
       } else {
         setMedications([])
-      }
-
-      if (!doctorsRes.error && doctorsRes.data) {
-        const mappedDoctors: DoctorOption[] = (
-          doctorsRes.data as MemberNameRoleRow[]
-        ).map((row) => ({
-          id: row.user_id,
-          full_name: row.full_name ?? 'Doctor',
-        }))
-
-        setDoctorOptions(mappedDoctors)
-        setScheduleForm((prev) => ({
-          ...prev,
-          doctorId: prev.doctorId || mappedDoctors[0]?.id || '',
-        }))
-      } else {
-        setDoctorOptions([])
       }
 
       setLoadingDashboard(false)
