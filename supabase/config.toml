@@ -118,6 +118,16 @@ file_size_limit = "50MiB"
 # allowed_mime_types = ["image/png", "image/jpeg"]
 # objects_path = "./images"
 
+[storage.buckets.patient-forms]
+public = false
+file_size_limit = "50MiB"
+allowed_mime_types = ["application/pdf"]
+
+[storage.buckets.clinic-forms]
+public = false
+file_size_limit = "50MiB"
+allowed_mime_types = ["application/pdf"]
+
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]
 enabled = true
