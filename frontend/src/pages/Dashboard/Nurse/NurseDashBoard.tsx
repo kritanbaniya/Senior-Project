@@ -50,6 +50,7 @@ export default function NurseDashBoard() {
   }, [loadClinicPermissions])
 
   useEffect(() => {
+    if (clinicsLoading) return
     if (!selectedClinicId) return
     if (acceptedClinics.length === 0) {
       setSelectedClinicId(null)
@@ -61,7 +62,7 @@ export default function NurseDashBoard() {
       setSelectedClinicId(null)
       setSelectedClinicName(null)
     }
-  }, [acceptedClinics, selectedClinicId, setSelectedClinicId, setSelectedClinicName])
+  }, [clinicsLoading, acceptedClinics, selectedClinicId, setSelectedClinicId, setSelectedClinicName])
 
   const runInviteUpdate = async (permissionId: string, status: 'accepted' | 'rejected') => {
     setInviteBusyId(permissionId)
