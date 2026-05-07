@@ -32,6 +32,7 @@ import NurseQueueManagement from './pages/Dashboard/Nurse/NurseQueueManagement'
 import PatientVisitSummary from './pages/Dashboard/Patient/PatientVisitSummary'
 import PatientLabResults from './pages/Dashboard/Patient/PatientLabResults'
 import PatientMedications from './pages/Dashboard/Patient/PatientMedications'
+import PatientFormView from './pages/Form/PatientFormView'
 /**
  * This file defines the main App component, which sets up the routing for the application.
  * It uses React Router to define routes for the homepage, clinic nearby, clinic discovery, clinic info, reset password, and dashboard pages.
