@@ -5,7 +5,6 @@ import {
   UserRound,
   CalendarClock,
   ListOrdered,
-  Building2,
   LogOut,
 } from "lucide-react"
 
@@ -51,11 +50,6 @@ const workItems: SidebarItem[] = [
     title: "Queue Management",
     url: "/dashboard/nurse/queue",
     icon: ListOrdered,
-  },
-  {
-    title: "Clinic Info",
-    url: "/clinic",
-    icon: Building2,
   },
 ]
 
