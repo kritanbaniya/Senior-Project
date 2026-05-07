@@ -108,73 +108,83 @@ export default function NurseDashBoard() {
             <h1 className="pd-header-title">Nurse dashboard</h1>
             <span className="pd-header-patient">Overview</span>
           </div>
-
-          <div className="pd-header-actions nurse-overview-header-actions">
-            <section className="nurse-overview-clinic-box">
-              <h2 className="nurse-overview-clinic-title">Clinic selection</h2>
-              {clinicsLoading && <p className="no-queue">Loading clinics...</p>}
-              {!clinicsLoading && clinicsError && <p className="no-queue">{clinicsError}</p>}
-              {!clinicsLoading && !clinicsError && (
-                <ClinicSelector
-                  clinics={acceptedClinics}
-                  selectedClinicId={selectedClinicId}
-                  onSelect={(clinicId) => setSelectedClinicId(clinicId)}
-                />
-              )}
-            </section>
-          </div>
         </header>
 
         <main className="pd-main nurse-dashboard nurse-overview-main">
-          {!clinicsLoading && !clinicsError && pendingInvites.length > 0 && (
-            <div className="info-box quick-actions-box" style={{ marginBottom: '1rem' }}>
-              <h2 className="info-box-title">Clinic invitations</h2>
-              <p className="pd-card-desc" style={{ marginBottom: '0.75rem' }}>
-                Accept or decline invitations from clinics. You must accept before the clinic appears in your selection above.
-              </p>
-              {inviteError && (
-                <p className="no-queue" style={{ marginBottom: '0.75rem' }}>{inviteError}</p>
-              )}
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {pendingInvites.map((row) => (
-                  <li
-                    key={row.id}
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.5rem 0',
-                      borderBottom: '1px solid rgba(0,0,0,0.06)',
-                    }}
-                  >
-                    <span style={{ flex: '1 1 200px' }}>
-                      {row.clinic_name}
-                      <span className="small-label" style={{ marginLeft: '0.5rem' }}>
-                        ({row.city ?? 'city n/a'}, {row.state ?? 'state n/a'})
+          {/* Clinic selection card */}
+          <div className="info-box quick-actions-box">
+            <h2 className="info-box-title">Clinic selection</h2>
+            <p className="pd-card-desc" style={{ marginBottom: '0.75rem' }}>
+              Select the clinic you are currently operating in.
+            </p>
+            {clinicsLoading && <p className="no-queue">Loading clinics...</p>}
+            {!clinicsLoading && clinicsError && <p className="no-queue">{clinicsError}</p>}
+            {!clinicsLoading && !clinicsError && (
+              <ClinicSelector
+                clinics={acceptedClinics}
+                selectedClinicId={selectedClinicId}
+                onSelect={(clinicId) => setSelectedClinicId(clinicId)}
+              />
+            )}
+          </div>
+
+          {/* Notifications card */}
+          <div className="info-box quick-actions-box">
+            <h2 className="info-box-title">Notifications</h2>
+            {clinicsLoading && <p className="no-queue">Loading...</p>}
+            {!clinicsLoading && clinicsError && <p className="no-queue">{clinicsError}</p>}
+            {!clinicsLoading && !clinicsError && pendingInvites.length === 0 && (
+              <p className="no-queue">No new notifications.</p>
+            )}
+            {!clinicsLoading && !clinicsError && pendingInvites.length > 0 && (
+              <>
+                <p className="pd-card-desc" style={{ marginBottom: '0.75rem' }}>
+                  Accept or decline clinic invitations. You must accept before a clinic appears in your selection above.
+                </p>
+                {inviteError && (
+                  <p className="no-queue" style={{ marginBottom: '0.75rem' }}>{inviteError}</p>
+                )}
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  {pendingInvites.map((row) => (
+                    <li
+                      key={row.id}
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 0',
+                        borderBottom: '1px solid rgba(0,0,0,0.06)',
+                      }}
+                    >
+                      <span style={{ flex: '1 1 200px' }}>
+                        {row.clinic_name}
+                        <span className="small-label" style={{ marginLeft: '0.5rem' }}>
+                          ({row.city ?? 'city n/a'}, {row.state ?? 'state n/a'})
+                        </span>
                       </span>
-                    </span>
-                    <button
-                      type="button"
-                      className="btn-small"
-                      disabled={inviteBusyId === row.id}
-                      onClick={() => openAcceptInvite(row)}
-                    >
-                      Accept
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-small"
-                      disabled={inviteBusyId === row.id}
-                      onClick={() => openDeclineInvite(row)}
-                    >
-                      Decline
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+                      <button
+                        type="button"
+                        className="btn-small"
+                        disabled={inviteBusyId === row.id}
+                        onClick={() => openAcceptInvite(row)}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-small"
+                        disabled={inviteBusyId === row.id}
+                        onClick={() => openDeclineInvite(row)}
+                      >
+                        Decline
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
 
           <div className="info-box quick-actions-box">
             <h2 className="info-box-title">Quick actions</h2>
