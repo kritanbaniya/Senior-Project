@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useClinicContext } from '../../context/ClinicContext';
 import { supabase } from '../../lib/supabase';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Hospital } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Hospital, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const ClinicPDFUpload: React.FC = () => {
     const { profile } = useAuth();
@@ -113,6 +114,13 @@ return (
   <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
     {/* Header */}
     <div className="mb-8">
+      <Link
+        to="/dashboard/nurse"
+        className="inline-flex items-center text-sky-600 hover:underline font-medium text-sm mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-1" />
+        Back to Dashboard
+      </Link>
       <h1 className="text-3xl font-bold text-gray-900 flex items-center">
         <Hospital className="w-7 h-7 mr-2 text-blue-600" />
         Clinic Form Management
