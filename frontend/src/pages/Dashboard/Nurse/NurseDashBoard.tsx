@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useClinicContext } from '../../../context/ClinicContext'
 import ClinicSelector from '../../../features/queue/components/ClinicSelector'
 import { fetchNurseClinicPermissions, updateNurseInvitationStatus } from '../../../features/queue/api'
