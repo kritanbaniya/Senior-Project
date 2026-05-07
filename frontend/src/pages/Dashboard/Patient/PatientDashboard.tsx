@@ -9,6 +9,14 @@ import PatientQueueCard from '../../../features/queue/components/PatientQueueCar
 import PatientSidebar from './components/PatientSidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { useAuth } from '../../../context/AuthContext'
+import {
+  fetchLabResults,
+  type LabResultRecord,
+} from '../../../features/medical/labResultsApi'
+import {
+  fetchAllPrescriptions,
+  type PrescriptionRecord,
+} from '../../../features/medical/prescriptionsApi'
 
 type AppointmentStatus =
   | 'pending'
@@ -33,19 +41,6 @@ type VisitRecord = {
   date: string
   doctor: string
   summary: string
-}
-
-type Medication = {
-  id: string
-  name: string
-  dosage: string
-  schedule: string
-}
-
-type LabPoint = {
-  label: string
-  value: number
-  max: number
 }
 
 type PatientInfo = {
@@ -184,8 +179,9 @@ export default function PatientDashboard() {
   const [info, setInfo] = useState<PatientInfo | null>(null)
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [records, setRecords] = useState<VisitRecord[]>([])
-  const [medications] = useState<Medication[]>([])
-  const [labs] = useState<LabPoint[]>([])
+  const [medications, setMedications] = useState<PrescriptionRecord[]>([])
+  const [labs, setLabs] = useState<LabResultRecord[]>([])
+
   const activeClinicId = selectedClinicId
 
   const {
@@ -242,12 +238,17 @@ export default function PatientDashboard() {
         .order('visit_date', { ascending: false })
         .limit(5)
 
-      const [patientInfoRes, appointmentsRes, recordsRes] =
-        await Promise.all([
-          patientInfoPromise,
-          appointmentsPromise,
-          recordsPromise,
-        ])
+      const labsPromise = fetchLabResults(user.id)
+      const medicationsPromise = fetchAllPrescriptions(user.id)
+
+      const [patientInfoRes, appointmentsRes, recordsRes, labsRes, medicationsRes] =
+      await Promise.all([
+        patientInfoPromise,
+        appointmentsPromise,
+        recordsPromise,
+        labsPromise,
+        medicationsPromise,
+      ])
 
       if (!patientInfoRes.error) {
         setInfo((patientInfoRes.data as PatientInfo | null) ?? null)
@@ -295,6 +296,18 @@ export default function PatientDashboard() {
         setRecords(mappedRecords)
       } else {
         setRecords([])
+      }
+
+      if (!labsRes.error && labsRes.data) {
+        setLabs(labsRes.data)
+      } else {
+        setLabs([])
+        }
+
+      if (!medicationsRes.error && medicationsRes.data) {
+        setMedications(medicationsRes.data)
+      } else {
+        setMedications([])
       }
 
       setLoadingDashboard(false)
@@ -618,7 +631,7 @@ export default function PatientDashboard() {
                 )}
 
                 <Link
-                  to="/dashboard/patient#records"
+                  to="/dashboard/patient/visit-summary"
                   className="mt-4 inline-block text-sm font-medium text-sky-600 hover:underline"
                 >
                   View all records
@@ -626,37 +639,118 @@ export default function PatientDashboard() {
               </DashboardPanel>
             </div>
 
-            <div>
-              <DashboardPanel
-                title="Lab results summary"
-                id="lab"
-                className="min-h-[350px]"
-              >
-                <p className="text-sm text-slate-500">
-                  No lab results available.
-                </p>
-                <p className="mt-4 text-sm leading-6 text-slate-500">
-                  This section is ready in the UI, but your current Supabase schema
-                  does not have a patient lab results table yet.
-                </p>
-              </DashboardPanel>
+   <div>
+  <DashboardPanel
+    title="Lab results summary"
+    id="lab"
+    className="min-h-[350px]"
+  >
+    {loadingDashboard ? (
+      <p className="text-sm text-slate-500">Loading lab results...</p>
+    ) : labs.length === 0 ? (
+      <p className="text-sm text-slate-500">No lab results available.</p>
+    ) : (
+      <ul className="flex flex-col gap-3">
+        {labs.slice(0, 3).map((lab) => (
+          <li
+            key={lab.id}
+            className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-semibold text-slate-800">
+                {lab.test_type}
+              </span>
+
+              <span className="rounded-md bg-sky-100 px-2 py-1 text-xs font-semibold text-sky-700">
+                {lab.result}
+              </span>
             </div>
 
-            <div>
-              <DashboardPanel
-                title="Medications"
-                id="medications"
-                className="min-h-[350px]"
+            <p className="mt-1 text-sm text-slate-500">
+              {lab.test_date}
+            </p>
+
+            {lab.result_details && (
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {lab.result_details}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
+
+    <Link
+      to="/dashboard/patient/lab-results"
+      className="mt-4 inline-block text-sm font-medium text-sky-600 hover:underline"
+    >
+      View all lab results
+    </Link>
+  </DashboardPanel>
+</div>
+
+<div>
+  <DashboardPanel
+    title="Medications"
+    id="medications"
+    className="min-h-[350px]"
+  >
+    {loadingDashboard ? (
+      <p className="text-sm text-slate-500">Loading medications...</p>
+    ) : medications.length === 0 ? (
+      <p className="text-sm text-slate-500">No medications on file.</p>
+    ) : (
+      <ul className="flex flex-col gap-3">
+        {medications.slice(0, 3).map((med) => (
+          <li
+            key={med.id}
+            className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-semibold text-slate-800">
+                {med.medication_name}
+              </span>
+
+              <span
+                className={[
+                  'rounded-md px-2 py-1 text-xs font-semibold',
+                  med.status === 'active'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : med.status === 'completed'
+                      ? 'bg-slate-100 text-slate-700'
+                      : 'bg-rose-100 text-rose-700',
+                ].join(' ')}
               >
-                <p className="text-sm text-slate-500">
-                  No medications on file.
-                </p>
-                <p className="mt-4 text-sm leading-6 text-slate-500">
-                  This section is ready in the UI, but your current Supabase schema
-                  does not have a patient medications table yet.
-                </p>
-              </DashboardPanel>
+                {med.status}
+              </span>
             </div>
+
+            <p className="mt-1 text-sm text-sky-700">
+              {med.dosage} • {med.frequency}
+            </p>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Duration: {med.duration}
+            </p>
+
+            {med.instructions && (
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {med.instructions}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
+
+    <Link
+      to="/dashboard/patient/medications"
+      className="mt-4 inline-block text-sm font-medium text-sky-600 hover:underline"
+    >
+      View all medications
+    </Link>
+  </DashboardPanel>
+</div>
 
             <div>
               <DashboardPanel

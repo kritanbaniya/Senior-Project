@@ -28,7 +28,11 @@ import SystemAdminClinicApprovals from './pages/Dashboard/SystemAdmin/SystemAdmi
 import PatientAppointmentManager from './pages/Dashboard/Patient/PatientAppointmentManager'
 import NurseAppointmentManager from './pages/Dashboard/Nurse/NurseAppointmentManager'
 import NurseQueueManagement from './pages/Dashboard/Nurse/NurseQueueManagement'
-import PatientFormView from './pages/Form/PatientFormView';
+
+import PatientVisitSummary from './pages/Dashboard/Patient/PatientVisitSummary'
+import PatientLabResults from './pages/Dashboard/Patient/PatientLabResults'
+import PatientMedications from './pages/Dashboard/Patient/PatientMedications'
+import PatientFormView from './pages/Form/PatientFormView'
 /**
  * This file defines the main App component, which sets up the routing for the application.
  * It uses React Router to define routes for the homepage, clinic nearby, clinic discovery, clinic info, reset password, and dashboard pages.
@@ -54,6 +58,10 @@ export default function App() {
                 <Route index element={<PatientDashboard />} />
                 <Route path="appointments" element={<PatientAppointmentManager />} />
                 <Route path="information" element={<PatientYourInformation />} />
+                <Route path="visit-summary" element={<PatientVisitSummary />} />
+                <Route path="lab-results" element={<PatientLabResults />} />
+                <Route path="medications" element={<PatientMedications />} />
+
                 <Route path="pdf-upload" element={<PatientPDFUpload />} />
               </Route>
               <Route path="nurse" element={<RoleGuard allowedRole="nurse" />}>
