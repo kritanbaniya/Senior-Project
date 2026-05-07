@@ -5,7 +5,7 @@ import {
   UserRound,
   MapPinned,
   CalendarClock,
-  //FileText,
+  FileText,
   Pill,
   LogOut,
   FlaskConical,
@@ -60,11 +60,11 @@ const healthItems: SidebarItem[] = [
     url: "/dashboard/patient/appointments",
     icon: CalendarClock,
   },
-  /*{
+  {
     title: "Documents",
-    url: "/dashboard/patient",
+    url: "/dashboard/patient/pdf-upload",
     icon: FileText,
-  },*/
+  },
   {
     title: "Visit Summary Notes",
     url: "/dashboard/patient/visit-summary",
