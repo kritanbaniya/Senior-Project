@@ -187,23 +187,7 @@ export default function NurseDashBoard() {
             )}
           </div>
 
-          <div className="info-box quick-actions-box">
-            <h2 className="info-box-title">Quick actions</h2>
-            <div className="info-box-content quick-actions">
-              <Link to="/dashboard/nurse/appointments" className="action-link">
-                Appointments
-              </Link>
-              <Link to="/dashboard/nurse/queue" className="action-link">
-                Queue management
-              </Link>
-              <Link to="/dashboard/nurse/information" className="action-link">
-                Your information
-              </Link>
-              <Link to="/clinic" className="action-link">
-                Clinic info
-              </Link>
-            </div>
-          </div>
+
         </main>
       </div>
 
