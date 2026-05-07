@@ -471,7 +471,10 @@ button:focus-visible {
   background: #fafafa;
   position: relative;
 }
+.nurse-queue-item.stage-pending { border-left: 4px solid #64748b; }
 .nurse-queue-item.stage-waiting { border-left: 4px solid #f59e0b; }
+.nurse-queue-item.stage-called { border-left: 4px solid #7c3aed; background: #f5f3ff; }
+.nurse-queue-item.stage-in_progress { border-left: 4px solid #0369a1; background: #f0f9ff; }
 .nurse-queue-item.stage-consultation { border-left: 4px solid #0369a1; background: #f0f9ff; }
 .nurse-queue-item.stage-discharge { border-left: 4px solid #15803d; background: #f0fdf4; }
 .queue-order { font-weight: 700; color: #555; min-width: 2rem; }
@@ -657,6 +660,7 @@ button:focus-visible {
   padding: 1rem 1.5rem;
   background: #fff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border-radius: 1rem;
   flex-shrink: 0;
 }
 .pd-header-left {
@@ -1744,15 +1748,6 @@ button:focus-visible {
   padding: 1.5rem 0;
 }
 
-.welcome-banner {
-  padding: 0.5rem 0.5em;
-  background-color: #0f0f79;
-  color: #ffffff;
-  font-size: 1.5rem;
-  font-weight: 500;
-  text-align: center;
-
-}
 
 @media (prefers-color-scheme: light) {
   :root {

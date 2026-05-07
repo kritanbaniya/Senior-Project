@@ -30,12 +30,21 @@ const PatientPDFUpload: React.FC = () => {
     const fetchClinics = async () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user?.id) return;
-      const { data } = await supabase
-        .from('membernamerole')
-        .select('*')
-        .eq('user_id', userData.user.id)
-        .eq('role', 'patient');
-      setClinics(data || []);
+      const { data: queueData } = await supabase
+        .from('queue_entries')
+        .select('clinic_id')
+        .eq('patient_id', userData.user.id)
+        .eq('status', 'waiting');
+      if (!queueData || queueData.length === 0) {
+        setClinics([]);
+        return;
+      }
+      const clinicIds = queueData.map((item: any) => item.clinic_id);
+      const { data: clinicsData } = await supabase
+        .from('clinics')
+        .select('clinic_id, clinic_name')
+        .in('clinic_id', clinicIds);
+      setClinics(clinicsData || []);
     };
     fetchClinics();
   }, []);
@@ -99,14 +108,10 @@ const PatientPDFUpload: React.FC = () => {
     if (!file || !selectedClinicId) return;
     setLoading(true);
     try {
-      const { data: clinicData } = await supabase
-        .from('clinics')
-        .select('clinic_id')
-        .eq('clinic_name', selectedClinicId)
-        .single();
+    
 
       const { data: userData } = await supabase.auth.getUser();
-      const filePath = `${clinicData?.clinic_id}/${userData.user?.id}/user_form.pdf`;
+      const filePath = `${selectedClinicId}/${userData.user?.id}/user_form.pdf`;
 
       const { error } = await supabase.storage
         .from('patient-forms')

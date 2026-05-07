@@ -51,7 +51,7 @@ export default function App() {
             <Route path="/clinic-discovery" element={<ClinicDiscovery />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/support" element={<Support />} />
-
+            <Route path="/form/patient-form/:patientId/:clinicId" element={<PatientFormView />} />
             <Route path="/dashboard" element={<DashboardGuard />}>
               <Route path="patient" element={<RoleGuard allowedRole="patient" />}>
                 <Route index element={<PatientDashboard />} />
@@ -69,6 +69,7 @@ export default function App() {
                 <Route path="queue" element={<NurseQueueManagement />} />
                 <Route path="information" element={<NurseYourInformation />} />
                 <Route path="pdf-upload" element={<ClinicPDFUpload />} />
+                
               </Route>
               <Route path="doctor" element={<RoleGuard allowedRole="doctor" />}>
                 <Route index element={<DoctorDashBoard />} />
@@ -81,6 +82,7 @@ export default function App() {
                   <Route path="manage-staff" element={<ClinicManageStaff />} />
                 </Route>
               </Route>
+              
               <Route path="system-admin" element={<RoleGuard allowedRole="system_admin" />}>
                 <Route element={<SystemAdminDashboard />}>
                   <Route index element={<SystemAdminClinicApprovals />} />

@@ -13,7 +13,7 @@ import ApptCreateModal from '@/features/appointment/ApptCreateModal.tsx';
 import { apiCreateAppt } from '@/features/appointment/appointment.api.ts';
 import { SidebarProvider } from '@/components/ui/sidebar'
 import ApptDetailModal from '@/features/appointment/ApptDetailModal.tsx';
- 
+import { apiUpdateAppt } from '@/features/appointment/appointment.api.ts';
 
 // CAN ONLY EDIT REQUESTS OR PENDING 
 
@@ -129,9 +129,9 @@ export default function PatientAppointmentManager() {
 
 
     // temparory empty f 
-    function emptyf(): void {
-        return
-    }
+    // function emptyf(): void {
+    //     return
+    // }
     
 
 
@@ -436,7 +436,35 @@ export default function PatientAppointmentManager() {
     //// U: UPDATE EXISTING APPOINTMENT
     // const updateAppointments = async () => { // relies on updateForm data 
     //     if(debuglog.includes('update')){console.log('UPDATEFORM SUBMITTED:', updateForm)}
- 
+    const cancelAppointment = async (apt: Appointment) => {
+    try {
+        const dt = new Date(apt.appointment_date);
+
+        const yyyy = dt.getFullYear();
+        const mm = String(dt.getMonth() + 1).padStart(2, "0");
+        const dd = String(dt.getDate()).padStart(2, "0");
+        const hh = String(dt.getHours()).padStart(2, "0");
+        const min = String(dt.getMinutes()).padStart(2, "0");
+
+        await apiUpdateAppt({
+            appointmentId: apt.Appointment_id,
+            patientId: apt.patient_id ?? "",
+            doctorId: apt.clinician_id ?? "",
+            date: `${yyyy}-${mm}-${dd}`,
+            time: `${hh}:${min}`,
+            type: apt.visit_type as AppointmentType,
+            appointment_status: "canceled",
+            nurse_note: apt.nurse_note ?? "",
+            patient_note: apt.patient_note ?? "",
+        });
+
+        if (clinicView) {
+            await readAppointments(clinicView, viewPrefs);
+        }
+    } catch (error) {
+        console.log("CANCEL APPOINTMENT ERROR:", error);
+    }
+    };
         
     //     ////// EXIT CASES  
     //     // UPDATE IT 
@@ -463,6 +491,7 @@ export default function PatientAppointmentManager() {
 
 
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// REACT HOOKS !
     useEffect(() => {
@@ -478,7 +507,7 @@ export default function PatientAppointmentManager() {
             setCreateStatus('idle')
             setCreateMessage('')
         }, 1200) // closes after 1.2 seconds
-
+        if(clinicView){readAppointments(clinicView, viewPrefs)}
         return () => clearTimeout(timer)
     }, [createStatus])
 
@@ -591,7 +620,7 @@ export default function PatientAppointmentManager() {
                                 appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments 
                                 // functions to handle appointment CRUD actions 
                                 onSelectAppointment={(apt) => openAppointmentDetails(apt)} 
-                                onDeleteAppointment={emptyf}
+                                onDeleteAppointment={(apt) => cancelAppointment(apt)}
                                 onSelectSlot={openCreateForm}
                                 // function to handle appointment view changes (changing query)
                                 viewPrefs={viewPrefs}

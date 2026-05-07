@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../../lib/supabase.ts' 
+import { Link } from 'react-router-dom'
+import { supabase } from '../../../lib/supabase.ts'
+import { useClinicContext } from '../../../context/ClinicContext'
 import AppointmentSwitch from '@/features/appointment/AppointmentSwitch.tsx'
 import type { 
   CreateApptForm, 
@@ -20,7 +22,9 @@ import {
 } from '@/features/appointment/appointment.api.ts';
 // import AppointmentR
 // import { Switch } from "radix-ui";
-import { apiCreateAppt } from '@/features/appointment/appointment.api.ts'; 
+import { apiCreateAppt } from '@/features/appointment/appointment.api.ts'
+import { fetchNurseClinicPermissions } from '../../../features/queue/api'
+import type { ClinicListItem, StaffPermissionRow } from '../../../features/queue/types'
 
 
 
@@ -29,7 +33,12 @@ export default function NurseAppointmentManager() {
     var debuglog: debuglogType[] = ['this', ]
     type AppointmentCreateStatus = 'idle' | 'loading' | 'success' | 'failed'
 
-  
+    const { selectedClinicId } = useClinicContext()
+
+    const [nursePermissions, setNursePermissions] = useState<(StaffPermissionRow & ClinicListItem)[]>([])
+    const canManageAppointment = Boolean(
+        nursePermissions.find((p) => p.clinic_id === selectedClinicId)?.manage_appointment
+    )
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// HELPER FUNCTIONS:
@@ -51,10 +60,9 @@ export default function NurseAppointmentManager() {
         }
     } // archiac. need to delete 
   
-    // Retrieve CLINIC ID
+    // Fetch clinic list for name display and to populate doctor/patient dropdowns
     const [ showClinicSelector ] = useState<boolean>(false) // will not change.
     const [clinicList, setClinicList] = useState<UserClinicRelationship[]>([])
-    const [clinic, setClinic] = useState<string>() 
     const loadClinics = async () => { 
         const { data: authData, error: authErr } = await supabase.auth.getUser()
         if (authErr || !authData.user) {
@@ -74,9 +82,11 @@ export default function NurseAppointmentManager() {
         }
         if (debuglog.includes('initial')){ console.log(data) }
 
-        setClinicList(data) 
-        setClinic(data[0].clinic_id) 
+        setClinicList(data)
+        // clinic selection is driven by ClinicContext (dashboard), not auto-picked here
     }
+
+    const selectedClinicName = clinicList.find((c) => c.clinic_id === selectedClinicId)?.clinic_name
 
     // Retrieve list of PRACTICIANERS in this clinic
     const [practicionerList, setPracticionerList] = useState<UserClinicRelationship[]>([])
@@ -180,7 +190,7 @@ export default function NurseAppointmentManager() {
             setCreateStatus('success')
             setCreateMessage(`Appointment created for ${patientName} on ${createForm.date} at ${createForm.time} with ${doctorName}.`)
             // since appt list changed, re-call readAppt
-            if(clinic) await readAppointments(clinic, viewPrefs)
+            if(selectedClinicId) await readAppointments(selectedClinicId, viewPrefs)
         } catch (error) {
             console.log('ERROR CREATE:', error)
             // TAIL UI CHANGES  
@@ -192,11 +202,9 @@ export default function NurseAppointmentManager() {
         // since appt list changed, re-call readAppt
         // await readAppointments(clinicId, viewPrefs)
     }
-    /// pass these to children 
-    // create an appointment 
-    const handleCreateAppointment = async () => { // relies on clinic existing in nurseApptManager
-        if (clinic){
-        createAppointment(clinic)}
+    const handleCreateAppointment = async () => {
+        if (selectedClinicId){
+        createAppointment(selectedClinicId)}
     }
     // open createForm and prefill information 
     const openCreateForm = (start: Date) => {
@@ -432,7 +440,7 @@ export default function NurseAppointmentManager() {
             setUpdateStatus('success')
             setUpdateMessage(`Appointment created for ${patientName} on ${updateForm.date} at ${updateForm.time} with ${doctorName}.`)
             // since appt list changed, re-call readAppt
-            if(clinic) await readAppointments(clinic, viewPrefs)
+            if(selectedClinicId) await readAppointments(selectedClinicId, viewPrefs)
         } catch (error) {
             console.log('UPDATE ERROR:', error)
             // TAIL UI CHANGES  
@@ -501,25 +509,28 @@ export default function NurseAppointmentManager() {
     //// REACT HOOKS !
     useEffect(() => {
         loadClinics()
+        fetchNurseClinicPermissions()
+            .then((data) => setNursePermissions(data.filter((p) => p.invitation_status === 'accepted')))
+            .catch(() => {/* non-critical — permission guard stays closed on error */})
     }, [])
 
 
     // only load patient and doctor data when the clinic information is retrieved 
     useEffect(() => {
-        if (!clinic) return 
-        retrieveAppointmentTypes()    // may depend on clinics in the future 
-        retrievePracticioners(clinic) // depend on clinics
-        retrievePatients(clinic)      // depend on clinics 
+        if (!selectedClinicId) return 
+        retrieveAppointmentTypes()
+        retrievePracticioners(selectedClinicId)
+        retrievePatients(selectedClinicId)
         if(viewPrefs){setViewPrefs((prev) => ({...prev, page: 1}))}
-    }, [clinic])
+    }, [selectedClinicId])
 
     // load the subset of appointments when we have the clinic 
     //    OR when the viewPreferences are updated 
     useEffect(() => {
-        if (!clinic) return  
+        if (!selectedClinicId) return  
         if (debuglog.includes('lifecycle')) console.log("SHOW REQ", viewPrefs.showReqs)
-        readAppointments(clinic, viewPrefs)
-    }, [clinic, viewPrefs])
+        readAppointments(selectedClinicId, viewPrefs)
+    }, [selectedClinicId, viewPrefs])
 
     useEffect(() => {
         if (createStatus !== 'success') return
@@ -529,7 +540,7 @@ export default function NurseAppointmentManager() {
             setCreateStatus('idle')
             setCreateMessage('')
         }, 1200) // closes after 1.2 seconds
-
+        if(selectedClinicId){readAppointments(selectedClinicId, viewPrefs)}
         return () => clearTimeout(timer)
     }, [createStatus])
 
@@ -566,20 +577,36 @@ return (
       <NurseSideBar />
 
       <div className="pd-right">
+        {/* No clinic selected guard */}
+        {!selectedClinicId && (
+          <div className="info-box quick-actions-box" style={{ margin: '1.5rem' }}>
+            <h2 className="info-box-title">No clinic selected</h2>
+            <p className="no-queue" style={{ marginBottom: '0.75rem' }}>
+              Select a clinic from the dashboard before managing appointments.
+            </p>
+            <Link to="/dashboard/nurse" className="pd-btn pd-btn-primary">
+              Go to dashboard
+            </Link>
+          </div>
+        )}
+
+        {selectedClinicId && !canManageAppointment && (
+          <div className="info-box quick-actions-box" style={{ margin: '1.5rem' }}>
+            <h2 className="info-box-title">Appointment access</h2>
+            <p className="no-queue">
+              You do not have permission to manage appointments for this clinic.
+            </p>
+          </div>
+        )}
+
+        {selectedClinicId && canManageAppointment && (
         <div className="info-box appointments-section">
           <div className='flex justify-between'>
-            {/* SELECT CLINIC */}
+            {/* SELECTED CLINIC DISPLAY */}
             <h1 className="info-box-title">
-              <select 
-                className='m-2 p-2 font-bold border-2 border-solid rounded-lg' 
-                onChange={(e) =>
-                  setClinic(() => (e.target.value))
-                }>
-                {clinicList.map((c) => (
-                  <option key={c.clinic_id} value={c.clinic_id}>
-                        {c.clinic_name}
-                  </option>))} 
-              </select>
+              <span className='m-2 p-2 font-bold'>
+                {selectedClinicName ?? 'Loading clinic...'}
+              </span>
               Appointment Scheduling 
             </h1>
 
@@ -589,8 +616,8 @@ return (
               <ApptCreateModal
                 showClinicSelector = {showClinicSelector}
                 clinicList = {clinicList} 
-                selectedClinic = { clinic ? clinic : '' }
-                setSelectedClinic={ setClinic } // should not be used 
+                selectedClinic = { selectedClinicId ?? '' }
+                setSelectedClinic={ () => {} }
                 // CREATE : form for UI and submission | display it 
                 showCreateForm = {showCreateForm} 
                 setShowCreateForm = {setShowCreateForm}
@@ -619,10 +646,9 @@ return (
           <div className = "flex items-center">
             <ApptEditModal
                 showClinicSelector = {showClinicSelector} 
-                // display and change selected clinic 
                 clinicList = {clinicList} 
-                selectedClinic = { clinic ? clinic : '' }
-                setSelectedClinic={ setClinic } // should not be used 
+                selectedClinic = { selectedClinicId ?? '' }
+                setSelectedClinic={ () => {} }
                 
                 // UPDATE : form for UI and submission | display it 
                 showAptUpdateForm = {showAptUpdateForm} 
@@ -651,10 +677,9 @@ return (
           <div className = "flex items-center">
             <ApptEditModal
                 showClinicSelector = {showClinicSelector} 
-                // display and change selected clinic 
                 clinicList = {clinicList} 
-                selectedClinic = { clinic ? clinic : '' }
-                setSelectedClinic={ setClinic } // should not be used 
+                selectedClinic = { selectedClinicId ?? '' }
+                setSelectedClinic={ () => {} }
                 
                 // UPDATE : form for UI and submission | display it 
                 showAptUpdateForm = {showAptUpdateForm} 
@@ -680,17 +705,14 @@ return (
           </div>
 
           {/* VIEWING APPOINTMENTS */}
-          {(!clinic || !viewPrefs) ? (<p>Loading clinic...</p>) : (<>
+          {!viewPrefs ? (<p>Loading...</p>) : (<>
             <AppointmentSwitch 
-                appointments={appointmentsLoading ? [] : appointmentsList} // send a subset of appointments
-                // reqAppointmentsList={reqAppointmentsList? reqAppointmentsList : []}
-                // functions to handle appointment CRUD actions 
+                appointments={appointmentsLoading ? [] : appointmentsList}
                 onSelectAppointment={openUpdateForm} 
                 onDeleteAppointment={(apt) =>
-                    deleteAppointments(apt.Appointment_id, clinic)
+                    deleteAppointments(apt.Appointment_id, selectedClinicId ?? '')
                 }
                 onSelectSlot={openCreateForm}
-                // function to handle appointment view changes (changing query)
                 viewPrefs={viewPrefs}
                 totalPages = {totalPages}
                 onUpdateViewPrefs = {updateViewPrefs}
@@ -700,6 +722,7 @@ return (
 
 
         </div>
+        )}
       </div>
     </SidebarProvider>
   </> )

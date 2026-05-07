@@ -10,6 +10,7 @@ type ActiveQueuePanelProps = {
   onCallPatient: (entryId: string) => void
   onStartVisit: (entryId: string) => void
   onNoShow: (entryId: string) => void
+  onCheckForm: (entryId: QueueEntryRow) => void
 }
 
 export default function ActiveQueuePanel({
@@ -21,6 +22,7 @@ export default function ActiveQueuePanel({
   onCallPatient,
   onStartVisit,
   onNoShow,
+  onCheckForm,
 }: ActiveQueuePanelProps) {
   const [uiError, setUiError] = useState<string | null>(null)
 
@@ -106,6 +108,13 @@ export default function ActiveQueuePanel({
                   </div>
 
                   <div className="queue-actions">
+                    <button
+                    type="button"
+                    className="btn-small"
+                    onClick={() => onCheckForm(row)}
+                  >
+                    Check form
+                  </button>
                     <button
                       type="button"
                       className="btn-small"

@@ -61,7 +61,7 @@ export default function SystemAdminSideBar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="top-[115px] h-[calc(100vh-120px)] bg-white rounded-2xl"
+      className="top-[60px] h-[calc(100vh-65px)] bg-white rounded-2xl"
     >
       <SidebarHeader className="border bg-white rounded-xl border-slate-300 px-3 py-4">
         <div className="flex items-start justify-between gap-3 group-data-[collapsible=icon]:justify-center">

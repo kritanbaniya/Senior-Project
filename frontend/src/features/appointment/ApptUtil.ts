@@ -13,7 +13,7 @@ export const statusColor = (status: string): string => {
     deserted: "#7f1d1d",  // dark red
     default: "#64748b",   // slate gray
   };
-  console.log(STATUS_COLORS[status])
+  // console.log(STATUS_COLORS[status])
   return STATUS_COLORS[status] ?? STATUS_COLORS.default;
 };
 
