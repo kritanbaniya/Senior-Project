@@ -67,17 +67,17 @@ const healthItems: SidebarItem[] = [
   },
   {
     title: "Visit Summary Notes",
-    url: "/dashboard/patient/",
+    url: "/dashboard/patient/visit-summary",
     icon: NotebookPen,
   },
   {
     title: "Lab Results",
-    url: "/dashboard/patient",
+    url: "/dashboard/patient/lab-results",
     icon: FlaskConical,
   },
   {
     title: "Prescriptions",
-    url: "/dashboard/patient",
+    url: "/dashboard/patient/medications",
     icon: Pill,
   },
 ]
