@@ -3,7 +3,6 @@ import { useAuth } from "@/context/AuthContext"
 import {
   LayoutDashboard,
   UserRound,
-  Building2,
   FileText,
   Stethoscope,
   ClipboardList,
@@ -38,11 +37,6 @@ const mainItems: SidebarItem[] = [
     title: "My Profile",
     url: "/dashboard/doctor/information",
     icon: UserRound,
-  },
-  {
-    title: "Clinic Info",
-    url: "/clinic",
-    icon: Building2,
   },
 ]
 
