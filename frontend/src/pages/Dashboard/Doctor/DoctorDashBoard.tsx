@@ -37,6 +37,7 @@ type TestResult = {
 
 type DoctorPatient = {
   id: string
+  patientId: string 
   patientName: string
   age: number
   gender: string
@@ -89,6 +90,7 @@ function formatArrivalTime(startedAt: string | null) {
 function mapQueueRowToDoctorPatient(row: DoctorQueuePatientRow): DoctorPatient {
   return {
     id: row.queue_entry_id,
+    patientId: row.patient_id, // medical DB (IMPORTANT FIX)
     patientName: row.patient_name ?? 'Unknown patient',
     age: 0,
     gender: 'Unknown',
@@ -342,7 +344,7 @@ export default function DoctorDashBoard() {
     if (selectedPatient) {
       const loadHistory = async () => {
         setLoadingHistory(true)
-        const { data, error } = await fetchMedicalHistory(selectedPatient.id)
+        const { data, error } = await fetchMedicalHistory(selectedPatient.patientId)
         if (!error && data) {
           setFetchedHistory(data)
         } else {
@@ -361,7 +363,7 @@ export default function DoctorDashBoard() {
     if (selectedPatient) {
       const loadLabResults = async () => {
         setLoadingLabResults(true)
-        const { data, error } = await fetchLabResults(selectedPatient.id)
+        const { data, error } = await fetchLabResults(selectedPatient.patientId)
         if (!error && data) {
           setFetchedLabResults(data)
         } else {
@@ -380,7 +382,7 @@ export default function DoctorDashBoard() {
     if (selectedPatient) {
       const loadPrescriptions = async () => {
         setLoadingPrescriptions(true)
-        const { data, error } = await fetchAllPrescriptions(selectedPatient.id)
+        const { data, error } = await fetchAllPrescriptions(selectedPatient.patientId)
         if (!error && data) {
           setFetchedPrescriptions(data)
         } else {
@@ -416,7 +418,7 @@ export default function DoctorDashBoard() {
   }
 
   const { error } = await saveMedicalHistory({
-    patientId: selectedPatient.id,
+    patientId: selectedPatient.patientId,
     doctorId: user.id,
     doctorName: profile?.full_name || 'Doctor',
     diagnosis: clinicalNote.assessment,
@@ -435,7 +437,7 @@ export default function DoctorDashBoard() {
   }
 
   // Refresh history to show new entry
-  const { data } = await fetchMedicalHistory(selectedPatient.id)
+  const { data } = await fetchMedicalHistory(selectedPatient.patientId)
   if (data) {
     setFetchedHistory(data)
   }
@@ -470,7 +472,7 @@ export default function DoctorDashBoard() {
     const testInfo = ALL_TEST_TYPES.find(t => t.test === newTestResult.type)
     
     const { error } = await saveLabResult({
-      patientId: selectedPatient.id,
+      patientId: selectedPatient.patientId,
       doctorId: user.id,
       testType: newTestResult.type,
       testCategory: testInfo?.category || 'Other',
@@ -486,7 +488,7 @@ export default function DoctorDashBoard() {
     }
 
     // Refresh lab results
-    const { data } = await fetchLabResults(selectedPatient.id)
+    const { data } = await fetchLabResults(selectedPatient.patientId)
     if (data) {
       setFetchedLabResults(data)
     }
@@ -515,7 +517,7 @@ export default function DoctorDashBoard() {
   }
 
   const { error } = await savePrescription({
-    patientId: selectedPatient.id,
+    patientId: selectedPatient.patientId,
     doctorId: user.id,
     medicationName: newPrescription.medicationName,
     dosage: newPrescription.dosage,
@@ -532,7 +534,7 @@ export default function DoctorDashBoard() {
   }
 
   // Refresh prescriptions
-  const { data } = await fetchAllPrescriptions(selectedPatient.id)
+  const { data } = await fetchAllPrescriptions(selectedPatient.patientId)
   if (data) {
     setFetchedPrescriptions(data)
   }
