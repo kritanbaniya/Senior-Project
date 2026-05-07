@@ -990,6 +990,7 @@ button:focus-visible {
 }
 
 .pd-btn {
+  display: inline-block;
   padding: 0.5rem 1rem;
   border-radius: 10px;
   font-size: 0.95rem;
@@ -997,11 +998,14 @@ button:focus-visible {
   cursor: pointer;
   border: 1px solid transparent;
   transition: background 0.2s, border-color 0.2s;
+  text-align: center;
+  box-sizing: border-box;
 }
 .pd-btn-primary { background: #0284c7; color: #fff; }
 .pd-btn-primary:hover { background: #0369a1; }
 .pd-btn-secondary { background: #f1f5f9; color: #334155; border-color: #e2e8f0; }
 .pd-btn-secondary:hover { background: #e2e8f0; }
+.pd-btn + .pd-btn { margin-left: 0.5rem; }
 .pd-btn-sm { font-size: 0.85rem; padding: 0.4rem 0.75rem; }
 
 .pd-list { list-style: none; padding: 0; margin: 0; }
