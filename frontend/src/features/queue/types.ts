@@ -50,6 +50,7 @@ export type StaffPermissionRow = {
   clinic_id: string
   user_id: string
   manage_queue: boolean
+  manage_appointment: boolean | null
   invitation_status: InvitationStatus
 }
 

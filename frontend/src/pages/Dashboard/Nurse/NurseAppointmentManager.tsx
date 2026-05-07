@@ -22,7 +22,9 @@ import {
 } from '@/features/appointment/appointment.api.ts';
 // import AppointmentR
 // import { Switch } from "radix-ui";
-import { apiCreateAppt } from '@/features/appointment/appointment.api.ts'; 
+import { apiCreateAppt } from '@/features/appointment/appointment.api.ts'
+import { fetchNurseClinicPermissions } from '../../../features/queue/api'
+import type { ClinicListItem, StaffPermissionRow } from '../../../features/queue/types'
 
 
 
@@ -33,7 +35,10 @@ export default function NurseAppointmentManager() {
 
     const { selectedClinicId } = useClinicContext()
 
-  
+    const [nursePermissions, setNursePermissions] = useState<(StaffPermissionRow & ClinicListItem)[]>([])
+    const canManageAppointment = Boolean(
+        nursePermissions.find((p) => p.clinic_id === selectedClinicId)?.manage_appointment
+    )
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// HELPER FUNCTIONS:
@@ -504,6 +509,9 @@ export default function NurseAppointmentManager() {
     //// REACT HOOKS !
     useEffect(() => {
         loadClinics()
+        fetchNurseClinicPermissions()
+            .then((data) => setNursePermissions(data.filter((p) => p.invitation_status === 'accepted')))
+            .catch(() => {/* non-critical — permission guard stays closed on error */})
     }, [])
 
 
@@ -582,7 +590,16 @@ return (
           </div>
         )}
 
-        {selectedClinicId && (
+        {selectedClinicId && !canManageAppointment && (
+          <div className="info-box quick-actions-box" style={{ margin: '1.5rem' }}>
+            <h2 className="info-box-title">Appointment access</h2>
+            <p className="no-queue">
+              You do not have permission to manage appointments for this clinic.
+            </p>
+          </div>
+        )}
+
+        {selectedClinicId && canManageAppointment && (
         <div className="info-box appointments-section">
           <div className='flex justify-between'>
             {/* SELECTED CLINIC DISPLAY */}
