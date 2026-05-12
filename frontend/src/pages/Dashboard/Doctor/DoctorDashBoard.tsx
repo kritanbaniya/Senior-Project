@@ -1147,21 +1147,6 @@ export default function DoctorDashBoard() {
                     </div>
                   </ChartSection>
 
-                  {/* Section 4: Appointment History */}
-                  <ChartSection 
-                    title="Appointment History" 
-                    icon="📅"
-                    defaultExpanded={false}
-                  >
-                    <div className="text-center py-8 text-gray-500">
-                      <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <p className="font-medium">Appointment history coming soon</p>
-                      <p className="text-sm mt-1">Past and upcoming appointments will be displayed here</p>
-                    </div>
-                  </ChartSection>
-
                 </div>
               ) : (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[400px] flex items-center justify-center">
