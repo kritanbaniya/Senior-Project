@@ -1,4 +1,4 @@
-# ClinicIQ — Clinic Queue Management System
+# ClinicIQ 
 
 > **Course:** CSC 59866 — Senior Project  
 > **Instructor:** Prof. Thomas M. Sessa  
