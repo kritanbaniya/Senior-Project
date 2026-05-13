@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'  
 import { saveMedicalHistory, fetchMedicalHistory, type MedicalHistoryRecord } from '@/features/medical/medicalHistoryApi'  
 import { saveLabResult, fetchLabResults, type LabResultRecord } from '@/features/medical/labResultsApi' 
-import { savePrescription, fetchAllPrescriptions, type PrescriptionRecord } from '@/features/medical/prescriptionsApi'
+import { savePrescription, fetchAllPrescriptions, fetchActivePrescriptions, type PrescriptionRecord } from '@/features/medical/prescriptionsApi'
 import { SidebarProvider } from "@/components/ui/sidebar" 
 import DoctorSidebar from "./DoctorSideBar" 
 import { fetchDoctorInProgressQueue } from '@/features/queue/api'
@@ -92,14 +92,30 @@ function mapQueueRowToDoctorPatient(row: DoctorQueuePatientRow): DoctorPatient {
     id: row.queue_entry_id,
     patientId: row.patient_id, // medical DB (IMPORTANT FIX)
     patientName: row.patient_name ?? 'Unknown patient',
-    age: 0,
-    gender: 'Unknown',
+    age: row.patient_age ?? 0,
+    gender: row.patient_gender ?? 'Unknown',
     appointmentType: row.visit_type ?? 'Visit',
     symptoms: 'No visit reason provided.',
     stage: 'consultation',
     arrivalTime: formatArrivalTime(row.started_at),
     formsComplete: true,
   }
+}
+
+function buildActiveMedicationText(prescriptions: PrescriptionRecord[]) {
+  const activePrescriptions = prescriptions.filter((rx) => {
+    return calculatePrescriptionStatus(
+      rx.prescribed_date,
+      rx.duration,
+      rx.status
+    ) === 'active'
+  })
+
+  if (activePrescriptions.length === 0) return 'None'
+
+  return activePrescriptions
+    .map((rx) => `${rx.medication_name} ${rx.dosage} ${rx.frequency}`)
+    .join(', ')
 }
 
 // Most common and important test types only
@@ -303,8 +319,33 @@ export default function DoctorDashBoard() {
         setIsLoadingQueue(true)
         setQueueError(null)
 
-        const rows = await fetchDoctorInProgressQueue()
-        const mappedPatients = rows.map(mapQueueRowToDoctorPatient)
+const rows = await fetchDoctorInProgressQueue()
+
+const mappedPatients = await Promise.all(
+  rows.map(async (row) => {
+    const patient = mapQueueRowToDoctorPatient(row)
+
+    // Fetch active prescriptions separately.
+    // Prescriptions are a one-to-many relationship, so keeping this
+    // outside the doctor queue RPC keeps the queue query clean.
+    const { data, error } = await fetchActivePrescriptions(row.patient_id)
+
+    const medicationText =
+      !error && data
+        ? buildActiveMedicationText(data)
+        : 'None'
+
+    return {
+      ...patient,
+      intakeForm: {
+        allergies: patient.intakeForm?.allergies ?? 'None reported',
+        medications: medicationText,
+        medicalHistory: patient.intakeForm?.medicalHistory ?? 'None reported',
+        emergencyContact: patient.intakeForm?.emergencyContact ?? 'Not provided',
+      },
+    }
+  })
+)
 
         if (!isMounted) return
 
