@@ -216,7 +216,7 @@ export default function PatientDashboard() {
       }
 
       const patientInfoPromise = supabase
-        .from('patient_info')
+        .from('patient_info_with_age')
         .select('id, name, birthday, gender, age, blood_type')
         .eq('id', user.id)
         .maybeSingle()
