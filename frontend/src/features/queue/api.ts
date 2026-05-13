@@ -97,6 +97,8 @@ export type DoctorQueuePatientRow = {
   queue_entry_id: string
   patient_id: string
   patient_name: string | null
+  patient_age: number | null
+  patient_gender: string | null
   visit_type: string | null
   status: string
   started_at: string | null

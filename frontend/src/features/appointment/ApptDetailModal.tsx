@@ -68,7 +68,14 @@ export default function ApptDetailModal({
                       <label
                         className='p-2 w-40 '
                             >Date Time</label>
-                        <p>{AppointmentDetails.appointment_date}</p> 
+                        <p>{new Date(AppointmentDetails.appointment_date).toLocaleString([], {
+                            year: 'numeric',
+                            month: '2-digit',
+                             day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                    })}</p> 
                     </div>
  
                     {/* CLINIC SELECT */}

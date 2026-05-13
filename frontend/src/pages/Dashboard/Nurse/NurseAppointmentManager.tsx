@@ -438,7 +438,7 @@ export default function NurseAppointmentManager() {
             const patientName = patientList.find((p) => p.user_id === updateForm.patientId)?.full_name ?? 'Unknown patient'
             const doctorName = practicionerList.find((d) => d.user_id === updateForm.doctorId)?.full_name ?? 'Unknown provider' 
             setUpdateStatus('success')
-            setUpdateMessage(`Appointment created for ${patientName} on ${updateForm.date} at ${updateForm.time} with ${doctorName}.`)
+            setUpdateMessage(`Appointment updated for ${patientName} on ${updateForm.date} at ${updateForm.time} with ${doctorName}.`)
             // since appt list changed, re-call readAppt
             if(selectedClinicId) await readAppointments(selectedClinicId, viewPrefs)
         } catch (error) {
@@ -543,6 +543,18 @@ export default function NurseAppointmentManager() {
         if(selectedClinicId){readAppointments(selectedClinicId, viewPrefs)}
         return () => clearTimeout(timer)
     }, [createStatus])
+
+    useEffect(() => {
+        if (updateStatus !== 'success') return
+
+        const timer = setTimeout(() => {
+            setShowAptUpdateForm(false)
+            setUpdateStatus('idle')
+            setUpdateMessage('')
+        }, 1200) // closes after 1.2 seconds
+        if(selectedClinicId){readAppointments(selectedClinicId, viewPrefs)}
+        return () => clearTimeout(timer)
+    }, [updateStatus])
 
     // Rerender components when these values are retrieved/updated 
     useEffect(() => {
