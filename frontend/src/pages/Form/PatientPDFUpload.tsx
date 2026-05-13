@@ -7,13 +7,49 @@ import { Link } from 'react-router-dom';
 
 const PatientPDFUpload: React.FC = () => {
   const { profile } = useAuth();
-  const { selectedClinicId, selectedClinicName } = useClinicContext();
+  const { selectedClinicId, selectedClinicName, setSelectedClinicId, setSelectedClinicName } = useClinicContext();
   const [file, setFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [clinicPdfUrl, setClinicPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  useEffect(() => {
+  const recoverClinicFromActiveQueue = async () => {
+    if (selectedClinicId) return
+
+    const { data: userData } = await supabase.auth.getUser()
+    const userId = userData?.user?.id
+    if (!userId) return
+
+    const { data: queueRow, error: queueError } = await supabase
+      .from('queue_entries')
+      .select('clinic_id')
+      .eq('patient_id', userId)
+      .eq('is_active', true)
+      .in('status', ['pending', 'waiting', 'called', 'in_progress'])
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (queueError || !queueRow?.clinic_id) return
+
+    setSelectedClinicId(queueRow.clinic_id)
+
+    const { data: clinicRow } = await supabase
+      .from('clinics')
+      .select('clinic_name')
+      .eq('clinic_id', queueRow.clinic_id)
+      .maybeSingle()
+
+    if (clinicRow?.clinic_name) {
+      setSelectedClinicName(clinicRow.clinic_name)
+    }
+  }
+
+  void recoverClinicFromActiveQueue()
+}, [selectedClinicId, setSelectedClinicId, setSelectedClinicName])
 
   useEffect(() => {
     const fetchPdfUrl = async () => {
