@@ -179,7 +179,6 @@ export default function PatientVisitSummary() {
                       ['Symptoms', record.symptoms],
                       ['Observations', record.observations],
                       ['Treatment Plan', record.treatment_plan],
-                      ['Prescriptions', record.prescriptions],
                       ['Follow-up Notes', record.follow_up_notes],
                     ].map(([label, value]) => (
                       <div key={label} className="rounded-2xl bg-slate-50 p-4">
