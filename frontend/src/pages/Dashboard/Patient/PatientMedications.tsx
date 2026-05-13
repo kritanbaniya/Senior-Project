@@ -33,6 +33,49 @@ function getStatusClasses(status: string) {
   }
 }
 
+// Helper function to calculate prescription status based on date and duration
+function calculatePrescriptionStatus(
+  prescribedDate: string,
+  duration: string,
+  manualStatus: string,
+): string {
+  // If manually discontinued, always show that
+  if (manualStatus === 'discontinued') {
+    return 'discontinued'
+  }
+
+  // If duration is ongoing, keep active
+  if (
+    duration === 'Ongoing' ||
+    duration === 'Until symptoms resolve'
+  ) {
+    return 'active'
+  }
+
+  // Parse duration like "7 days"
+  const durationMatch = duration.match(/(\d+)\s*days?/)
+
+  if (!durationMatch) {
+    return manualStatus
+  }
+
+  const durationDays = parseInt(durationMatch[1], 10)
+
+  const prescribed = new Date(prescribedDate)
+  const today = new Date()
+
+  const daysSincePrescribed = Math.floor(
+    (today.getTime() - prescribed.getTime()) /
+      (1000 * 60 * 60 * 24),
+  )
+
+  if (daysSincePrescribed > durationDays) {
+    return 'completed'
+  }
+
+  return 'active'
+}
+
 export default function PatientMedications() {
   const [prescriptions, setPrescriptions] = useState<PrescriptionRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -71,7 +114,15 @@ export default function PatientMedications() {
   }, [])
 
   const activeCount = useMemo(
-    () => prescriptions.filter((p) => p.status === 'active').length,
+    () =>
+      prescriptions.filter(
+        (p) =>
+          calculatePrescriptionStatus(
+            p.prescribed_date,
+            p.duration,
+            p.status,
+          ) === 'active',
+      ).length,
     [prescriptions],
   )
 
@@ -164,12 +215,33 @@ export default function PatientMedications() {
             </Card>
           ) : (
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {prescriptions.map((prescription) => (
+              {prescriptions.map((prescription) => {
+                const actualStatus = calculatePrescriptionStatus(
+                  prescription.prescribed_date,
+                  prescription.duration,
+                  prescription.status,
+                )
+
+                return (
                 <Card
                   key={prescription.id}
-                  className="overflow-hidden rounded-3xl border-slate-200 bg-white/95 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                  className={`overflow-hidden rounded-3xl shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${
+                    actualStatus === 'active'
+                      ? 'border-emerald-200 bg-white/95'
+                      : actualStatus === 'completed'
+                      ? 'border-slate-200 bg-slate-50'
+                      : 'border-rose-200 bg-rose-50/70'
+                  }`}
                 >
-                  <CardHeader className="border-b border-slate-100 bg-gradient-to-r from-emerald-50 to-white">
+                  <CardHeader
+                    className={`border-b ${
+                      actualStatus === 'active'
+                        ? 'border-emerald-100 bg-gradient-to-r from-emerald-50 to-white'
+                        : actualStatus === 'completed'
+                        ? 'border-slate-200 bg-slate-100'
+                        : 'border-rose-200 bg-rose-50'
+                    }`}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <CardTitle className="text-xl text-slate-900">
@@ -187,8 +259,8 @@ export default function PatientMedications() {
                         </div>
                       </div>
 
-                      <Badge className={getStatusClasses(prescription.status)}>
-                        {prescription.status}
+                      <Badge className={getStatusClasses(actualStatus)}>
+                        {actualStatus}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -214,8 +286,24 @@ export default function PatientMedications() {
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
-                      <p className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-emerald-700">
+                    <div
+                      className={`rounded-2xl p-4 ${
+                        actualStatus === 'active'
+                          ? 'border border-emerald-100 bg-emerald-50'
+                          : actualStatus === 'completed'
+                          ? 'border border-slate-200 bg-slate-100'
+                          : 'border border-rose-200 bg-rose-50'
+                      }`}
+                    >
+                      <p
+                        className={`mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wide ${
+                          actualStatus === 'active'
+                            ? 'text-emerald-700'
+                            : actualStatus === 'completed'
+                            ? 'text-slate-600'
+                            : 'text-rose-700'
+                        }`}
+                      >
                         <Clock3 className="h-3.5 w-3.5" />
                         Frequency
                       </p>
@@ -235,7 +323,8 @@ export default function PatientMedications() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )
+              })}
             </div>
           )}
         </main>

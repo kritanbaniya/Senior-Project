@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Menu, FlaskConical, CalendarDays, UserRound, ClipboardList } from 'lucide-react'
+import { Menu, FlaskConical, CalendarDays, UserRound} from 'lucide-react'
 import PatientSidebar from './components/PatientSidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -178,16 +178,6 @@ export default function PatientLabResults() {
                         Result
                       </p>
                       <p className="text-lg font-semibold text-slate-900">{result.result}</p>
-                    </div>
-
-                    <div className="rounded-2xl bg-slate-50 p-4">
-                      <p className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                        <ClipboardList className="h-3.5 w-3.5" />
-                        Details
-                      </p>
-                      <p className="text-sm leading-6 text-slate-700">
-                        {result.result_details || 'No detailed result description provided.'}
-                      </p>
                     </div>
 
                     {result.notes && (
