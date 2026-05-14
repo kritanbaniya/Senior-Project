@@ -19,7 +19,6 @@ export default function InProgressQueuePanel({ rows, onComplete }: InProgressQue
                 <span className="queue-order">#{index + 1}</span>
                 <div className="queue-patient-info">
                   <span className="queue-patient-name">{row.patient_name ?? 'patient'}</span>
-                  <span className="queue-apt-type">{row.status}</span>
                   {row.appointment?.clinician_name && (
                     <span className="queue-doctor">
                       {row.appointment.clinician_name}

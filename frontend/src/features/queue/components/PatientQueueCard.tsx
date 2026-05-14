@@ -9,10 +9,19 @@ type PatientQueueCardProps = {
   loading: boolean
   row: QueueEntryRow | null
   activePosition: number | null
+  estimatedWaitSeconds: number | null
   exitState: 'left' | 'removed_from_active' | null
   rateLimitRetry: number | null
   onJoin: () => void
   onLeave: () => void
+}
+
+function formatWaitTime(seconds: number): string {
+  if (seconds === 0) return "You're next!"
+  const minutes = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  if (minutes === 0) return `${secs}s`
+  return secs > 0 ? `${minutes}m ${secs}s` : `${minutes}m`
 }
 
 export default function PatientQueueCard({
@@ -21,6 +30,7 @@ export default function PatientQueueCard({
   loading,
   row,
   activePosition,
+  estimatedWaitSeconds,
   exitState,
   rateLimitRetry,
   onJoin,
@@ -79,11 +89,9 @@ export default function PatientQueueCard({
         </div>
       )}
 
-      <section className="pd-card pd-card-queue" id="queue">
+      <section className={`pd-card pd-card-queue${loading ? ' refreshing' : ''}`} id="queue">
         <h2 className="pd-card-title">Check-in & queue</h2>
-        {loading ? (
-          <p className="pd-card-desc">Loading queue status...</p>
-        ) : hasActiveQueueEntry ? (
+        {hasActiveQueueEntry ? (
           <>
             {row?.status === 'pending' ? (
               <>
@@ -97,7 +105,14 @@ export default function PatientQueueCard({
               </>
             ) : row?.status === 'waiting' ? (
               <>
-                <p className="pd-card-desc">You are in active queue.</p>
+                <p className="pd-card-desc">
+                  Est. wait time:{' '}
+                  <span className="pd-queue-est-wait">
+                    {estimatedWaitSeconds != null
+                      ? formatWaitTime(estimatedWaitSeconds)
+                      : 'Calculating...'}
+                  </span>
+                </p>
                 {activePosition != null && (
                   <QueuePositionDots position={activePosition} status="waiting" />
                 )}

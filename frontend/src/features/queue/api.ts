@@ -312,3 +312,15 @@ export async function joinQueueForAppointment(
 export function activeQueueStatuses(): readonly string[] {
   return ACTIVE_QUEUE_STATUSES
 }
+
+export async function fetchQueueStats(
+  clinicId: string,
+): Promise<{ waitingCount: number; avgServiceSeconds: number | null }> {
+  const { data, error } = await supabase.rpc('get_queue_stats', { cid: clinicId })
+  if (error) throw error
+  const row = (data ?? [])[0]
+  return {
+    waitingCount: row?.waiting_count ?? 0,
+    avgServiceSeconds: row?.avg_service_seconds ?? null,
+  }
+}

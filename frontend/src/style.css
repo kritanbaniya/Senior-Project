@@ -453,6 +453,16 @@ button:focus-visible {
 .nurse-intro { font-size: 0.9rem; color: #555; margin-bottom: 1rem; }
 .nurse-dashboard .no-queue { color: #666; margin: 0 0 1rem 0; }
 
+.nurse-queue-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  transition: opacity 0.15s ease;
+}
+.nurse-queue-panels.refreshing {
+  opacity: 0.55;
+  pointer-events: none;
+}
 .nurse-queue-list {
   list-style: none;
   padding: 0;
@@ -823,8 +833,13 @@ button:focus-visible {
   border-radius: 14px;
   padding: 1.25rem 1.25rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  transition: opacity 0.15s ease;
   border: 1px solid rgba(0,0,0,0.04);
   text-align: left;
+}
+.pd-card.refreshing {
+  opacity: 0.55;
+  pointer-events: none;
 }
 .pd-card-title {
   font-size: 1.1rem;
@@ -875,6 +890,7 @@ button:focus-visible {
 .pd-queue-label { font-size: 0.85rem; color: #64748b; }
 .pd-queue-value { font-size: 1.5rem; font-weight: 700; color: #0284c7; }
 .pd-queue-value-called { color: #16a34a; }
+.pd-queue-est-wait { color: #0284c7; font-weight: 700; }
 .pd-checkin-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
 
 /* queue position dot visualizer */
@@ -1610,6 +1626,7 @@ button:focus-visible {
   border-top: 1px solid #f1f5f9;
   display: flex;
   justify-content: flex-end;
+  gap: 0.75rem;
 }
 .clinic-discovery .cd-btn {
   padding: 0.5rem 1.25rem;

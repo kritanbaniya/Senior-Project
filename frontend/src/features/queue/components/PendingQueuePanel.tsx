@@ -19,7 +19,6 @@ export default function PendingQueuePanel({ rows, onApprove }: PendingQueuePanel
                 <span className="queue-order">#{index + 1}</span>
                 <div className="queue-patient-info">
                   <span className="queue-patient-name">{row.patient_name ?? 'patient'}</span>
-                  <span className="queue-apt-type">{row.status}</span>
                 </div>
                 <div className="queue-actions">
                   <button

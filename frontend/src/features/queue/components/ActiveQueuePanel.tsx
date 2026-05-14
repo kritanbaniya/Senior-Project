@@ -84,9 +84,6 @@ export default function ActiveQueuePanel({
                     <span className="queue-patient-name">
                       {row.patient_name ?? 'patient'}
                     </span>
-                    <span className="queue-apt-type">
-                      {row.status}
-                    </span>
 
                     <select
                       className="queue-doctor-select"

@@ -22,8 +22,7 @@ export default function ClinicSelector({ clinics, selectedClinicId, onSelect }: 
       {clinics.map((clinic) => (
         <div key={clinic.clinic_id} className="add-to-queue-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span>
-            {clinic.clinic_name} ({clinic.city ?? 'city n/a'}, {clinic.state ?? 'state n/a'}) - queue permission:{' '}
-            {clinic.manage_queue ? 'enabled' : 'disabled'}
+            {clinic.clinic_name} ({clinic.city ?? 'city n/a'}, {clinic.state ?? 'state n/a'})
           </span>
           <button
             type="button"
