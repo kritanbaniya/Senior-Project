@@ -98,6 +98,9 @@ const estimatedWait =
           <p><strong>Clinic Name:</strong> {clinic.clinic_name}</p>
           <p><strong>Address:</strong> {formatAddress(clinic)}</p>
           <p><strong>Phone:</strong> {clinic.phone ?? 'Not provided'}</p>
+          <p><strong>Specialty:</strong> {clinic.specialty ?? 'Not specified'}</p>
+          {clinic.email && <p><strong>Email:</strong> {clinic.email}</p>}
+          {clinic.website && <p><strong>Website:</strong> <a href={clinic.website} target="_blank" rel="noopener noreferrer">{clinic.website}</a></p>}
         </div>
       </div>
 
@@ -133,14 +136,6 @@ const estimatedWait =
               </p>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="info-box doctor-box">
-        <h2 className="info-box-title">Doctor Information</h2>
-        <div className="info-box-content">
-          <p><strong>Doctor Name:</strong> Coming soon</p>
-          <p><strong>Specialty:</strong> {clinic.specialty ?? 'Not specified'}</p>
         </div>
       </div>
 
