@@ -1,13 +1,55 @@
 import { Link, useLocation } from 'react-router-dom'
-import type { ClinicRow } from './Dashboard/Clinic/ClinicADashBoard'
+import type { ClinicRow, ClinicHours } from './Dashboard/Clinic/ClinicADashBoard'
 import  { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Loader2, Users, Clock } from 'lucide-react'; // 增加图标
+import { Loader2, Users, Clock } from 'lucide-react';
 
 
 interface ExtendedClinicRow extends ClinicRow {
-  id: string; 
+  id: string;
+}
+
+const DAYS: { key: keyof ClinicHours; label: string }[] = [
+  { key: 'monday',    label: 'Monday'    },
+  { key: 'tuesday',   label: 'Tuesday'   },
+  { key: 'wednesday', label: 'Wednesday' },
+  { key: 'thursday',  label: 'Thursday'  },
+  { key: 'friday',    label: 'Friday'    },
+  { key: 'saturday',  label: 'Saturday'  },
+  { key: 'sunday',    label: 'Sunday'    },
+]
+
+function formatTime(t: string): string {
+  const [hStr, mStr] = t.split(':')
+  const h = parseInt(hStr, 10)
+  const m = mStr
+  const period = h >= 12 ? 'PM' : 'AM'
+  const h12 = h % 12 === 0 ? 12 : h % 12
+  return `${h12}:${m} ${period}`
+}
+
+function isClinicOpenNow(hours: ClinicHours | null | undefined): boolean {
+  if (!hours) return false
+  const tz = 'America/New_York'
+  const dayName = new Date()
+    .toLocaleDateString('en-US', { timeZone: tz, weekday: 'long' })
+    .toLowerCase() as keyof ClinicHours
+  const day = hours[dayName]
+  if (!day) return false
+  const nowHHMM = new Date().toLocaleTimeString('en-US', {
+    timeZone: tz,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  return nowHHMM >= day.open && nowHHMM < day.close
+}
+
+function getTodayKey(): keyof ClinicHours {
+  return new Date()
+    .toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long' })
+    .toLowerCase() as keyof ClinicHours
 }
 const formatSeconds = (sec: number | null) => {
   if (sec == null) return '--';
@@ -138,6 +180,78 @@ const estimatedWait =
           )}
         </div>
       </div>
+
+      {clinic.clinic_hours && (
+        <div className="info-box">
+          <h2 className="info-box-title">
+            Clinic Hours
+            {' '}
+            {isClinicOpenNow(clinic.clinic_hours) ? (
+              <span style={{
+                display: 'inline-block',
+                marginLeft: '0.5rem',
+                padding: '0.15rem 0.6rem',
+                borderRadius: '999px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                background: '#dcfce7',
+                color: '#166534',
+                verticalAlign: 'middle',
+              }}>
+                Open Now
+              </span>
+            ) : (
+              <span style={{
+                display: 'inline-block',
+                marginLeft: '0.5rem',
+                padding: '0.15rem 0.6rem',
+                borderRadius: '999px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                background: '#fee2e2',
+                color: '#991b1b',
+                verticalAlign: 'middle',
+              }}>
+                Closed Now
+              </span>
+            )}
+          </h2>
+          <div className="info-box-content">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {DAYS.map(({ key, label }) => {
+                  const day = clinic.clinic_hours![key]
+                  const isToday = key === getTodayKey()
+                  return (
+                    <tr
+                      key={key}
+                      style={{
+                        borderBottom: '1px solid #f1f5f9',
+                        background: isToday ? '#f0fdf4' : 'transparent',
+                        fontWeight: isToday ? 600 : 400,
+                      }}
+                    >
+                      <td style={{ padding: '0.45rem 0.25rem', color: '#334155', width: '110px' }}>
+                        {label}
+                        {isToday && (
+                          <span style={{ fontSize: '0.7rem', color: '#16a34a', marginLeft: '0.35rem' }}>
+                            (today)
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: '0.45rem 0.25rem', color: day ? '#1e293b' : '#94a3b8' }}>
+                        {day
+                          ? `${formatTime(day.open)} – ${formatTime(day.close)}`
+                          : 'Closed'}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <Link to="/clinic-discovery" className="back-link">← Back</Link>
     </div>
