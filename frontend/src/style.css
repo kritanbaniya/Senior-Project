@@ -890,6 +890,7 @@ button:focus-visible {
 .pd-queue-label { font-size: 0.85rem; color: #64748b; }
 .pd-queue-value { font-size: 1.5rem; font-weight: 700; color: #0284c7; }
 .pd-queue-value-called { color: #16a34a; }
+.pd-queue-est-wait { color: #0284c7; font-weight: 700; }
 .pd-checkin-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
 
 /* queue position dot visualizer */

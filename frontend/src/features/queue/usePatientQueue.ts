@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchOwnActiveQueueRows, joinQueue, joinQueueForAppointment, leaveQueue } from './api'
+import { fetchOwnActiveQueueRows, fetchQueueStats, joinQueue, joinQueueForAppointment, leaveQueue } from './api'
 import { subscribeToClinicQueue } from './realtime'
 import type { QueueEntryRow } from './types'
 
@@ -24,6 +24,7 @@ export function usePatientQueue(clinicId: string | null) {
   const [rateLimitRetry, setRateLimitRetry] = useState<number | null>(null)
   const [currentRow, setCurrentRow] = useState<QueueEntryRow | null>(null)
   const [exitState, setExitState] = useState<ExitState>(null)
+  const [avgServiceTime, setAvgServiceTime] = useState<number | null>(null)
 
   const loadSnapshot = useCallback(async () => {
     setLoading(true)
@@ -43,6 +44,12 @@ export function usePatientQueue(clinicId: string | null) {
       } else {
         setExitState(null)
         setCurrentRow(latest)
+        try {
+          const stats = await fetchQueueStats(latest.clinic_id)
+          setAvgServiceTime(stats.avgServiceSeconds)
+        } catch {
+          // non-fatal: est. wait will show "Calculating..."
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'failed to load queue')
@@ -142,6 +149,11 @@ export function usePatientQueue(clinicId: string | null) {
       ? currentRow.queue_order ?? null
       : null
 
+  const estimatedWaitSeconds =
+    activePosition != null && avgServiceTime != null
+      ? Math.max(0, (activePosition) * avgServiceTime)
+      : null
+
   return {
     loading,
     error,
@@ -149,6 +161,7 @@ export function usePatientQueue(clinicId: string | null) {
     row: currentRow,
     exitState,
     activePosition,
+    estimatedWaitSeconds,
     join,
     joinForAppointment,
     leave,

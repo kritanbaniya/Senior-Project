@@ -191,6 +191,7 @@ export default function PatientDashboard() {
     row: queueRow,
     exitState,
     activePosition,
+    estimatedWaitSeconds,
     join,
     joinForAppointment,
     leave,
@@ -497,6 +498,7 @@ export default function PatientDashboard() {
                 loading={queueLoading}
                 row={queueRow}
                 activePosition={activePosition}
+                estimatedWaitSeconds={estimatedWaitSeconds}
                 exitState={exitState}
                 rateLimitRetry={rateLimitRetry}
                 onJoin={join}
