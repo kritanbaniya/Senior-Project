@@ -20,6 +20,7 @@ import './style.css'
 import ClinicOverview from './pages/Dashboard/Clinic/ClinicOverview'
 import ClinicMyClinic from './pages/Dashboard/Clinic/ClinicMyClinic'
 import ClinicManageStaff from './pages/Dashboard/Clinic/ClinicManageStaff'
+import ClinicHoursManager from './pages/Dashboard/Clinic/ClinicHoursManager'
 import Support from './pages/Support'
 import HomeGate from './pages/HomeGate'
 import SystemAdminDashboard from './pages/Dashboard/SystemAdmin/SystemAdminDashboard'
@@ -80,6 +81,7 @@ export default function App() {
                 <Route element={<ClinicADashBoard />}>
                   <Route index element={<ClinicOverview />} />
                   <Route path="my-clinic" element={<ClinicMyClinic />} />
+                  <Route path="clinic-hours" element={<ClinicHoursManager />} />
                   <Route path="manage-staff" element={<ClinicManageStaff />} />
                 </Route>
               </Route>

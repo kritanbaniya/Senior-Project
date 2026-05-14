@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Building2,
   UsersRound,
+  Clock,
   LogOut,
 } from "lucide-react"
 import {
@@ -35,6 +36,11 @@ const clinicItems: SidebarItem[] = [
     title: "My Clinic",
     url: "/dashboard/clinic/my-clinic",
     icon: Building2,
+  },
+  {
+    title: "Clinic Hours",
+    url: "/dashboard/clinic/clinic-hours",
+    icon: Clock,
   },
   {
     title: "Manage Staff",

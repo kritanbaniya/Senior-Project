@@ -35,6 +35,18 @@ export type ClinicAdminRow = {
   clinic_created: boolean
 }
 
+export type DayHours = { open: string; close: string } | null
+
+export type ClinicHours = {
+  monday: DayHours
+  tuesday: DayHours
+  wednesday: DayHours
+  thursday: DayHours
+  friday: DayHours
+  saturday: DayHours
+  sunday: DayHours
+}
+
 export type ClinicRow = {
   clinic_id: string
   admin_id: string
@@ -55,6 +67,7 @@ export type ClinicRow = {
   latitude: number | null
   longitude: number | null
   geocode_status: string | null
+  clinic_hours: ClinicHours | null
 }
 
 export const SPECIALTIES = [
@@ -97,6 +110,7 @@ export type ClinicDashboardContext = {
   handleAdminProfileUpdate: (form: AdminFormData) => Promise<void>
   handleClinicCreateSubmit: (form: ClinicFormData) => Promise<boolean>
   handleClinicUpdate: (form: ClinicFormData) => Promise<boolean>
+  handleClinicHoursUpdate: (hours: ClinicHours) => Promise<boolean>
 }
 
 export function useClinicDashboard() {
@@ -474,6 +488,39 @@ export default function ClinicADashBoard() {
     return true
   }
 
+  const handleClinicHoursUpdate = async (hours: ClinicHours): Promise<boolean> => {
+    setMessage(null)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setMessage({ type: 'error', text: 'not logged in' })
+      return false
+    }
+
+    if (!clinicRow) {
+      setMessage({ type: 'error', text: 'no clinic loaded' })
+      return false
+    }
+
+    setSaving(true)
+
+    const { error } = await supabase
+      .from('clinics')
+      .update({ clinic_hours: hours })
+      .eq('admin_id', user.id)
+
+    setSaving(false)
+
+    if (error) {
+      setMessage({ type: 'error', text: error.message })
+      return false
+    }
+
+    setClinicRow((prev) => (prev ? { ...prev, clinic_hours: hours } : prev))
+    setMessage({ type: 'success', text: 'clinic hours updated' })
+    return true
+  }
+
   const ctx: ClinicDashboardContext = {
     adminRow,
     clinicRow,
@@ -485,6 +532,7 @@ export default function ClinicADashBoard() {
     handleAdminProfileUpdate,
     handleClinicCreateSubmit,
     handleClinicUpdate,
+    handleClinicHoursUpdate,
   }
 
   return (
