@@ -5,6 +5,7 @@ import { fetchNurseClinicPermissions, updateNurseInvitationStatus } from '../../
 import type { ClinicListItem, StaffPermissionRow } from '../../../features/queue/types'
 import NurseSideBar from './NurseSideBar'
 import { SidebarProvider } from "@/components/ui/sidebar"
+import { Menu } from 'lucide-react'
 
 type NurseClinicPermission = ClinicListItem & StaffPermissionRow
 
@@ -14,6 +15,7 @@ type PendingInviteAction = {
 }
 
 export default function NurseDashBoard() {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const { selectedClinicId, setSelectedClinicId, setSelectedClinicName } = useClinicContext()
   const [permissions, setPermissions] = useState<NurseClinicPermission[]>([])
   const [clinicsLoading, setClinicsLoading] = useState(true)
@@ -100,11 +102,22 @@ export default function NurseDashBoard() {
       }
     
     >
-      <NurseSideBar />
+      <NurseSideBar
+        mobileOpen={mobileSidebarOpen}
+        onMobileClose={() => setMobileSidebarOpen(false)}
+    />
 
       <div className="pd-right">
         <header className="pd-header">
           <div className="pd-header-left">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-indigo-400/70 text-slate-700 shadow-sm transition hover:bg-slate-100 md:hidden"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
             <h1 className="pd-header-title">Nurse dashboard</h1>
             <span className="pd-header-patient">Overview</span>
           </div>
