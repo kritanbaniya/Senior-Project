@@ -67,25 +67,21 @@ export default function NurseQueueManagement() {
           )}
 
           {selectedClinicId && canManageQueue && (
-            loading ? (
-              <p className="no-queue">Loading queue status...</p>
-            ) : (
-              <>
-                <PendingQueuePanel rows={pendingRows} onApprove={approvePending} />
-                <ActiveQueuePanel
-                  rows={activeRows}
-                  doctors={doctors}
-                  onAssignDoctor={assignDoctor}
-                  onMove={moveRow}
-                  onCallNext={callNextPatient}
-                  onCallPatient={callSinglePatient}
-                  onStartVisit={beginVisit}
-                  onNoShow={noShow}
-                  onCheckForm={Checkform}
-                />
-                <InProgressQueuePanel rows={inProgressRows} onComplete={markCompleted} />
-              </>
-            )
+            <div className={`nurse-queue-panels${loading ? ' refreshing' : ''}`}>
+              <PendingQueuePanel rows={pendingRows} onApprove={approvePending} />
+              <ActiveQueuePanel
+                rows={activeRows}
+                doctors={doctors}
+                onAssignDoctor={assignDoctor}
+                onMove={moveRow}
+                onCallNext={callNextPatient}
+                onCallPatient={callSinglePatient}
+                onStartVisit={beginVisit}
+                onNoShow={noShow}
+                onCheckForm={Checkform}
+              />
+              <InProgressQueuePanel rows={inProgressRows} onComplete={markCompleted} />
+            </div>
           )}
 
           {error && <p className="no-queue">{error}</p>}

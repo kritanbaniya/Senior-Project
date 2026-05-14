@@ -79,11 +79,9 @@ export default function PatientQueueCard({
         </div>
       )}
 
-      <section className="pd-card pd-card-queue" id="queue">
+      <section className={`pd-card pd-card-queue${loading ? ' refreshing' : ''}`} id="queue">
         <h2 className="pd-card-title">Check-in & queue</h2>
-        {loading ? (
-          <p className="pd-card-desc">Loading queue status...</p>
-        ) : hasActiveQueueEntry ? (
+        {hasActiveQueueEntry ? (
           <>
             {row?.status === 'pending' ? (
               <>
